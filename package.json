@@ -1,0 +1,44 @@
+{
+  "name": "autogest-monorepo",
+  "version": "1.0.0",
+  "description": "Sistema Inteligente de Gestão de Abastecimentos e Manutenção de Veículos",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm --prefix apps/api run dev",
+    "dev:mobile": "npm --prefix apps/mobile run dev",
+    "build:types": "npm --prefix packages/shared-types run build",
+    "build:api": "npm run build:types && npm --prefix apps/api run build",
+    "build": "npm run build:types && npm run build:api",
+    "lint": "eslint \"**/*.{ts,tsx,js,jsx}\"",
+    "lint:fix": "eslint \"**/*.{ts,tsx,js,jsx}\" --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:migrate": "npm --prefix apps/api run migrate"
+  },
+  "keywords": [
+    "autogest",
+    "monorepo",
+    "react-native",
+    "express",
+    "postgresql",
+    "typescript"
+  ],
+  "author": "Equipe AutoGest",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.57.1",
+    "prettier": "^3.9.9",
+    "tsx": "^4.20.6",
+    "typescript": "^5.3.3"
+  }
+}

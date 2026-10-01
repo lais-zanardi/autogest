@@ -1,0 +1,89 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Dependency directories
+node_modules/
+jspm_packages/
+.pnpm-store/
+
+# Build & Output directories
+dist/
+build/
+out/
+.next/
+.expo/
+*.tsbuildinfo
+
+# Monorepo Package Build Outputs
+packages/shared-types/dist/
+apps/api/dist/
+
+# Environment & Secret files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+
+# React Native & Metro Bundler
+.metro-health-check*
+*.bundle
+.sourcemap.map
+
+# Android Native Build Artifacts
+apps/mobile/android/.gradle/
+apps/mobile/android/app/build/
+apps/mobile/android/app/debug.keystore
+apps/mobile/android/.idea/
+apps/mobile/android/captures/
+apps/mobile/android/local.properties
+apps/mobile/android/*.iml
+apps/mobile/android/app/*.iml
+
+# iOS Native Build Artifacts (futuro)
+apps/mobile/ios/Pods/
+apps/mobile/ios/build/
+apps/mobile/ios/*.xcworkspace
+apps/mobile/ios/Pods.xcodeproj
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.suo
+*.ntvsopt
+*.njsproj
+*.sln
+*.sw?
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary & Testing Files
+.cache/
+coverage/
+.nyc_output/
+scratch/
+
+# Agent & AI instructions (local development only)
+.agents/
+AGENTS.md
+
+# Development documentation & backlog (local development only)
+docs/
+backlog/
+scripts/
+CONTRIBUTING.md
+.github/workflows/sync-github-project.yml

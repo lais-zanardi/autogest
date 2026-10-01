@@ -1,0 +1,11 @@
+node_modules/
+dist/
+build/
+.gradle/
+*.lock
+*.bin
+package-lock.json
+android/
+ios/
+coverage/
+.idea/

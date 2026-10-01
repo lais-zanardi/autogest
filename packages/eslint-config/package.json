@@ -1,0 +1,9 @@
+{
+  "name": "@autogest/eslint-config",
+  "version": "1.0.0",
+  "description": "Configurações padronizadas do ESLint para o monorepo AutoGest",
+  "main": "index.js",
+  "devDependencies": {
+    "eslint": "^8.56.0"
+  }
+}
