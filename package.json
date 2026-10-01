@@ -20,7 +20,8 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
-    "db:migrate": "npm --prefix apps/api run migrate"
+    "db:migrate": "npm --prefix apps/api run migrate",
+    "test": "tsx --test \"apps/**/__tests__/**/*.test.ts\""
   },
   "keywords": [
     "autogest",
