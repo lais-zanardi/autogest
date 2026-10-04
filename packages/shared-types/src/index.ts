@@ -71,7 +71,11 @@ export interface Refuel {
   calculatedKml?: number | null;
   receiptImageUrl?: string | null;
   stationName?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   createdAt: string;
+  updatedAt?: string;
+  deletedAt?: string | null;
 }
 
 export interface CreateRefuelDTO {
@@ -83,10 +87,44 @@ export interface CreateRefuelDTO {
   totalValue: number;
   liters: number;
   isFullTank: boolean;
-  receiptImageUrl?: string;
-  stationName?: string;
-  latitude?: number;
-  longitude?: number;
+  receiptImageUrl?: string | null;
+  stationName?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
+export interface UpdateRefuelDTO {
+  date?: string;
+  odometer?: number;
+  fuelType?: FuelType;
+  pricePerLiter?: number;
+  totalValue?: number;
+  liters?: number;
+  isFullTank?: boolean;
+  receiptImageUrl?: string | null;
+  stationName?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
+export type OdometerReadingOrigin = 'abastecimento' | 'manual' | 'manutencao';
+
+export interface OdometerReading {
+  id: string;
+  vehicleId: string;
+  km: number;
+  date: string;
+  origin: OdometerReadingOrigin;
+  createdAt: string;
+  updatedAt?: string;
+  deletedAt?: string | null;
+}
+
+export interface CreateOdometerReadingDTO {
+  vehicleId: string;
+  km: number;
+  date?: string;
+  origin: OdometerReadingOrigin;
 }
 
 export interface WeatherLog {

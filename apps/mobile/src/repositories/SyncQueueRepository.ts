@@ -1,7 +1,13 @@
 import { db } from '../database/DatabaseConnection';
 
 export type SyncOperationType =
-  'CREATE_REFUEL' | 'CREATE_VEHICLE' | 'UPDATE_VEHICLE' | 'DELETE_VEHICLE' | 'CREATE_EXPENSE';
+  | 'CREATE_REFUEL'
+  | 'UPDATE_REFUEL'
+  | 'DELETE_REFUEL'
+  | 'CREATE_VEHICLE'
+  | 'UPDATE_VEHICLE'
+  | 'DELETE_VEHICLE'
+  | 'CREATE_EXPENSE';
 export type SyncStatus = 'PENDING' | 'SYNCING' | 'FAILED' | 'COMPLETED';
 
 export interface SyncQueueItem<T = any> {

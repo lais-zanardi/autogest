@@ -68,6 +68,39 @@ CREATE TABLE IF NOT EXISTS refuels (
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Tabela de Leituras de Hodômetro (US05.1)
+CREATE TABLE IF NOT EXISTS leituras_hodometro (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    veiculo_id UUID NOT NULL REFERENCES veiculos(id) ON DELETE CASCADE,
+    km NUMERIC(10,2) NOT NULL,
+    data_hora TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    origem VARCHAR(30) NOT NULL CHECK (origem IN ('abastecimento', 'manual', 'manutencao')),
+    criado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    excluido_em TIMESTAMPTZ NULL
+);
+
+-- Tabela de Abastecimentos (US05.1)
+CREATE TABLE IF NOT EXISTS abastecimentos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    veiculo_id UUID NOT NULL REFERENCES veiculos(id) ON DELETE CASCADE,
+    data_hora TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    tipo_combustivel VARCHAR(30) NOT NULL,
+    litros NUMERIC(8,3) NOT NULL,
+    valor_total NUMERIC(10,2) NOT NULL,
+    valor_litro NUMERIC(8,3) NOT NULL,
+    km NUMERIC(10,2) NOT NULL,
+    consumo_kml NUMERIC(6,2) NULL,
+    latitude NUMERIC(10,8) NULL,
+    longitude NUMERIC(11,8) NULL,
+    tanque_cheio BOOLEAN NOT NULL DEFAULT TRUE,
+    posto VARCHAR(100) NULL,
+    imagem_comprovante_url TEXT NULL,
+    criado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    excluido_em TIMESTAMPTZ NULL
+);
+
 -- Tabela de Logs Climatológicos (OpenWeatherMap)
 CREATE TABLE IF NOT EXISTS weather_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
