@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { EnvConfig } from '../config/env';
 
-let currentAuthToken: string | null = 'test-token';
+let currentAuthToken: string | null = null;
 
 export function setAuthToken(token: string | null) {
   currentAuthToken = token;

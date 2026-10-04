@@ -46,7 +46,16 @@ export const useAppStore = create<AppState>(set => ({
       refuels: [],
       stats: null,
     }),
-  setVehicles: vehicles => set({ vehicles, selectedVehicle: vehicles[0] || null }),
+  setVehicles: vehicles =>
+    set(state => {
+      const activeVehicleStillExists = state.selectedVehicle
+        ? vehicles.find(v => v.id === state.selectedVehicle?.id)
+        : null;
+      return {
+        vehicles,
+        selectedVehicle: activeVehicleStillExists || vehicles[0] || null,
+      };
+    }),
   setSelectedVehicle: selectedVehicle => set({ selectedVehicle }),
   setRefuels: (refuels, stats) => set({ refuels, stats }),
   setOnlineStatus: isOnline => set({ isOnline }),

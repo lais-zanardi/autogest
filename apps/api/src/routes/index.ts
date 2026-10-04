@@ -9,7 +9,7 @@ const router = Router();
 
 router.use('/auth', authRoutes);
 router.get('/me', authMiddleware as any, AuthController.getMe as any);
-router.use('/vehicles', vehicleRoutes);
+router.use('/vehicles', authMiddleware as any, vehicleRoutes);
 router.use('/refuels', refuelRoutes);
 
 export default router;

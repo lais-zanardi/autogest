@@ -22,5 +22,13 @@ module.exports = {
     semi: ['error', 'always'],
     quotes: ['error', 'single', { avoidEscape: true }],
   },
+  overrides: [
+    {
+      files: ['*.js', '*.cjs'],
+      rules: {
+        '@typescript-eslint/no-var-requires': 'off',
+      },
+    },
+  ],
   ignorePatterns: ['node_modules/', 'dist/', 'build/', '.gradle/', 'android/', 'ios/', 'coverage/'],
 };

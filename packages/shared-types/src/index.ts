@@ -16,27 +16,46 @@ export interface User {
 export interface Vehicle {
   id: string;
   userId: string;
-  name: string;
-  brand: string;
+  name?: string;
+  brand?: string;
   model: string;
   year: number;
   plate: string;
   fuelType: FuelType;
+  tankCapacityL: number;
+  preferredFuel: FuelType;
   initialOdometer: number;
   currentOdometer: number;
   fipeValue?: number | null;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string | null;
 }
 
 export interface CreateVehicleDTO {
-  name: string;
-  brand: string;
+  name?: string;
+  brand?: string;
   model: string;
   year: number;
   plate: string;
-  fuelType: FuelType;
-  initialOdometer: number;
+  fuelType?: FuelType;
+  tankCapacityL: number;
+  preferredFuel: FuelType;
+  initialOdometer?: number;
+}
+
+export interface UpdateVehicleDTO {
+  name?: string;
+  brand?: string;
+  model?: string;
+  year?: number;
+  plate?: string;
+  fuelType?: FuelType;
+  tankCapacityL?: number;
+  preferredFuel?: FuelType;
+  initialOdometer?: number;
+  currentOdometer?: number;
+  fipeValue?: number | null;
 }
 
 export interface Refuel {
