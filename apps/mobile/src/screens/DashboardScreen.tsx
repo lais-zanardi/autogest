@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,13 +11,14 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useAppStore } from '../store/useAppStore';
 import { VehicleService } from '../services/vehicleService';
-import { VehicleHeaderSelector } from '../components';
+import { VehicleHeaderSelector, UpdateOdometerModal } from '../components';
 import { formatCurrency, formatKml } from '../utils/formatters';
 import { colors, spacing, radius, typography } from '../theme';
 
 export const DashboardScreen: React.FC = () => {
   const { user, selectedVehicle, stats } = useAppStore();
   const navigation = useNavigation<any>();
+  const [odometerModalVisible, setOdometerModalVisible] = useState(false);
 
   useEffect(() => {
     VehicleService.listVehicles();
@@ -77,7 +78,16 @@ export const DashboardScreen: React.FC = () => {
             </View>
 
             <View style={styles.detailsCard}>
-              <Text style={styles.detailsTitle}>Ficha do Veículo Ativo</Text>
+              <View style={styles.detailsHeader}>
+                <Text style={styles.detailsTitle}>Ficha do Veículo Ativo</Text>
+                <TouchableOpacity
+                  style={styles.updateOdoBtn}
+                  onPress={() => setOdometerModalVisible(true)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.updateOdoBtnText}>⏱️ Atualizar km</Text>
+                </TouchableOpacity>
+              </View>
               <View style={styles.detailsGrid}>
                 <View style={styles.detailCol}>
                   <Text style={styles.detailLabel}>Ano</Text>
@@ -106,6 +116,12 @@ export const DashboardScreen: React.FC = () => {
                 <Text style={styles.fipeValue}>{formatCurrency(selectedVehicle.fipeValue)}</Text>
               </View>
             )}
+
+            <UpdateOdometerModal
+              visible={odometerModalVisible}
+              vehicle={selectedVehicle}
+              onClose={() => setOdometerModalVisible(false)}
+            />
           </>
         )}
       </ScrollView>
@@ -169,10 +185,28 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     marginBottom: spacing.md,
   },
+  detailsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
   detailsTitle: {
     ...typography.captionBold,
     color: colors.textPrimary,
-    marginBottom: spacing.sm,
+  },
+  updateOdoBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  updateOdoBtnText: {
+    ...typography.captionBold,
+    color: colors.lime,
+    fontSize: 11,
   },
   detailsGrid: {
     flexDirection: 'row',

@@ -7,7 +7,9 @@ export type SyncOperationType =
   | 'CREATE_VEHICLE'
   | 'UPDATE_VEHICLE'
   | 'DELETE_VEHICLE'
-  | 'CREATE_EXPENSE';
+  | 'CREATE_EXPENSE'
+  | 'CREATE_ODOMETER_READING'
+  | 'UPDATE_ODOMETER';
 export type SyncStatus = 'PENDING' | 'SYNCING' | 'FAILED' | 'COMPLETED';
 
 export interface SyncQueueItem<T = any> {

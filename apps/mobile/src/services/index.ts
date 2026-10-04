@@ -5,3 +5,4 @@ export * from './vehicleService';
 export * from './vehicleValidation';
 export * from './fuelingService';
 export * from './fuelingCalculations';
+export * from './odometerService';

@@ -11,7 +11,7 @@ import {
 import { Vehicle } from '@autogest/shared-types';
 import { useAppStore } from '../store/useAppStore';
 import { VehicleService } from '../services/vehicleService';
-import { VehicleFormModal, ConfirmModal } from '../components';
+import { VehicleFormModal, ConfirmModal, UpdateOdometerModal } from '../components';
 import { colors, spacing, radius, typography } from '../theme';
 
 export const GarageScreen: React.FC = () => {
@@ -22,6 +22,9 @@ export const GarageScreen: React.FC = () => {
 
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [vehicleToDelete, setVehicleToDelete] = useState<Vehicle | null>(null);
+
+  const [odometerModalVisible, setOdometerModalVisible] = useState(false);
+  const [vehicleToUpdateOdo, setVehicleToUpdateOdo] = useState<Vehicle | null>(null);
 
   useEffect(() => {
     // Carrega a lista inicial de veículos se estiver vazia
@@ -160,8 +163,19 @@ export const GarageScreen: React.FC = () => {
                     </View>
                   </View>
 
-                  {/* Ações: Editar e Excluir */}
+                  {/* Ações: Atualizar Hodômetro, Editar e Excluir */}
                   <View style={styles.cardFooter}>
+                    <TouchableOpacity
+                      style={styles.actionBtn}
+                      onPress={() => {
+                        setVehicleToUpdateOdo(item);
+                        setOdometerModalVisible(true);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.actionBtnText}>⏱️ Km</Text>
+                    </TouchableOpacity>
+
                     <TouchableOpacity
                       style={styles.actionBtn}
                       onPress={() => handleOpenEdit(item)}
@@ -183,6 +197,19 @@ export const GarageScreen: React.FC = () => {
             }}
           />
         )}
+
+        {/* Modal de Atualização de Hodômetro (US06.1) */}
+        <UpdateOdometerModal
+          visible={odometerModalVisible}
+          vehicle={vehicleToUpdateOdo}
+          onClose={() => {
+            setOdometerModalVisible(false);
+            setVehicleToUpdateOdo(null);
+          }}
+          onSuccess={() => {
+            VehicleService.listVehicles();
+          }}
+        />
 
         {/* Modal de Formulário (Criação / Edição) */}
         <VehicleFormModal
