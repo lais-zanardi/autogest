@@ -3,6 +3,7 @@ import authRoutes from './authRoutes';
 import vehicleRoutes from './vehicleRoutes';
 import refuelRoutes from './refuelRoutes';
 import odometerRoutes from './odometerRoutes';
+import expenseRoutes from './expenseRoutes';
 import { AuthController } from '../controllers/authController';
 import { authMiddleware } from '../middlewares/authMiddleware';
 
@@ -13,5 +14,6 @@ router.get('/me', authMiddleware as any, AuthController.getMe as any);
 router.use('/vehicles', authMiddleware as any, vehicleRoutes);
 router.use('/refuels', authMiddleware as any, refuelRoutes);
 router.use('/odometer', authMiddleware as any, odometerRoutes);
+router.use('/expenses', authMiddleware as any, expenseRoutes);
 
 export default router;

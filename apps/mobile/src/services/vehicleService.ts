@@ -1,6 +1,7 @@
 import { Vehicle, CreateVehicleDTO, UpdateVehicleDTO } from '@autogest/shared-types';
 import { VehicleRepository } from '../repositories/VehicleRepository';
 import { RefuelRepository } from '../repositories/RefuelRepository';
+import { ExpenseRepository } from '../repositories/ExpenseRepository';
 import { SyncQueueRepository } from '../repositories/SyncQueueRepository';
 import { useAppStore } from '../store/useAppStore';
 import { validateVehicleForm } from './vehicleValidation';
@@ -101,8 +102,9 @@ export class VehicleService {
     const success = await VehicleRepository.delete(id);
     if (!success) return false;
 
-    // US04.6: Ocultação lógica em cascata dos registros vinculados (abastecimentos, etc)
+    // US04.6: Ocultação lógica em cascata dos registros vinculados (abastecimentos, despesas, etc)
     await RefuelRepository.softDeleteByVehicle(id);
+    await ExpenseRepository.softDeleteByVehicle(id);
 
     // Enfileira sincronização de exclusão
     await SyncQueueRepository.enqueue('DELETE_VEHICLE', `/api/v1/vehicles/${id}`, { id });

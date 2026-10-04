@@ -127,6 +127,43 @@ export interface CreateOdometerReadingDTO {
   origin: OdometerReadingOrigin;
 }
 
+export type ExpenseCategory =
+  'Combustível' | 'Manutenção' | 'Seguro' | 'Imposto' | 'Lavagem' | 'Outros';
+
+export const MANUAL_EXPENSE_CATEGORIES: ExpenseCategory[] = [
+  'Seguro',
+  'Imposto',
+  'Lavagem',
+  'Outros',
+];
+
+export interface Expense {
+  id: string;
+  vehicleId: string;
+  category: ExpenseCategory;
+  amount: number;
+  date: string;
+  description?: string | null;
+  createdAt: string;
+  updatedAt?: string;
+  deletedAt?: string | null;
+}
+
+export interface CreateExpenseDTO {
+  vehicleId: string;
+  category: ExpenseCategory;
+  amount: number;
+  date: string;
+  description?: string | null;
+}
+
+export interface UpdateExpenseDTO {
+  category?: ExpenseCategory;
+  amount?: number;
+  date?: string;
+  description?: string | null;
+}
+
 export interface WeatherLog {
   id: string;
   refuelId: string;

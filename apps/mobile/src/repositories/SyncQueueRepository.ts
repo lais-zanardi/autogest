@@ -8,6 +8,8 @@ export type SyncOperationType =
   | 'UPDATE_VEHICLE'
   | 'DELETE_VEHICLE'
   | 'CREATE_EXPENSE'
+  | 'UPDATE_EXPENSE'
+  | 'DELETE_EXPENSE'
   | 'CREATE_ODOMETER_READING'
   | 'UPDATE_ODOMETER';
 export type SyncStatus = 'PENDING' | 'SYNCING' | 'FAILED' | 'COMPLETED';

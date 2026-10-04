@@ -5,3 +5,4 @@ export * from './BiometricsPromptModal';
 export * from './VehicleHeaderSelector';
 export * from './VehicleFormModal';
 export * from './UpdateOdometerModal';
+export * from './ExpenseFormModal';

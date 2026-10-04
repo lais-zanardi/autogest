@@ -11,7 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useAppStore } from '../store/useAppStore';
 import { VehicleService } from '../services/vehicleService';
-import { VehicleHeaderSelector, UpdateOdometerModal } from '../components';
+import { VehicleHeaderSelector, UpdateOdometerModal, ExpenseFormModal } from '../components';
 import { formatCurrency, formatKml } from '../utils/formatters';
 import { colors, spacing, radius, typography } from '../theme';
 
@@ -19,6 +19,7 @@ export const DashboardScreen: React.FC = () => {
   const { user, selectedVehicle, stats } = useAppStore();
   const navigation = useNavigation<any>();
   const [odometerModalVisible, setOdometerModalVisible] = useState(false);
+  const [expenseModalVisible, setExpenseModalVisible] = useState(false);
 
   useEffect(() => {
     VehicleService.listVehicles();
@@ -80,13 +81,22 @@ export const DashboardScreen: React.FC = () => {
             <View style={styles.detailsCard}>
               <View style={styles.detailsHeader}>
                 <Text style={styles.detailsTitle}>Ficha do Veículo Ativo</Text>
-                <TouchableOpacity
-                  style={styles.updateOdoBtn}
-                  onPress={() => setOdometerModalVisible(true)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.updateOdoBtnText}>⏱️ Atualizar km</Text>
-                </TouchableOpacity>
+                <View style={styles.detailsHeaderActions}>
+                  <TouchableOpacity
+                    style={styles.actionHeaderBtn}
+                    onPress={() => setExpenseModalVisible(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.actionHeaderBtnText}>🧾 Despesa</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.updateOdoBtn}
+                    onPress={() => setOdometerModalVisible(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.updateOdoBtnText}>⏱️ Atualizar km</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
               <View style={styles.detailsGrid}>
                 <View style={styles.detailCol}>
@@ -121,6 +131,12 @@ export const DashboardScreen: React.FC = () => {
               visible={odometerModalVisible}
               vehicle={selectedVehicle}
               onClose={() => setOdometerModalVisible(false)}
+            />
+
+            <ExpenseFormModal
+              visible={expenseModalVisible}
+              vehicle={selectedVehicle}
+              onClose={() => setExpenseModalVisible(false)}
             />
           </>
         )}
@@ -191,9 +207,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.sm,
   },
+  detailsHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
   detailsTitle: {
     ...typography.captionBold,
     color: colors.textPrimary,
+  },
+  actionHeaderBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  actionHeaderBtnText: {
+    ...typography.captionBold,
+    color: colors.textSecondary,
+    fontSize: 11,
   },
   updateOdoBtn: {
     paddingVertical: 4,

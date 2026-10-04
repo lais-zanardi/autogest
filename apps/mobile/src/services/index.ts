@@ -6,3 +6,6 @@ export * from './vehicleValidation';
 export * from './fuelingService';
 export * from './fuelingCalculations';
 export * from './odometerService';
+export * from './expenseValidation';
+export * from './expenseAggregation';
+export * from './expenseService';

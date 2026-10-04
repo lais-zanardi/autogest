@@ -35,6 +35,21 @@ export class RefuelRepository {
     return item;
   }
 
+  static async listByVehicleAndPeriod(
+    vehicleId: string,
+    inicio: string | Date,
+    fim: string | Date,
+  ): Promise<Refuel[]> {
+    const startTime = new Date(inicio).getTime();
+    const endTime = new Date(fim).getTime();
+
+    const list = await this.listByVehicle(vehicleId);
+    return list.filter(item => {
+      const itemTime = new Date(item.date).getTime();
+      return itemTime >= startTime && itemTime <= endTime;
+    });
+  }
+
   static async getPreviousRefuel(
     vehicleId: string,
     beforeOdometer: number,
