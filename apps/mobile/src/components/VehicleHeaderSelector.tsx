@@ -4,6 +4,8 @@ import { useAppStore } from '../store/useAppStore';
 import { VehicleService } from '../services/vehicleService';
 import { colors, spacing, radius, typography } from '../theme';
 
+import { SyncStatusBadge } from './SyncStatusBadge';
+
 interface VehicleHeaderSelectorProps {
   onAddNewPress?: () => void;
 }
@@ -40,8 +42,11 @@ export const VehicleHeaderSelector: React.FC<VehicleHeaderSelectorProps> = ({ on
           )}
         </View>
 
-        <View style={styles.chevronButton}>
-          <Text style={styles.chevronText}>▾</Text>
+        <View style={styles.headerRight}>
+          <SyncStatusBadge variant="badge" />
+          <View style={styles.chevronButton}>
+            <Text style={styles.chevronText}>▾</Text>
+          </View>
         </View>
       </TouchableOpacity>
 
@@ -167,6 +172,11 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textSecondary,
     fontStyle: 'italic',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   chevronButton: {
     width: 28,

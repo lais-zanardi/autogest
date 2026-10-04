@@ -5,10 +5,12 @@ import { NavigationContainer } from '@react-navigation/native';
 import { ThemeProvider, theme } from './src/theme';
 import { RootNavigator } from './src/navigation';
 import { initDatabase } from './src/database';
+import { SyncService } from './src/services/sync';
 
 export default function App() {
   useEffect(() => {
     initDatabase();
+    SyncService.init();
   }, []);
 
   return (

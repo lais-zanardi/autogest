@@ -25,7 +25,7 @@ export class ExpenseService {
     const newExpense = await ExpenseRepository.create(validation.data);
 
     // Enfileira na fila outbox de sincronização offline-first (US02)
-    await SyncQueueRepository.enqueue('CREATE_EXPENSE', '/api/v1/expenses', newExpense);
+    await SyncQueueRepository.enqueue('CREATE_EXPENSE', '/api/v1/sync/despesas', newExpense);
 
     return newExpense;
   }
@@ -54,7 +54,7 @@ export class ExpenseService {
       throw new Error('Falha ao atualizar despesa.');
     }
 
-    await SyncQueueRepository.enqueue('UPDATE_EXPENSE', `/api/v1/expenses/${id}`, updated);
+    await SyncQueueRepository.enqueue('UPDATE_EXPENSE', `/api/v1/sync/despesas/${id}`, updated);
 
     return updated;
   }
@@ -69,7 +69,7 @@ export class ExpenseService {
     const success = await ExpenseRepository.delete(id);
     if (!success) return false;
 
-    await SyncQueueRepository.enqueue('DELETE_EXPENSE', `/api/v1/expenses/${id}`, {
+    await SyncQueueRepository.enqueue('DELETE_EXPENSE', `/api/v1/sync/despesas/${id}`, {
       id,
       vehicleId: existing.vehicleId,
     });

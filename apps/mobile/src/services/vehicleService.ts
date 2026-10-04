@@ -62,7 +62,7 @@ export class VehicleService {
     );
 
     // Enfileira operação na fila outbox de sincronização offline-first
-    await SyncQueueRepository.enqueue('CREATE_VEHICLE', '/api/v1/vehicles', newVehicle);
+    await SyncQueueRepository.enqueue('CREATE_VEHICLE', '/api/v1/sync/veiculos', newVehicle);
 
     // Atualiza estado global
     const store = useAppStore.getState();
@@ -82,7 +82,7 @@ export class VehicleService {
     }
 
     // Enfileira sincronização de atualização
-    await SyncQueueRepository.enqueue('UPDATE_VEHICLE', `/api/v1/vehicles/${id}`, updated);
+    await SyncQueueRepository.enqueue('UPDATE_VEHICLE', `/api/v1/sync/veiculos/${id}`, updated);
 
     const store = useAppStore.getState();
     const updatedList = store.vehicles.map(v => (v.id === id ? updated : v));
@@ -107,7 +107,7 @@ export class VehicleService {
     await ExpenseRepository.softDeleteByVehicle(id);
 
     // Enfileira sincronização de exclusão
-    await SyncQueueRepository.enqueue('DELETE_VEHICLE', `/api/v1/vehicles/${id}`, { id });
+    await SyncQueueRepository.enqueue('DELETE_VEHICLE', `/api/v1/sync/veiculos/${id}`, { id });
 
     // Atualiza estado global
     const store = useAppStore.getState();

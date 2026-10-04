@@ -3,6 +3,7 @@ import { NavigatorScreenParams } from '@react-navigation/native';
 export type MainTabParamList = {
   Dashboard: undefined;
   Garage: undefined;
+  NewRefuelAction: undefined;
   Reports: undefined;
   Settings: undefined;
 };

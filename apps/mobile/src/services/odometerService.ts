@@ -46,7 +46,11 @@ export class OdometerService {
     store.setVehicles(updatedVehicles);
 
     // Enfileira sincronização na fila outbox offline-first
-    await SyncQueueRepository.enqueue('CREATE_ODOMETER_READING', '/api/v1/odometer', reading);
+    await SyncQueueRepository.enqueue(
+      'CREATE_ODOMETER_READING',
+      '/api/v1/sync/leituras_hodometro',
+      reading,
+    );
 
     return reading;
   }

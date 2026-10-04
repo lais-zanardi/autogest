@@ -6,3 +6,4 @@ export * from './VehicleHeaderSelector';
 export * from './VehicleFormModal';
 export * from './UpdateOdometerModal';
 export * from './ExpenseFormModal';
+export * from './SyncStatusBadge';

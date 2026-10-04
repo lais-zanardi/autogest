@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -7,20 +7,82 @@ import { MainTabParamList, RootStackParamList } from './types';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { GarageScreen } from '../screens/GarageScreen';
 import { ReportsScreen } from '../screens/ReportsScreen';
-import { useTheme } from '../theme';
+import { SyncStatusBadge } from '../components/SyncStatusBadge';
+import { useAppStore } from '../store/useAppStore';
+import { useTheme, spacing, radius } from '../theme';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-// Tela simples de ajustes/perfil
+// Componente placeholder para a ação do FAB central
+const DummyActionScreen: React.FC = () => null;
+
+// Tela de ajustes/perfil com controle de sincronização (US02.6)
 const SettingsScreen: React.FC = () => {
   const { colors, typography } = useTheme();
+  const { user, logout } = useAppStore();
+
+  const getInitials = (name?: string) => {
+    if (!name) return 'AG';
+    const parts = name.trim().split(' ');
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
+
   return (
-    <View style={[styles.centerContainer, { backgroundColor: colors.background }]}>
-      <Text style={[typography.h2, { color: colors.textPrimary }]}>⚙️ Ajustes e Perfil</Text>
-      <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 8 }]}>
-        Preferências, backup e sincronização
-      </Text>
-    </View>
+    <SafeAreaView style={[styles.screenContainer, { backgroundColor: colors.background }]}>
+      <ScrollView contentContainerStyle={styles.settingsScroll}>
+        <View style={styles.settingsHeader}>
+          <Text style={[typography.h2, { color: colors.textPrimary }]}>⚙️ Ajustes e Perfil</Text>
+          <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 4 }]}>
+            Preferências da conta e sincronização offline-first
+          </Text>
+        </View>
+
+        {/* Card do Usuário */}
+        <View
+          style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+        >
+          <View style={[styles.avatarCircle, { backgroundColor: colors.lime }]}>
+            <Text style={[styles.avatarText, { color: colors.black }]}>
+              {getInitials(user?.name)}
+            </Text>
+          </View>
+          <View style={styles.profileInfo}>
+            <Text style={[typography.bodyBold, { color: colors.textPrimary }]}>
+              {user?.name || 'Motorista AutoGest'}
+            </Text>
+            <Text style={[typography.caption, { color: colors.textSecondary }]}>
+              {user?.email || 'usuario@autogest.app'}
+            </Text>
+          </View>
+        </View>
+
+        {/* Card de Sincronização em Nuvem (US02.6) */}
+        <SyncStatusBadge variant="card" />
+
+        {/* Ações da Conta */}
+        <View
+          style={[
+            styles.actionSection,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={() => logout()}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.logoutText, { color: colors.error }]}>🚪 Encerrar Sessão</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.footerNote}>
+          <Text style={[typography.caption, { color: colors.textMuted, textAlign: 'center' }]}>
+            AutoGest v1.0.0 • Gestão Inteligente de Frotas e Veículos
+          </Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -64,11 +126,11 @@ export const AppTabs: React.FC = () => {
           tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 18 }}>🚘</Text>,
         }}
       />
-      {/* Botão Fake Central FAB na barra inferior */}
       <Tab.Screen
-        name="Settings"
-        component={SettingsScreen}
+        name="NewRefuelAction"
+        component={DummyActionScreen}
         options={{
+          tabBarLabel: '',
           tabBarButton: () => (
             <View style={styles.fabWrapper}>
               <TouchableOpacity
@@ -90,16 +152,72 @@ export const AppTabs: React.FC = () => {
           tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 18 }}>📈</Text>,
         }}
       />
+      <Tab.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{
+          tabBarLabel: 'Ajustes',
+          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 18 }}>⚙️</Text>,
+        }}
+      />
     </Tab.Navigator>
   );
 };
 
 const styles = StyleSheet.create({
-  centerContainer: {
+  screenContainer: {
     flex: 1,
+  },
+  settingsScroll: {
+    padding: spacing.lg,
+    paddingBottom: 40,
+  },
+  settingsHeader: {
+    marginBottom: spacing.lg,
+  },
+  profileCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    marginBottom: spacing.md,
+    gap: spacing.md,
+  },
+  avatarCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
+  },
+  avatarText: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  actionSection: {
+    borderRadius: radius.md,
+    borderWidth: 1,
+    overflow: 'hidden',
+    marginTop: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  logoutButton: {
+    paddingVertical: 14,
+    paddingHorizontal: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoutText: {
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  footerNote: {
+    marginTop: spacing.md,
+    alignItems: 'center',
   },
   fabWrapper: {
     alignItems: 'center',
