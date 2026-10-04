@@ -80,6 +80,55 @@ const despesasSyncRouter = createSyncResourceRouter({
   },
 });
 
+// 5. Manutenções (US09.1)
+const manutencoesSyncRouter = createSyncResourceRouter({
+  tableName: 'manutencoes',
+  ownershipType: 'via_vehicle',
+  allowedFields: [
+    'veiculo_id',
+    'data',
+    'km',
+    'tipo',
+    'tipo_servico',
+    'descricao',
+    'pecas',
+    'oficina',
+    'profissional',
+    'tempo_execucao_min',
+    'valor',
+  ],
+  validatePayload: body => {
+    if (!body.veiculo_id && !body.vehicleId) {
+      return { isValid: false, error: 'veiculo_id é obrigatório.' };
+    }
+    if (!body.tipo) {
+      return { isValid: false, error: 'tipo (preventiva ou corretiva) é obrigatório.' };
+    }
+    return { isValid: true };
+  },
+});
+
+// 6. Anexos de Manutenção (US09.1)
+const anexosSyncRouter = createSyncResourceRouter({
+  tableName: 'anexos',
+  ownershipType: 'direct',
+  allowedFields: [
+    'manutencao_id',
+    'arquivo_local',
+    'url_gcs',
+    'tamanho',
+    'status_upload',
+    'tipo_mime',
+  ],
+  validatePayload: body => {
+    const tamanho = body.tamanho !== undefined ? body.tamanho : body.fileSize;
+    if (tamanho === undefined || tamanho === null || Number(tamanho) <= 0) {
+      return { isValid: false, error: 'tamanho do anexo é obrigatório e deve ser positivo.' };
+    }
+    return { isValid: true };
+  },
+});
+
 // Monta rotas em português e inglês para conveniência
 router.use('/veiculos', veiculosSyncRouter);
 router.use('/vehicles', veiculosSyncRouter);
@@ -92,5 +141,11 @@ router.use('/odometer', hodometroSyncRouter);
 
 router.use('/despesas', despesasSyncRouter);
 router.use('/expenses', despesasSyncRouter);
+
+router.use('/manutencoes', manutencoesSyncRouter);
+router.use('/maintenances', manutencoesSyncRouter);
+
+router.use('/anexos', anexosSyncRouter);
+router.use('/attachments', anexosSyncRouter);
 
 export default router;

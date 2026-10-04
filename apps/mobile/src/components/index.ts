@@ -7,3 +7,5 @@ export * from './VehicleFormModal';
 export * from './UpdateOdometerModal';
 export * from './ExpenseFormModal';
 export * from './SyncStatusBadge';
+export * from './MaintenanceFormModal';
+export * from './MaintenanceHistoryCard';

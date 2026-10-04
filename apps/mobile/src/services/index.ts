@@ -9,4 +9,6 @@ export * from './odometerService';
 export * from './expenseValidation';
 export * from './expenseAggregation';
 export * from './expenseService';
+export * from './maintenanceService';
+export * from './attachmentUploadQueue';
 export * from './sync';

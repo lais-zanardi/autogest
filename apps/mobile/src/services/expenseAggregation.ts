@@ -1,6 +1,7 @@
-import { ExpenseCategory, Expense, Refuel } from '@autogest/shared-types';
+import { ExpenseCategory, Expense, Refuel, Maintenance } from '@autogest/shared-types';
 import { ExpenseRepository } from '../repositories/ExpenseRepository';
 import { RefuelRepository } from '../repositories/RefuelRepository';
+import { MaintenanceRepository } from '../repositories/MaintenanceRepository';
 
 export interface GastosDetalhadosPeriodo {
   total: number;
@@ -10,6 +11,7 @@ export interface GastosDetalhadosPeriodo {
   totalManutencoes: number;
   despesas: Expense[];
   abastecimentos: Refuel[];
+  manutencoes: Maintenance[];
 }
 
 function normalizeDateRange(inicio: string | Date, fim: string | Date): { start: Date; end: Date } {
@@ -27,13 +29,13 @@ function normalizeDateRange(inicio: string | Date, fim: string | Date): { start:
 }
 
 /**
- * US22.4: Camada de agregação gastosDoPeriodo(veiculo, inicio, fim, categoria?)
- * Soma despesas e abastecimentos (as manutenções entrarão na US09).
+ * US22.4 & US09.3: Camada de agregação gastosDoPeriodo(veiculo, inicio, fim, categoria?)
+ * Soma despesas manuais, abastecimentos e manutenções.
  * Se categoria for especificada:
  *  - 'Combustível': soma abastecimentos
- *  - 'Manutenção': soma despesas de manutenção (e manutenções da US09)
+ *  - 'Manutenção': soma manutenções da US09 (e eventuais despesas de manutenção)
  *  - 'Seguro', 'Imposto', 'Lavagem', 'Outros': soma despesas da respectiva categoria
- * Se categoria não for informada, soma tudo (despesas + abastecimentos).
+ * Se categoria não for informada, soma tudo (despesas + abastecimentos + manutenções).
  */
 export async function gastosDoPeriodo(
   veiculo: string | { id: string },
@@ -46,7 +48,7 @@ export async function gastosDoPeriodo(
 
   let total = 0;
 
-  // Despesas (Seguro, Imposto, Lavagem, Outros, Manutenção)
+  // Despesas (Seguro, Imposto, Lavagem, Outros)
   if (!categoria || categoria !== 'Combustível') {
     const despesas = await ExpenseRepository.listByVehicleAndPeriod(vehicleId, start, end);
     const filteredDespesas = categoria ? despesas.filter(d => d.category === categoria) : despesas;
@@ -63,6 +65,13 @@ export async function gastosDoPeriodo(
       0,
     );
     total += somaAbastecimentos;
+  }
+
+  // Manutenções (US09.3)
+  if (!categoria || categoria === 'Manutenção') {
+    const manutencoes = await MaintenanceRepository.listByVehicleAndPeriod(vehicleId, start, end);
+    const somaManutencoes = manutencoes.reduce((acc, curr) => acc + (curr.totalValue || 0), 0);
+    total += somaManutencoes;
   }
 
   return Number(total.toFixed(2));
@@ -82,6 +91,7 @@ export async function obterDetalhamentoGastosDoPeriodo(
 
   const despesas = await ExpenseRepository.listByVehicleAndPeriod(vehicleId, start, end);
   const abastecimentos = await RefuelRepository.listByVehicleAndPeriod(vehicleId, start, end);
+  const manutencoes = await MaintenanceRepository.listByVehicleAndPeriod(vehicleId, start, end);
 
   const porCategoria: Record<ExpenseCategory, number> = {
     Combustível: 0,
@@ -103,12 +113,15 @@ export async function obterDetalhamentoGastosDoPeriodo(
   const totalAbastecimentos = abastecimentos.reduce((acc, curr) => acc + (curr.totalValue || 0), 0);
   porCategoria['Combustível'] += totalAbastecimentos;
 
+  const totalManutencoes = manutencoes.reduce((acc, curr) => acc + (curr.totalValue || 0), 0);
+  porCategoria['Manutenção'] += totalManutencoes;
+
   for (const cat of Object.keys(porCategoria) as ExpenseCategory[]) {
     porCategoria[cat] = Number(porCategoria[cat].toFixed(2));
   }
 
   const totalDespesas = despesas.reduce((acc, curr) => acc + (curr.amount || 0), 0);
-  const total = Number((totalDespesas + totalAbastecimentos).toFixed(2));
+  const total = Number((totalDespesas + totalAbastecimentos + totalManutencoes).toFixed(2));
 
   return {
     total,
@@ -118,5 +131,6 @@ export async function obterDetalhamentoGastosDoPeriodo(
     totalManutencoes: Number(porCategoria['Manutenção'].toFixed(2)),
     despesas,
     abastecimentos,
+    manutencoes,
   };
 }

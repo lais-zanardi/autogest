@@ -213,3 +213,85 @@ export interface DashboardStats {
   costPerKm: number;
   fuelDistribution: Record<FuelType, number>;
 }
+
+export type MaintenanceType = 'preventiva' | 'corretiva';
+
+export type MaintenanceServiceType =
+  'troca_oleo' | 'filtros' | 'correia_dentada' | 'velas' | 'pneus' | 'freios' | 'outros';
+
+export type AttachmentUploadStatus = 'pendente' | 'enviado' | 'erro';
+
+export interface MaintenanceAttachment {
+  id: string;
+  maintenanceId?: string | null;
+  localPath: string;
+  gcsUrl?: string | null;
+  fileSize: number;
+  mimeType?: string | null;
+  uploadStatus: AttachmentUploadStatus;
+  createdAt: string;
+  updatedAt?: string;
+  deletedAt?: string | null;
+}
+
+export interface Maintenance {
+  id: string;
+  vehicleId: string;
+  date: string;
+  odometer: number;
+  type: MaintenanceType;
+  serviceType: MaintenanceServiceType;
+  description: string;
+  replacedParts?: string | null;
+  workshop?: string | null;
+  mechanic?: string | null;
+  executionTimeMin?: number | null;
+  totalValue: number;
+  attachments?: MaintenanceAttachment[];
+  createdAt: string;
+  updatedAt?: string;
+  deletedAt?: string | null;
+}
+
+export interface CreateMaintenanceDTO {
+  vehicleId: string;
+  date: string;
+  odometer: number;
+  type: MaintenanceType;
+  serviceType: MaintenanceServiceType;
+  description: string;
+  replacedParts?: string | null;
+  workshop?: string | null;
+  mechanic?: string | null;
+  executionTimeMin?: number | null;
+  totalValue: number;
+  attachmentIds?: string[];
+}
+
+export interface UpdateMaintenanceDTO {
+  date?: string;
+  odometer?: number;
+  type?: MaintenanceType;
+  serviceType?: MaintenanceServiceType;
+  description?: string;
+  replacedParts?: string | null;
+  workshop?: string | null;
+  mechanic?: string | null;
+  executionTimeMin?: number | null;
+  totalValue?: number;
+  attachmentIds?: string[];
+}
+
+export interface UploadUrlRequestDTO {
+  nomeArquivo: string;
+  tipoMime: string;
+  tamanhoBytes: number;
+  manutencaoId?: string;
+}
+
+export interface UploadUrlResponseDTO {
+  uploadUrl: string;
+  publicUrl: string;
+  gcsPath: string;
+  expiresIn: number;
+}

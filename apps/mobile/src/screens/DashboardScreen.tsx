@@ -11,15 +11,28 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useAppStore } from '../store/useAppStore';
 import { VehicleService } from '../services/vehicleService';
-import { VehicleHeaderSelector, UpdateOdometerModal, ExpenseFormModal } from '../components';
+import { MaintenanceService } from '../services/maintenanceService';
+import {
+  VehicleHeaderSelector,
+  UpdateOdometerModal,
+  ExpenseFormModal,
+  MaintenanceFormModal,
+  MaintenanceHistoryCard,
+  ConfirmModal,
+} from '../components';
 import { formatCurrency, formatKml } from '../utils/formatters';
 import { colors, spacing, radius, typography } from '../theme';
+import { Maintenance } from '@autogest/shared-types';
 
 export const DashboardScreen: React.FC = () => {
   const { user, selectedVehicle, stats } = useAppStore();
   const navigation = useNavigation<any>();
   const [odometerModalVisible, setOdometerModalVisible] = useState(false);
   const [expenseModalVisible, setExpenseModalVisible] = useState(false);
+  const [maintenanceModalVisible, setMaintenanceModalVisible] = useState(false);
+  const [maintenanceToEdit, setMaintenanceToEdit] = useState<Maintenance | null>(null);
+  const [maintenanceToDelete, setMaintenanceToDelete] = useState<Maintenance | null>(null);
+  const [refreshMaintTrigger, setRefreshMaintTrigger] = useState(0);
 
   useEffect(() => {
     VehicleService.listVehicles();
@@ -90,6 +103,16 @@ export const DashboardScreen: React.FC = () => {
                     <Text style={styles.actionHeaderBtnText}>🧾 Despesa</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
+                    style={styles.actionHeaderBtn}
+                    onPress={() => {
+                      setMaintenanceToEdit(null);
+                      setMaintenanceModalVisible(true);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.actionHeaderBtnText}>🛠️ Manutenção</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
                     style={styles.updateOdoBtn}
                     onPress={() => setOdometerModalVisible(true)}
                     activeOpacity={0.7}
@@ -127,6 +150,21 @@ export const DashboardScreen: React.FC = () => {
               </View>
             )}
 
+            {/* Histórico e Ações de Manutenção (US09.7) */}
+            <MaintenanceHistoryCard
+              vehicle={selectedVehicle}
+              onAddNewPress={() => {
+                setMaintenanceToEdit(null);
+                setMaintenanceModalVisible(true);
+              }}
+              onEditPress={m => {
+                setMaintenanceToEdit(m);
+                setMaintenanceModalVisible(true);
+              }}
+              onDeletePress={m => setMaintenanceToDelete(m)}
+              refreshTrigger={refreshMaintTrigger}
+            />
+
             <UpdateOdometerModal
               visible={odometerModalVisible}
               vehicle={selectedVehicle}
@@ -137,6 +175,28 @@ export const DashboardScreen: React.FC = () => {
               visible={expenseModalVisible}
               vehicle={selectedVehicle}
               onClose={() => setExpenseModalVisible(false)}
+            />
+
+            <MaintenanceFormModal
+              visible={maintenanceModalVisible}
+              vehicle={selectedVehicle}
+              maintenanceToEdit={maintenanceToEdit}
+              onClose={() => setMaintenanceModalVisible(false)}
+              onSuccess={() => setRefreshMaintTrigger(prev => prev + 1)}
+            />
+
+            <ConfirmModal
+              visible={!!maintenanceToDelete}
+              title="Excluir Manutenção"
+              message="Deseja realmente excluir este registro de manutenção? Esta ação ocultará o registro do histórico."
+              onConfirm={async () => {
+                if (maintenanceToDelete) {
+                  await MaintenanceService.deleteMaintenance(maintenanceToDelete.id);
+                  setMaintenanceToDelete(null);
+                  setRefreshMaintTrigger(prev => prev + 1);
+                }
+              }}
+              onCancel={() => setMaintenanceToDelete(null)}
             />
           </>
         )}

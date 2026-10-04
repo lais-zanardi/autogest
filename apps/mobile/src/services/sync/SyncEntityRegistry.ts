@@ -1,6 +1,8 @@
 import { VehicleRepository } from '../../repositories/VehicleRepository';
 import { RefuelRepository } from '../../repositories/RefuelRepository';
 import { ExpenseRepository } from '../../repositories/ExpenseRepository';
+import { MaintenanceRepository } from '../../repositories/MaintenanceRepository';
+import { AttachmentRepository } from '../../repositories/AttachmentRepository';
 import { db } from '../../database/DatabaseConnection';
 
 export interface SyncEntityDefinition {
@@ -196,6 +198,113 @@ SyncEntityRegistry.register({
         amount: remote.valor !== undefined ? Number(remote.valor) : Number(remote.amount),
         date: remote.data_hora || remote.date,
         description: remote.descricao || remote.description || null,
+        createdAt: remote.criado_em || remote.createdAt || new Date().toISOString(),
+        updatedAt: remote.atualizado_em || remote.updatedAt || new Date().toISOString(),
+        deletedAt: null,
+      });
+    }
+  },
+});
+
+// 5. Entidade Manutenções (US09.1 / US02.7)
+SyncEntityRegistry.register({
+  name: 'manutencoes',
+  endpoint: '/api/v1/sync/manutencoes',
+  localTable: 'manutencoes',
+  applyRemote: async (remote: any) => {
+    const existing = await MaintenanceRepository.findById(remote.id);
+    const remoteUpdatedAt = new Date(remote.atualizado_em || remote.updatedAt || 0).getTime();
+
+    if (remote.excluido_em || remote.deletedAt) {
+      if (existing) {
+        await MaintenanceRepository.delete(remote.id);
+      }
+      return;
+    }
+
+    if (existing) {
+      const localUpdatedAt = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
+      if (remoteUpdatedAt >= localUpdatedAt) {
+        await MaintenanceRepository.update(remote.id, {
+          date: remote.data || remote.date,
+          odometer: remote.km !== undefined ? Number(remote.km) : Number(remote.odometer),
+          type: remote.tipo || remote.type,
+          serviceType: remote.tipo_servico || remote.serviceType,
+          description: remote.descricao || remote.description,
+          replacedParts: remote.pecas !== undefined ? remote.pecas : remote.replacedParts,
+          workshop: remote.oficina !== undefined ? remote.oficina : remote.workshop,
+          mechanic: remote.profissional !== undefined ? remote.profissional : remote.mechanic,
+          executionTimeMin:
+            remote.tempo_execucao_min !== undefined
+              ? remote.tempo_execucao_min
+              : remote.executionTimeMin,
+          totalValue: remote.valor !== undefined ? Number(remote.valor) : Number(remote.totalValue),
+        });
+      }
+    } else {
+      await db.insert('manutencoes', {
+        id: remote.id,
+        vehicleId: remote.veiculo_id || remote.vehicleId,
+        date: remote.data || remote.date,
+        odometer: remote.km !== undefined ? Number(remote.km) : Number(remote.odometer),
+        type: remote.tipo || remote.type,
+        serviceType: remote.tipo_servico || remote.serviceType,
+        description: remote.descricao || remote.description || '',
+        replacedParts: remote.pecas !== undefined ? remote.pecas : remote.replacedParts || null,
+        workshop: remote.oficina !== undefined ? remote.oficina : remote.workshop || null,
+        mechanic: remote.profissional !== undefined ? remote.profissional : remote.mechanic || null,
+        executionTimeMin:
+          remote.tempo_execucao_min !== undefined
+            ? Number(remote.tempo_execucao_min)
+            : remote.executionTimeMin || null,
+        totalValue:
+          remote.valor !== undefined ? Number(remote.valor) : Number(remote.totalValue || 0),
+        createdAt: remote.criado_em || remote.createdAt || new Date().toISOString(),
+        updatedAt: remote.atualizado_em || remote.updatedAt || new Date().toISOString(),
+        deletedAt: null,
+      });
+    }
+  },
+});
+
+// 6. Entidade Anexos de Manutenção (US09.1 / US02.7)
+SyncEntityRegistry.register({
+  name: 'anexos',
+  endpoint: '/api/v1/sync/anexos',
+  localTable: 'anexos',
+  applyRemote: async (remote: any) => {
+    const existing = await AttachmentRepository.findById(remote.id);
+    const remoteUpdatedAt = new Date(remote.atualizado_em || remote.updatedAt || 0).getTime();
+
+    if (remote.excluido_em || remote.deletedAt) {
+      if (existing) {
+        await AttachmentRepository.delete(remote.id);
+      }
+      return;
+    }
+
+    if (existing) {
+      const localUpdatedAt = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
+      if (remoteUpdatedAt >= localUpdatedAt) {
+        await AttachmentRepository.update(remote.id, {
+          maintenanceId: remote.manutencao_id || remote.maintenanceId,
+          localPath: remote.arquivo_local || remote.localPath || existing.localPath,
+          gcsUrl: remote.url_gcs || remote.gcsUrl,
+          fileSize: remote.tamanho !== undefined ? Number(remote.tamanho) : Number(remote.fileSize),
+          uploadStatus: remote.status_upload || remote.uploadStatus,
+          mimeType: remote.tipo_mime || remote.mimeType,
+        });
+      }
+    } else {
+      await db.insert('anexos', {
+        id: remote.id,
+        maintenanceId: remote.manutencao_id || remote.maintenanceId || null,
+        localPath: remote.arquivo_local || remote.localPath || '',
+        gcsUrl: remote.url_gcs || remote.gcsUrl || null,
+        fileSize:
+          remote.tamanho !== undefined ? Number(remote.tamanho) : Number(remote.fileSize || 0),
+        uploadStatus: remote.status_upload || remote.uploadStatus || 'pendente',
+        mimeType: remote.tipo_mime || remote.mimeType || 'image/jpeg',
         createdAt: remote.criado_em || remote.createdAt || new Date().toISOString(),
         updatedAt: remote.atualizado_em || remote.updatedAt || new Date().toISOString(),
         deletedAt: null,

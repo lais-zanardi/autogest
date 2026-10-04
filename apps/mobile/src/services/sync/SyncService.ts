@@ -165,6 +165,14 @@ export class SyncService {
         }
       }
 
+      // 3. Processa upload de anexos de manutenção pendentes (US09.6)
+      try {
+        const { AttachmentUploadQueue } = await import('../attachmentUploadQueue');
+        await AttachmentUploadQueue.processPending().catch(() => {});
+      } catch {
+        // Ignore in headless test runs
+      }
+
       const success = pushRes.success && pullRes.success;
       const now = new Date().toISOString();
       const remainingPending = await SyncQueueRepository.countPending();
