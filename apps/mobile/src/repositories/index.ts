@@ -5,3 +5,4 @@ export * from './OdometerRepository';
 export * from './ExpenseRepository';
 export * from './MaintenanceRepository';
 export * from './AttachmentRepository';
+export * from './MaintenanceRuleRepository';

@@ -3,6 +3,7 @@ import { RefuelRepository } from '../../repositories/RefuelRepository';
 import { ExpenseRepository } from '../../repositories/ExpenseRepository';
 import { MaintenanceRepository } from '../../repositories/MaintenanceRepository';
 import { AttachmentRepository } from '../../repositories/AttachmentRepository';
+import { MaintenanceRuleRepository } from '../../repositories/MaintenanceRuleRepository';
 import { db } from '../../database/DatabaseConnection';
 
 export interface SyncEntityDefinition {
@@ -305,6 +306,72 @@ SyncEntityRegistry.register({
           remote.tamanho !== undefined ? Number(remote.tamanho) : Number(remote.fileSize || 0),
         uploadStatus: remote.status_upload || remote.uploadStatus || 'pendente',
         mimeType: remote.tipo_mime || remote.mimeType || 'image/jpeg',
+        createdAt: remote.criado_em || remote.createdAt || new Date().toISOString(),
+        updatedAt: remote.atualizado_em || remote.updatedAt || new Date().toISOString(),
+        deletedAt: null,
+      });
+    }
+  },
+});
+
+// 7. Entidade Regras de Manutenção (US10.1 / US02.7)
+SyncEntityRegistry.register({
+  name: 'regras_manutencao',
+  endpoint: '/api/v1/sync/regras_manutencao',
+  localTable: 'regras_manutencao',
+  applyRemote: async (remote: any) => {
+    const existing = await MaintenanceRuleRepository.findById(remote.id);
+    const remoteUpdatedAt = new Date(remote.atualizado_em || remote.updatedAt || 0).getTime();
+
+    if (remote.excluido_em || remote.deletedAt) {
+      if (existing) {
+        await MaintenanceRuleRepository.delete(remote.id);
+      }
+      return;
+    }
+
+    if (existing) {
+      const localUpdatedAt = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
+      if (remoteUpdatedAt >= localUpdatedAt) {
+        await MaintenanceRuleRepository.update(remote.id, {
+          serviceType: remote.tipo_servico || remote.serviceType,
+          name: remote.nome || remote.name,
+          intervalKm: remote.intervalo_km !== undefined ? remote.intervalo_km : remote.intervalKm,
+          intervalDays:
+            remote.intervalo_dias !== undefined ? remote.intervalo_dias : remote.intervalDays,
+          advanceKm:
+            remote.antecedencia_km !== undefined ? remote.antecedencia_km : remote.advanceKm,
+          advanceDays:
+            remote.antecedencia_dias !== undefined ? remote.antecedencia_dias : remote.advanceDays,
+          lastServiceDate: remote.ultima_troca_data || remote.lastServiceDate,
+          lastServiceKm:
+            remote.ultima_troca_km !== undefined ? remote.ultima_troca_km : remote.lastServiceKm,
+          active: remote.ativo !== undefined ? remote.ativo : remote.active,
+        });
+      }
+    } else {
+      await db.insert('regras_manutencao', {
+        id: remote.id,
+        vehicleId: remote.veiculo_id || remote.vehicleId,
+        userId: remote.usuario_id || remote.userId || 'local_user',
+        serviceType: remote.tipo_servico || remote.serviceType,
+        name: remote.nome || remote.name || remote.tipo_servico,
+        intervalKm:
+          remote.intervalo_km !== undefined ? remote.intervalo_km : remote.intervalKm || null,
+        intervalDays:
+          remote.intervalo_dias !== undefined ? remote.intervalo_dias : remote.intervalDays || null,
+        advanceKm:
+          remote.antecedencia_km !== undefined ? remote.antecedencia_km : remote.advanceKm || 500,
+        advanceDays:
+          remote.antecedencia_dias !== undefined
+            ? remote.antecedencia_dias
+            : remote.advanceDays || 15,
+        lastServiceDate: remote.ultima_troca_data || remote.lastServiceDate || null,
+        lastServiceKm:
+          remote.ultima_troca_km !== undefined
+            ? remote.ultima_troca_km
+            : remote.lastServiceKm || null,
+        active: remote.ativo !== undefined ? remote.ativo : remote.active !== false,
         createdAt: remote.criado_em || remote.createdAt || new Date().toISOString(),
         updatedAt: remote.atualizado_em || remote.updatedAt || new Date().toISOString(),
         deletedAt: null,

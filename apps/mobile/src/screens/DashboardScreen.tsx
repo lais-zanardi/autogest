@@ -18,6 +18,8 @@ import {
   ExpenseFormModal,
   MaintenanceFormModal,
   MaintenanceHistoryCard,
+  MaintenanceAlertsCard,
+  MaintenanceRuleModal,
   ConfirmModal,
 } from '../components';
 import { formatCurrency, formatKml } from '../utils/formatters';
@@ -33,10 +35,29 @@ export const DashboardScreen: React.FC = () => {
   const [maintenanceToEdit, setMaintenanceToEdit] = useState<Maintenance | null>(null);
   const [maintenanceToDelete, setMaintenanceToDelete] = useState<Maintenance | null>(null);
   const [refreshMaintTrigger, setRefreshMaintTrigger] = useState(0);
+  const [rulesModalVisible, setRulesModalVisible] = useState(false);
+  const [refreshAlertsTrigger, setRefreshAlertsTrigger] = useState(0);
 
   useEffect(() => {
     VehicleService.listVehicles();
+    let cleanup: (() => void) | undefined;
+    import('../services/maintenanceAlertService').then(({ MaintenanceAlertService }) => {
+      MaintenanceAlertService.startPeriodicEvaluation();
+      cleanup = () => MaintenanceAlertService.stopPeriodicEvaluation();
+    });
+    return () => {
+      cleanup?.();
+    };
   }, []);
+
+  // US10.5: Reavalia regras preventivas de manutenção ao abrir o app / alternar veículo
+  useEffect(() => {
+    if (selectedVehicle?.id) {
+      import('../services/maintenanceAlertService').then(({ MaintenanceAlertService }) => {
+        MaintenanceAlertService.evaluateVehicleAlerts(selectedVehicle.id).catch(() => {});
+      });
+    }
+  }, [selectedVehicle?.id]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -150,6 +171,17 @@ export const DashboardScreen: React.FC = () => {
               </View>
             )}
 
+            {/* Alertas Preventivos e Próximas Revisões (US10.6) */}
+            <MaintenanceAlertsCard
+              vehicle={selectedVehicle}
+              onOpenRulesPress={() => setRulesModalVisible(true)}
+              onRegisterMaintenancePress={() => {
+                setMaintenanceToEdit(null);
+                setMaintenanceModalVisible(true);
+              }}
+              refreshTrigger={refreshAlertsTrigger + refreshMaintTrigger}
+            />
+
             {/* Histórico e Ações de Manutenção (US09.7) */}
             <MaintenanceHistoryCard
               vehicle={selectedVehicle}
@@ -182,7 +214,17 @@ export const DashboardScreen: React.FC = () => {
               vehicle={selectedVehicle}
               maintenanceToEdit={maintenanceToEdit}
               onClose={() => setMaintenanceModalVisible(false)}
-              onSuccess={() => setRefreshMaintTrigger(prev => prev + 1)}
+              onSuccess={() => {
+                setRefreshMaintTrigger(prev => prev + 1);
+                setRefreshAlertsTrigger(prev => prev + 1);
+              }}
+            />
+
+            <MaintenanceRuleModal
+              visible={rulesModalVisible}
+              vehicle={selectedVehicle}
+              onClose={() => setRulesModalVisible(false)}
+              onSuccess={() => setRefreshAlertsTrigger(prev => prev + 1)}
             />
 
             <ConfirmModal
@@ -194,6 +236,7 @@ export const DashboardScreen: React.FC = () => {
                   await MaintenanceService.deleteMaintenance(maintenanceToDelete.id);
                   setMaintenanceToDelete(null);
                   setRefreshMaintTrigger(prev => prev + 1);
+                  setRefreshAlertsTrigger(prev => prev + 1);
                 }
               }}
               onCancel={() => setMaintenanceToDelete(null)}

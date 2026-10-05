@@ -119,6 +119,19 @@ export class MaintenanceService {
       () => {},
     );
 
+    // US10.5 & US10.7: Reavalia regras preventivas e reinicia o ciclo de notificação para este tipo de serviço
+    const { MaintenanceAlertService } = await import('./maintenanceAlertService');
+    const { NotificationService } = await import('./notificationService');
+    const { MaintenanceRuleRepository } = await import('../repositories/MaintenanceRuleRepository');
+    const matchingRule = await MaintenanceRuleRepository.findByVehicleAndServiceType(
+      dto.vehicleId,
+      dto.serviceType,
+    );
+    if (matchingRule) {
+      await NotificationService.clearNotificationCycleForRule(matchingRule.id);
+    }
+    MaintenanceAlertService.evaluateVehicleAlerts(dto.vehicleId).catch(() => {});
+
     return {
       ...maintenance,
       attachments,

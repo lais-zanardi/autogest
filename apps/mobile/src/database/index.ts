@@ -3,6 +3,7 @@ import './migrations/002_create_local_veiculos';
 import './migrations/003_create_local_fueling_schema';
 import './migrations/004_create_local_despesas';
 import './migrations/005_create_local_manutencoes';
+import './migrations/006_create_local_regras_manutencao';
 import { localMigrator } from './migrations/localMigrator';
 
 export * from './DatabaseConnection';

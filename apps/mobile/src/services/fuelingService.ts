@@ -66,6 +66,10 @@ export class FuelingService {
     // Enfileira na fila outbox de sincronização offline-first
     await SyncQueueRepository.enqueue('CREATE_REFUEL', '/api/v1/refuels', savedRefuel);
 
+    // US10.5: Reavalia regras preventivas de manutenção ao salvar abastecimento
+    const { MaintenanceAlertService } = await import('./maintenanceAlertService');
+    MaintenanceAlertService.evaluateVehicleAlerts(dto.vehicleId).catch(() => {});
+
     return savedRefuel;
   }
 

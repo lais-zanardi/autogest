@@ -52,6 +52,10 @@ export class OdometerService {
       reading,
     );
 
+    // US10.5: Reavalia regras preventivas de manutenção ao salvar novo km
+    const { MaintenanceAlertService } = await import('./maintenanceAlertService');
+    MaintenanceAlertService.evaluateVehicleAlerts(vehicleId).catch(() => {});
+
     return reading;
   }
 

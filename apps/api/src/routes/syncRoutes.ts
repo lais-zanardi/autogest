@@ -129,6 +129,31 @@ const anexosSyncRouter = createSyncResourceRouter({
   },
 });
 
+// 7. Regras Preventivas de Manutenção (US10.1)
+const regrasManutencaoSyncRouter = createSyncResourceRouter({
+  tableName: 'regras_manutencao',
+  ownershipType: 'via_vehicle',
+  allowedFields: [
+    'veiculo_id',
+    'tipo_servico',
+    'nome',
+    'intervalo_km',
+    'intervalo_dias',
+    'antecedencia_km',
+    'antecedencia_dias',
+    'ultima_troca_data',
+    'ultima_troca_km',
+    'ativo',
+  ],
+  validatePayload: body => {
+    const vId = body.veiculo_id || body.vehicleId;
+    if (!vId) return { isValid: false, error: 'veiculo_id é obrigatório.' };
+    const tipo = body.tipo_servico || body.serviceType;
+    if (!tipo) return { isValid: false, error: 'tipo_servico é obrigatório.' };
+    return { isValid: true };
+  },
+});
+
 // Monta rotas em português e inglês para conveniência
 router.use('/veiculos', veiculosSyncRouter);
 router.use('/vehicles', veiculosSyncRouter);
@@ -147,5 +172,8 @@ router.use('/maintenances', manutencoesSyncRouter);
 
 router.use('/anexos', anexosSyncRouter);
 router.use('/attachments', anexosSyncRouter);
+
+router.use('/regras_manutencao', regrasManutencaoSyncRouter);
+router.use('/maintenance_rules', regrasManutencaoSyncRouter);
 
 export default router;

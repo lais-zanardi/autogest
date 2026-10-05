@@ -11,4 +11,7 @@ export * from './expenseAggregation';
 export * from './expenseService';
 export * from './maintenanceService';
 export * from './attachmentUploadQueue';
+export * from './maintenanceCalculation';
+export * from './notificationService';
+export * from './maintenanceAlertService';
 export * from './sync';

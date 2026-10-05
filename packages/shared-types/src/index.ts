@@ -295,3 +295,80 @@ export interface UploadUrlResponseDTO {
   gcsPath: string;
   expiresIn: number;
 }
+
+export interface MaintenanceRule {
+  id: string;
+  vehicleId: string;
+  userId?: string;
+  serviceType: MaintenanceServiceType;
+  name?: string;
+  intervalKm?: number | null;
+  intervalDays?: number | null;
+  advanceKm: number;
+  advanceDays: number;
+  lastServiceDate?: string | null;
+  lastServiceKm?: number | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt?: string;
+  deletedAt?: string | null;
+}
+
+export interface CreateMaintenanceRuleDTO {
+  vehicleId: string;
+  userId?: string;
+  serviceType: MaintenanceServiceType;
+  name?: string;
+  intervalKm?: number | null;
+  intervalDays?: number | null;
+  advanceKm?: number;
+  advanceDays?: number;
+  lastServiceDate?: string | null;
+  lastServiceKm?: number | null;
+  active?: boolean;
+}
+
+export interface UpdateMaintenanceRuleDTO {
+  serviceType?: MaintenanceServiceType;
+  name?: string;
+  intervalKm?: number | null;
+  intervalDays?: number | null;
+  advanceKm?: number;
+  advanceDays?: number;
+  lastServiceDate?: string | null;
+  lastServiceKm?: number | null;
+  active?: boolean;
+}
+
+export type MaintenanceAlertStatus = 'ok' | 'proximo' | 'vencido';
+
+export interface MaintenanceDueCalculation {
+  status: MaintenanceAlertStatus;
+  vencePorKm: boolean;
+  vencePorDias: boolean;
+  baseKm: number;
+  baseDate: string;
+  targetKm?: number | null;
+  remainingKm?: number | null;
+  targetDate?: string | null;
+  remainingDays?: number | null;
+  estimatedDateByKm?: string | null;
+  reason?: string;
+}
+
+export interface MaintenanceAlert {
+  id: string;
+  ruleId: string;
+  vehicleId: string;
+  serviceType: MaintenanceServiceType;
+  serviceName: string;
+  status: 'proximo' | 'vencido';
+  vencePorKm: boolean;
+  vencePorDias: boolean;
+  targetKm?: number | null;
+  remainingKm?: number | null;
+  targetDate?: string | null;
+  remainingDays?: number | null;
+  estimatedDateByKm?: string | null;
+  message: string;
+}
