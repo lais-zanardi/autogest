@@ -372,3 +372,39 @@ export interface MaintenanceAlert {
   estimatedDateByKm?: string | null;
   message: string;
 }
+
+export type IndicatorPeriodPreset =
+  'mes_atual' | 'ultimos_30_dias' | 'ultimos_90_dias' | 'ano_atual';
+
+export interface UsageIndicators {
+  kmRodados: number;
+  diasNoPeriodo: number;
+  kmPorDia: number;
+  kmPorSemana: number;
+  kmPorMes: number;
+  possuiKmRodado: boolean;
+}
+
+export interface CostPerKmIndicators {
+  custoTotal: number;
+  custoCombustivel: number;
+  custoManutencaoTotal: number;
+  custoManutencaoPreventiva: number;
+  custoManutencaoCorretiva: number;
+  custoOutrasDespesas: number;
+  custoFixoProporcional: number;
+  custoKmTotal: number;
+  custoKmCombustivel: number;
+  custoKmManutencaoTotal: number;
+  custoKmManutencaoPreventiva: number;
+  custoKmManutencaoCorretiva: number;
+}
+
+export interface UsageAndCostIndicators {
+  inicio: string;
+  fim: string;
+  uso: UsageIndicators;
+  custo: CostPerKmIndicators;
+  semDados: boolean;
+  semKmRodado: boolean;
+}

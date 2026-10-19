@@ -16,7 +16,12 @@ import {
   obterDetalhamentoGastosDoPeriodo,
   GastosDetalhadosPeriodo,
 } from '../services/expenseAggregation';
-import { ExpenseFormModal, ConfirmModal, VehicleHeaderSelector } from '../components';
+import {
+  ExpenseFormModal,
+  ConfirmModal,
+  VehicleHeaderSelector,
+  UsageAndCostIndicatorsCard,
+} from '../components';
 import { formatCurrency } from '../utils/formatters';
 import { colors, spacing, radius, typography } from '../theme';
 
@@ -155,6 +160,10 @@ export const ReportsScreen: React.FC = () => {
     }
   };
 
+  const currentStartDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`;
+  const currentLastDay = new Date(selectedYear, selectedMonth, 0).getDate();
+  const currentEndDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(currentLastDay).padStart(2, '0')}`;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={colors.background} />
@@ -205,6 +214,17 @@ export const ReportsScreen: React.FC = () => {
           </View>
         ) : (
           <>
+            {/* Card de Indicadores de Uso e Custo (US24.1, US24.2, US24.3) */}
+            <UsageAndCostIndicatorsCard
+              vehicle={selectedVehicle}
+              externalRange={{
+                inicio: currentStartDate,
+                fim: currentEndDate,
+                label: `${MONTH_NAMES[selectedMonth - 1].substring(0, 3)}/${selectedYear}`,
+              }}
+              refreshTrigger={expenses.length + (breakdown?.total || 0)}
+            />
+
             {/* Card de Resumo Agregado do Mês (US22.3 e US22.4) */}
             <View style={styles.summaryCard}>
               <View style={styles.summaryTopRow}>
@@ -226,6 +246,12 @@ export const ReportsScreen: React.FC = () => {
                   <Text style={styles.pillLabel}>⛽ Combustível</Text>
                   <Text style={styles.pillValue}>
                     {formatCurrency(breakdown?.porCategoria['Combustível'] || 0)}
+                  </Text>
+                </View>
+                <View style={styles.pillItem}>
+                  <Text style={styles.pillLabel}>🔧 Manutenção</Text>
+                  <Text style={styles.pillValue}>
+                    {formatCurrency(breakdown?.porCategoria['Manutenção'] || 0)}
                   </Text>
                 </View>
                 <View style={styles.pillItem}>

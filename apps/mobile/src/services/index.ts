@@ -14,4 +14,5 @@ export * from './attachmentUploadQueue';
 export * from './maintenanceCalculation';
 export * from './notificationService';
 export * from './maintenanceAlertService';
+export * from './usageAndCostIndicators';
 export * from './sync';

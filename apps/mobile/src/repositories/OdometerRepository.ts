@@ -5,14 +5,38 @@ export class OdometerRepository {
   private static TABLE = 'local_leituras_hodometro';
 
   static async listByVehicle(vehicleId: string): Promise<OdometerReading[]> {
-    const all = await db.find<OdometerReading>(
+    const primary = await db.find<OdometerReading>(
       this.TABLE,
       item => item.vehicleId === vehicleId && !item.deletedAt && !(item as any).excluido_em,
     );
-    return all.sort((a, b) => {
+    const synced = await db.find<OdometerReading>(
+      'leituras_hodometro',
+      item => item.vehicleId === vehicleId && !item.deletedAt && !(item as any).excluido_em,
+    );
+
+    const map = new Map<string, OdometerReading>();
+    for (const item of [...synced, ...primary]) {
+      map.set(item.id, item);
+    }
+
+    return Array.from(map.values()).sort((a, b) => {
       const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
       if (dateDiff !== 0) return dateDiff;
       return b.km - a.km;
+    });
+  }
+
+  static async listByVehicleAndPeriod(
+    vehicleId: string,
+    start: Date,
+    end: Date,
+  ): Promise<OdometerReading[]> {
+    const all = await this.listByVehicle(vehicleId);
+    const startTime = start.getTime();
+    const endTime = end.getTime();
+    return all.filter(item => {
+      const itemTime = new Date(item.date).getTime();
+      return itemTime >= startTime && itemTime <= endTime;
     });
   }
 

@@ -20,6 +20,7 @@ import {
   MaintenanceHistoryCard,
   MaintenanceAlertsCard,
   MaintenanceRuleModal,
+  UsageAndCostIndicatorsCard,
   ConfirmModal,
 } from '../components';
 import { formatCurrency, formatKml } from '../utils/formatters';
@@ -171,6 +172,12 @@ export const DashboardScreen: React.FC = () => {
               </View>
             )}
 
+            {/* Indicadores de Uso (km/dia, semana, mês) e Custo/Km Detalhado (US24.1, US24.2, US24.3) */}
+            <UsageAndCostIndicatorsCard
+              vehicle={selectedVehicle}
+              refreshTrigger={refreshAlertsTrigger + refreshMaintTrigger}
+            />
+
             {/* Alertas Preventivos e Próximas Revisões (US10.6) */}
             <MaintenanceAlertsCard
               vehicle={selectedVehicle}
@@ -201,12 +208,14 @@ export const DashboardScreen: React.FC = () => {
               visible={odometerModalVisible}
               vehicle={selectedVehicle}
               onClose={() => setOdometerModalVisible(false)}
+              onSuccess={() => setRefreshAlertsTrigger(prev => prev + 1)}
             />
 
             <ExpenseFormModal
               visible={expenseModalVisible}
               vehicle={selectedVehicle}
               onClose={() => setExpenseModalVisible(false)}
+              onSuccess={() => setRefreshAlertsTrigger(prev => prev + 1)}
             />
 
             <MaintenanceFormModal
