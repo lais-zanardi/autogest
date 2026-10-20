@@ -379,3 +379,48 @@ SyncEntityRegistry.register({
     }
   },
 });
+
+// 8. Entidade Custos Fixos Mensais (US23.1 / US02.7)
+SyncEntityRegistry.register({
+  name: 'custos_fixos',
+  endpoint: '/api/v1/sync/custos_fixos',
+  localTable: 'custos_fixos',
+  applyRemote: async (remote: any) => {
+    const { FixedCostRepository } = await import('../../repositories/FixedCostRepository');
+    const existing = await FixedCostRepository.findById(remote.id);
+    const remoteUpdatedAt = new Date(remote.atualizado_em || remote.updatedAt || 0).getTime();
+
+    if (remote.excluido_em || remote.deletedAt) {
+      if (existing) {
+        await FixedCostRepository.delete(remote.id);
+      }
+      return;
+    }
+
+    if (existing) {
+      const localUpdatedAt = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
+      if (remoteUpdatedAt >= localUpdatedAt) {
+        await FixedCostRepository.update(remote.id, {
+          description: remote.descricao || remote.description,
+          monthlyAmount:
+            remote.valor_mensal !== undefined
+              ? Number(remote.valor_mensal)
+              : Number(remote.monthlyAmount),
+        });
+      }
+    } else {
+      await db.insert('custos_fixos', {
+        id: remote.id,
+        vehicleId: remote.veiculo_id || remote.vehicleId,
+        description: remote.descricao || remote.description || '',
+        monthlyAmount:
+          remote.valor_mensal !== undefined
+            ? Number(remote.valor_mensal)
+            : Number(remote.monthlyAmount || 0),
+        createdAt: remote.criado_em || remote.createdAt || new Date().toISOString(),
+        updatedAt: remote.atualizado_em || remote.updatedAt || new Date().toISOString(),
+        deletedAt: null,
+      });
+    }
+  },
+});

@@ -12,3 +12,4 @@ export * from './MaintenanceHistoryCard';
 export * from './MaintenanceAlertsCard';
 export * from './MaintenanceRuleModal';
 export * from './UsageAndCostIndicatorsCard';
+export * from './FixedCostFormModal';

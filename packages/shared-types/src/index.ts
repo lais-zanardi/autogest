@@ -214,6 +214,20 @@ export interface DashboardStats {
   fuelDistribution: Record<FuelType, number>;
 }
 
+export interface DashboardIndicators {
+  vehicleId: string;
+  monthTotalSpent: number;
+  averageCostPerKm: number;
+  averageConsumptionKml: number;
+  totalMileageKm: number;
+  projectedAutonomyKm: number;
+  nextMaintenance: MaintenanceAlert | null;
+  activeAlertsCount: number;
+  hasData: boolean;
+  loadDurationMs: number;
+  updatedAt: string;
+}
+
 export type MaintenanceType = 'preventiva' | 'corretiva';
 
 export type MaintenanceServiceType =
@@ -407,4 +421,25 @@ export interface UsageAndCostIndicators {
   custo: CostPerKmIndicators;
   semDados: boolean;
   semKmRodado: boolean;
+}
+
+export interface FixedCost {
+  id: string;
+  vehicleId: string;
+  description: string;
+  monthlyAmount: number;
+  createdAt: string;
+  updatedAt?: string;
+  deletedAt?: string | null;
+}
+
+export interface CreateFixedCostDTO {
+  vehicleId: string;
+  description: string;
+  monthlyAmount: number;
+}
+
+export interface UpdateFixedCostDTO {
+  description?: string;
+  monthlyAmount?: number;
 }

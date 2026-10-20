@@ -132,6 +132,10 @@ export class MaintenanceService {
     }
     MaintenanceAlertService.evaluateVehicleAlerts(dto.vehicleId).catch(() => {});
 
+    // US13.3: Recalcula indicadores globais do dashboard ao salvar manutenção
+    const { DashboardIndicatorsService } = await import('./dashboardIndicators');
+    await DashboardIndicatorsService.refreshForVehicle(dto.vehicleId).catch(() => {});
+
     return {
       ...maintenance,
       attachments,
@@ -162,6 +166,10 @@ export class MaintenanceService {
       updated,
     ).catch(() => {});
 
+    // US13.3: Recalcula indicadores globais do dashboard ao editar manutenção
+    const { DashboardIndicatorsService } = await import('./dashboardIndicators');
+    await DashboardIndicatorsService.refreshForVehicle(updated.vehicleId).catch(() => {});
+
     const attachments = await AttachmentRepository.listByMaintenance(id);
     return {
       ...updated,
@@ -173,6 +181,7 @@ export class MaintenanceService {
    * Exclusão lógica de manutenção e seus anexos
    */
   static async deleteMaintenance(id: string): Promise<boolean> {
+    const existing = await MaintenanceRepository.findById(id);
     const success = await MaintenanceRepository.delete(id);
     if (success) {
       // Exclusão lógica em cascata para os anexos
@@ -184,6 +193,12 @@ export class MaintenanceService {
       await SyncQueueRepository.enqueue('DELETE_MAINTENANCE', `/sync/manutencoes/${id}`, {
         id,
       }).catch(() => {});
+
+      // US13.3: Recalcula indicadores globais do dashboard ao excluir manutenção
+      if (existing?.vehicleId) {
+        const { DashboardIndicatorsService } = await import('./dashboardIndicators');
+        await DashboardIndicatorsService.refreshForVehicle(existing.vehicleId).catch(() => {});
+      }
     }
     return success;
   }

@@ -56,6 +56,10 @@ export class OdometerService {
     const { MaintenanceAlertService } = await import('./maintenanceAlertService');
     MaintenanceAlertService.evaluateVehicleAlerts(vehicleId).catch(() => {});
 
+    // US13.3: Recalcula indicadores globais do dashboard ao atualizar quilometragem
+    const { DashboardIndicatorsService } = await import('./dashboardIndicators');
+    await DashboardIndicatorsService.refreshForVehicle(vehicleId).catch(() => {});
+
     return reading;
   }
 

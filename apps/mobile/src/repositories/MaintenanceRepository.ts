@@ -64,15 +64,10 @@ export class MaintenanceRepository {
     vehicleId: string,
     filterType?: MaintenanceType,
   ): Promise<Maintenance[]> {
-    const records = await db.find<Maintenance>(
-      this.TABLE,
-      item =>
-        item.vehicleId === vehicleId &&
-        !item.deletedAt &&
-        (!filterType || item.type === filterType),
-    );
+    const records = await db.findByVehicleIndex<Maintenance>(this.TABLE, vehicleId);
+    const filtered = filterType ? records.filter(item => item.type === filterType) : records;
 
-    return records.sort(
+    return filtered.sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime() || b.odometer - a.odometer,
     );
   }
@@ -85,13 +80,7 @@ export class MaintenanceRepository {
     const startTime = start.getTime();
     const endTime = end.getTime();
 
-    const records = await db.find<Maintenance>(this.TABLE, item => {
-      if (item.vehicleId !== vehicleId || item.deletedAt) return false;
-      const itemTime = new Date(item.date).getTime();
-      return itemTime >= startTime && itemTime <= endTime;
-    });
-
-    return records;
+    return db.findByVehicleIndex<Maintenance>(this.TABLE, vehicleId, startTime, endTime);
   }
 
   static async update(id: string, updates: UpdateMaintenanceDTO): Promise<Maintenance | null> {

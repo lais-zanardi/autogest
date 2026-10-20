@@ -6,14 +6,23 @@ export interface DatabaseQueryResult<T = any> {
   insertId?: string;
 }
 
+export interface LocalIndexDefinition {
+  name: string;
+  tableName: string;
+  columns: string[];
+}
+
 /**
  * Camada de persistência relacional local do AutoGest.
- * Gerencia tabelas locais, chaves primárias e transações de forma determinística e offline-first.
+ * Gerencia tabelas locais, chaves primárias, índices compostos (veiculo_id + data) e transações de forma determinística e offline-first.
  */
 export class DatabaseConnection {
   private static instance: DatabaseConnection;
   private readonly DB_PREFIX = '@autogest_db:';
+  private readonly INDEX_META_KEY = '@autogest_db:_local_indexes';
   private memoryFallback = new Map<string, string>();
+  private indexRegistry = new Map<string, LocalIndexDefinition>();
+  private vehicleBucketCache = new Map<string, Map<string, any[]>>();
 
   private constructor() {}
 
@@ -45,18 +54,126 @@ export class DatabaseConnection {
   }
 
   /**
-   * Grava os dados completos de uma tabela local
+   * Grava os dados completos de uma tabela local e atualiza índices registrados
    */
   public async saveTableData<T = any>(tableName: string, data: T[]): Promise<void> {
     const key = this.getTableKey(tableName);
     const json = JSON.stringify(data);
     this.memoryFallback.set(key, json);
+    this.rebuildTableIndexCache(tableName, data);
 
     try {
       await AsyncStorage.setItem(key, json);
     } catch {
       // Falha esperada em ambientes Node de teste sem AsyncStorage nativo; o memoryFallback garante a persistência
     }
+  }
+
+  /**
+   * US13.5: Cria e registra um índice composto no banco local (ex.: veiculo_id + data)
+   * para otimizar buscas por veículo e período.
+   */
+  public async createIndex(name: string, tableName: string, columns: string[]): Promise<void> {
+    const def: LocalIndexDefinition = { name, tableName, columns };
+    this.indexRegistry.set(name, def);
+
+    const data = await this.getTableData(tableName);
+    this.rebuildTableIndexCache(tableName, data);
+
+    try {
+      const allDefs = Array.from(this.indexRegistry.values());
+      const json = JSON.stringify(allDefs);
+      this.memoryFallback.set(this.INDEX_META_KEY, json);
+      await AsyncStorage.setItem(this.INDEX_META_KEY, json);
+    } catch {
+      // Ignora em ambiente sem AsyncStorage nativo
+    }
+  }
+
+  /**
+   * US13.5: Lista os nomes dos índices registrados no banco local
+   */
+  public getRegisteredIndexes(): string[] {
+    return Array.from(this.indexRegistry.keys());
+  }
+
+  /**
+   * Reconstrói o índice em memória particionado por (veiculo_id / vehicleId) e ordenado por data
+   */
+  private rebuildTableIndexCache(tableName: string, data: any[]): void {
+    const hasIndexForTable = Array.from(this.indexRegistry.values()).some(
+      idx => idx.tableName === tableName,
+    );
+    if (!hasIndexForTable && !this.vehicleBucketCache.has(tableName)) {
+      return;
+    }
+
+    const bucketMap = new Map<string, any[]>();
+    for (const row of data || []) {
+      if (!row || row.deletedAt || row.excluido_em) continue;
+      const vId = row.vehicleId || row.veiculo_id;
+      if (!vId) continue;
+      const list = bucketMap.get(vId) || [];
+      list.push(row);
+      bucketMap.set(vId, list);
+    }
+
+    // Ordena cada partição por data decrescente para varredura rápida
+    for (const [vId, list] of bucketMap.entries()) {
+      list.sort((a, b) => {
+        const dA = new Date(a.date || a.data_hora || a.data || a.createdAt || 0).getTime();
+        const dB = new Date(b.date || b.data_hora || b.data || b.createdAt || 0).getTime();
+        return dB - dA;
+      });
+      bucketMap.set(vId, list);
+    }
+
+    this.vehicleBucketCache.set(tableName, bucketMap);
+  }
+
+  /**
+   * US13.5: Consulta otimizada utilizando o índice (veiculo_id + data)
+   */
+  public async findByVehicleIndex<T = any>(
+    tableName: string,
+    vehicleId: string,
+    startTimeMs?: number,
+    endTimeMs?: number,
+  ): Promise<T[]> {
+    if (!this.vehicleBucketCache.has(tableName)) {
+      const data = await this.getTableData(tableName);
+      this.rebuildTableIndexCache(tableName, data);
+    }
+
+    const tableBuckets = this.vehicleBucketCache.get(tableName);
+    if (tableBuckets) {
+      const rows = (tableBuckets.get(vehicleId) || []) as T[];
+      if (startTimeMs === undefined && endTimeMs === undefined) {
+        return [...rows];
+      }
+      return rows.filter((item: any) => {
+        const t = new Date(
+          item.date || item.data_hora || item.data || item.createdAt || 0,
+        ).getTime();
+        if (startTimeMs !== undefined && t < startTimeMs) return false;
+        if (endTimeMs !== undefined && t > endTimeMs) return false;
+        return true;
+      });
+    }
+
+    const all = await this.getTableData<any>(tableName);
+    return all.filter(item => {
+      const vId = item.vehicleId || item.veiculo_id;
+      if (vId !== vehicleId || item.deletedAt || item.excluido_em) return false;
+      if (startTimeMs !== undefined || endTimeMs !== undefined) {
+        const t = new Date(
+          item.date || item.data_hora || item.data || item.createdAt || 0,
+        ).getTime();
+        if (startTimeMs !== undefined && t < startTimeMs) return false;
+        if (endTimeMs !== undefined && t > endTimeMs) return false;
+      }
+      return true;
+    });
   }
 
   /**

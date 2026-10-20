@@ -154,6 +154,26 @@ const regrasManutencaoSyncRouter = createSyncResourceRouter({
   },
 });
 
+// 8. Custos Fixos Mensais (US23.1)
+const custosFixosSyncRouter = createSyncResourceRouter({
+  tableName: 'custos_fixos',
+  ownershipType: 'via_vehicle',
+  allowedFields: ['veiculo_id', 'descricao', 'valor_mensal'],
+  validatePayload: body => {
+    const vId = body.veiculo_id || body.vehicleId;
+    if (!vId) return { isValid: false, error: 'veiculo_id é obrigatório.' };
+    const desc = body.descricao || body.description;
+    if (!desc || !String(desc).trim()) {
+      return { isValid: false, error: 'descricao é obrigatória.' };
+    }
+    const valor = body.valor_mensal !== undefined ? body.valor_mensal : body.monthlyAmount;
+    if (valor === undefined || valor === null || Number(valor) <= 0) {
+      return { isValid: false, error: 'valor_mensal deve ser maior que zero.' };
+    }
+    return { isValid: true };
+  },
+});
+
 // Monta rotas em português e inglês para conveniência
 router.use('/veiculos', veiculosSyncRouter);
 router.use('/vehicles', veiculosSyncRouter);
@@ -175,5 +195,8 @@ router.use('/attachments', anexosSyncRouter);
 
 router.use('/regras_manutencao', regrasManutencaoSyncRouter);
 router.use('/maintenance_rules', regrasManutencaoSyncRouter);
+
+router.use('/custos_fixos', custosFixosSyncRouter);
+router.use('/fixed_costs', custosFixosSyncRouter);
 
 export default router;

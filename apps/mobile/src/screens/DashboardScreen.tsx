@@ -7,15 +7,18 @@ import {
   SafeAreaView,
   StatusBar,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAppStore } from '../store/useAppStore';
 import { VehicleService } from '../services/vehicleService';
 import { MaintenanceService } from '../services/maintenanceService';
+import { DashboardIndicatorsService } from '../services/dashboardIndicators';
 import {
   VehicleHeaderSelector,
   UpdateOdometerModal,
   ExpenseFormModal,
+  FixedCostFormModal,
   MaintenanceFormModal,
   MaintenanceHistoryCard,
   MaintenanceAlertsCard,
@@ -23,15 +26,16 @@ import {
   UsageAndCostIndicatorsCard,
   ConfirmModal,
 } from '../components';
-import { formatCurrency, formatKml } from '../utils/formatters';
+import { formatCurrency, formatKml, formatDecimal } from '../utils/formatters';
 import { colors, spacing, radius, typography } from '../theme';
 import { Maintenance } from '@autogest/shared-types';
 
 export const DashboardScreen: React.FC = () => {
-  const { user, selectedVehicle, stats } = useAppStore();
+  const { user, selectedVehicle, dashboardIndicators, isLoadingDashboard } = useAppStore();
   const navigation = useNavigation<any>();
   const [odometerModalVisible, setOdometerModalVisible] = useState(false);
   const [expenseModalVisible, setExpenseModalVisible] = useState(false);
+  const [fixedCostModalVisible, setFixedCostModalVisible] = useState(false);
   const [maintenanceModalVisible, setMaintenanceModalVisible] = useState(false);
   const [maintenanceToEdit, setMaintenanceToEdit] = useState<Maintenance | null>(null);
   const [maintenanceToDelete, setMaintenanceToDelete] = useState<Maintenance | null>(null);
@@ -51,14 +55,14 @@ export const DashboardScreen: React.FC = () => {
     };
   }, []);
 
-  // US10.5: Reavalia regras preventivas de manutenção ao abrir o app / alternar veículo
+  // US13.3 & US10.5: Recalcula indicadores globais e reavalia regras preventivas ao abrir / alternar veículo
   useEffect(() => {
     if (selectedVehicle?.id) {
-      import('../services/maintenanceAlertService').then(({ MaintenanceAlertService }) => {
-        MaintenanceAlertService.evaluateVehicleAlerts(selectedVehicle.id).catch(() => {});
-      });
+      DashboardIndicatorsService.refreshForVehicle(selectedVehicle.id).catch(() => {});
     }
-  }, [selectedVehicle?.id]);
+  }, [selectedVehicle?.id, refreshAlertsTrigger, refreshMaintTrigger]);
+
+  const nextMaint = dashboardIndicators?.nextMaintenance || null;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -89,28 +93,171 @@ export const DashboardScreen: React.FC = () => {
               <Text style={styles.emptyBtnText}>Ir para Garagem</Text>
             </TouchableOpacity>
           </View>
+        ) : isLoadingDashboard && !dashboardIndicators ? (
+          /* US13.4: Estado de Carregamento do Dashboard */
+          <View style={styles.loadingCard} accessibilityLabel="Carregando indicadores do painel">
+            <ActivityIndicator size="large" color={colors.lime} />
+            <Text style={styles.loadingTitle}>Calculando indicadores em tempo real...</Text>
+            <Text style={styles.loadingDesc}>
+              Consolidando gastos do mês, consumo médio, autonomia e alertas preventivos.
+            </Text>
+          </View>
         ) : (
           <>
+            {/* US13.4: Banner de Estado Vazio (sem lançamentos registrados para o veículo) */}
+            {dashboardIndicators && !dashboardIndicators.hasData && (
+              <View style={styles.noDataBanner} accessibilityLabel="Veículo sem registros">
+                <Text style={styles.noDataEyebrow}>PAINEL SEM LANÇAMENTOS</Text>
+                <Text style={styles.noDataTitle}>Comece a registrar os dados do veículo</Text>
+                <Text style={styles.noDataDesc}>
+                  Ainda não há abastecimentos, despesas ou manutenções para {selectedVehicle.model}.
+                  Registre seu primeiro lançamento para calcular consumo médio, custo/km e autonomia
+                  projetada em tempo real.
+                </Text>
+                <View style={styles.noDataActions}>
+                  <TouchableOpacity
+                    style={styles.noDataPrimaryBtn}
+                    onPress={() => setExpenseModalVisible(true)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.noDataPrimaryBtnText}>+ Lançar Despesa</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.noDataSecondaryBtn}
+                    onPress={() => setOdometerModalVisible(true)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.noDataSecondaryBtnText}>Atualizar Km</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {/* US13.1, US13.2 & US13.4: Cartões Consolidados de Indicadores do Dashboard */}
             <View style={styles.grid}>
+              {/* 1. Gasto Total do Mês */}
+              <TouchableOpacity
+                style={[styles.card, styles.cardHighlight]}
+                onPress={() => navigation.navigate('Reports')}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.cardEyebrow}>RESUMO FINANCEIRO</Text>
+                <Text style={styles.cardLabel}>Gasto Total do Mês</Text>
+                <Text style={styles.cardValue}>
+                  {formatCurrency(dashboardIndicators?.monthTotalSpent || 0)}
+                </Text>
+                <Text style={styles.cardSubtext}>Toque para ver detalhes →</Text>
+              </TouchableOpacity>
+
+              {/* 2. Custo Médio / Km */}
+              <TouchableOpacity
+                style={styles.card}
+                onPress={() => navigation.navigate('Reports')}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.cardEyebrow}>EFICIÊNCIA</Text>
+                <Text style={styles.cardLabel}>Custo Médio / Km</Text>
+                <Text style={styles.cardValue}>
+                  {dashboardIndicators && dashboardIndicators.averageCostPerKm > 0
+                    ? `${formatCurrency(dashboardIndicators.averageCostPerKm)}/km`
+                    : 'R$ 0,00/km'}
+                </Text>
+                <Text style={styles.cardSubtext}>Variáveis + fixos</Text>
+              </TouchableOpacity>
+
+              {/* 3. Consumo Médio */}
               <View style={styles.card}>
-                <Text style={styles.cardLabel}>Média Geral</Text>
-                <Text style={styles.cardValue}>{formatKml(stats?.averageKml)}</Text>
+                <Text style={styles.cardEyebrow}>RENDIMENTO</Text>
+                <Text style={styles.cardLabel}>Consumo Médio</Text>
+                <Text style={styles.cardValue}>
+                  {formatKml(dashboardIndicators?.averageConsumptionKml)}
+                </Text>
+                <Text style={styles.cardSubtext}>Combustível: {selectedVehicle.preferredFuel}</Text>
               </View>
 
+              {/* 4. Autonomia Projetada (US13.2) */}
               <View style={styles.card}>
-                <Text style={styles.cardLabel}>Total Gasto</Text>
-                <Text style={styles.cardValue}>{formatCurrency(stats?.totalSpent || 0)}</Text>
+                <Text style={styles.cardEyebrow}>TANQUE ({selectedVehicle.tankCapacityL} L)</Text>
+                <Text style={styles.cardLabel}>Autonomia Projetada</Text>
+                <Text style={styles.cardValue}>
+                  {formatDecimal(dashboardIndicators?.projectedAutonomyKm || 0, 0)} km
+                </Text>
+                <Text style={styles.cardSubtext}>Estimativa restante</Text>
               </View>
 
-              <View style={styles.card}>
-                <Text style={styles.cardLabel}>Custo por Km</Text>
-                <Text style={styles.cardValue}>R$ {stats?.costPerKm || '0,00'}/km</Text>
-              </View>
+              {/* 5. Quilometragem Total */}
+              <TouchableOpacity
+                style={styles.card}
+                onPress={() => setOdometerModalVisible(true)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.cardEyebrow}>HODÔMETRO</Text>
+                <Text style={styles.cardLabel}>Quilometragem Total</Text>
+                <Text style={styles.cardValueWhite}>
+                  {(
+                    dashboardIndicators?.totalMileageKm ||
+                    selectedVehicle.currentOdometer ||
+                    selectedVehicle.initialOdometer ||
+                    0
+                  ).toLocaleString('pt-BR')}{' '}
+                  km
+                </Text>
+                <Text style={styles.cardSubtext}>Toque para atualizar km</Text>
+              </TouchableOpacity>
 
-              <View style={styles.card}>
-                <Text style={styles.cardLabel}>Distância Percorrida</Text>
-                <Text style={styles.cardValue}>{stats?.totalDistance || 0} km</Text>
-              </View>
+              {/* 6. Próxima Manutenção (US10.6) */}
+              <TouchableOpacity
+                style={[
+                  styles.card,
+                  nextMaint?.status === 'vencido'
+                    ? styles.cardAlertOverdue
+                    : nextMaint?.status === 'proximo'
+                      ? styles.cardAlertUpcoming
+                      : null,
+                ]}
+                onPress={() => setRulesModalVisible(true)}
+                activeOpacity={0.8}
+              >
+                <Text
+                  style={[
+                    styles.cardEyebrow,
+                    nextMaint?.status === 'vencido'
+                      ? { color: colors.error }
+                      : nextMaint?.status === 'proximo'
+                        ? { color: colors.amber }
+                        : null,
+                  ]}
+                >
+                  {nextMaint?.status === 'vencido'
+                    ? '⚠️ MANUTENÇÃO VENCIDA'
+                    : '🔔 PRÓXIMA MANUTENÇÃO'}
+                </Text>
+                <Text style={styles.cardLabel} numberOfLines={1}>
+                  {nextMaint ? nextMaint.serviceName : 'Revisões em Dia'}
+                </Text>
+                <Text
+                  style={[
+                    styles.cardMaintValue,
+                    nextMaint?.status === 'vencido'
+                      ? { color: colors.error }
+                      : nextMaint?.status === 'proximo'
+                        ? { color: colors.amber }
+                        : { color: colors.textPrimary },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {nextMaint
+                    ? nextMaint.remainingKm !== null && nextMaint.remainingKm !== undefined
+                      ? `${nextMaint.remainingKm} km`
+                      : nextMaint.remainingDays !== null && nextMaint.remainingDays !== undefined
+                        ? `${nextMaint.remainingDays} dias`
+                        : nextMaint.status.toUpperCase()
+                    : 'Sem alertas'}
+                </Text>
+                <Text style={styles.cardSubtext} numberOfLines={1}>
+                  {nextMaint ? nextMaint.message : 'Configurar alertas →'}
+                </Text>
+              </TouchableOpacity>
             </View>
 
             <View style={styles.detailsCard}>
@@ -123,6 +270,13 @@ export const DashboardScreen: React.FC = () => {
                     activeOpacity={0.7}
                   >
                     <Text style={styles.actionHeaderBtnText}>🧾 Despesa</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.actionHeaderBtn}
+                    onPress={() => setFixedCostModalVisible(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.actionHeaderBtnText}>📌 Fixo</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.actionHeaderBtn}
@@ -159,7 +313,11 @@ export const DashboardScreen: React.FC = () => {
                 <View style={styles.detailCol}>
                   <Text style={styles.detailLabel}>Odômetro Atual</Text>
                   <Text style={styles.detailValue}>
-                    {selectedVehicle.currentOdometer || selectedVehicle.initialOdometer || 0} km
+                    {dashboardIndicators?.totalMileageKm ||
+                      selectedVehicle.currentOdometer ||
+                      selectedVehicle.initialOdometer ||
+                      0}{' '}
+                    km
                   </Text>
                 </View>
               </View>
@@ -175,7 +333,11 @@ export const DashboardScreen: React.FC = () => {
             {/* Indicadores de Uso (km/dia, semana, mês) e Custo/Km Detalhado (US24.1, US24.2, US24.3) */}
             <UsageAndCostIndicatorsCard
               vehicle={selectedVehicle}
-              refreshTrigger={refreshAlertsTrigger + refreshMaintTrigger}
+              refreshTrigger={
+                refreshAlertsTrigger +
+                refreshMaintTrigger +
+                (dashboardIndicators?.monthTotalSpent || 0)
+              }
             />
 
             {/* Alertas Preventivos e Próximas Revisões (US10.6) */}
@@ -215,6 +377,13 @@ export const DashboardScreen: React.FC = () => {
               visible={expenseModalVisible}
               vehicle={selectedVehicle}
               onClose={() => setExpenseModalVisible(false)}
+              onSuccess={() => setRefreshAlertsTrigger(prev => prev + 1)}
+            />
+
+            <FixedCostFormModal
+              visible={fixedCostModalVisible}
+              vehicle={selectedVehicle}
+              onClose={() => setFixedCostModalVisible(false)}
               onSuccess={() => setRefreshAlertsTrigger(prev => prev + 1)}
             />
 
@@ -282,6 +451,78 @@ const styles = StyleSheet.create({
     color: colors.lime,
     marginTop: 4,
   },
+  loadingCard: {
+    backgroundColor: colors.card,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.xl,
+    alignItems: 'center',
+    marginVertical: spacing.md,
+  },
+  loadingTitle: {
+    ...typography.h3,
+    color: colors.textPrimary,
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  loadingDesc: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  noDataBanner: {
+    backgroundColor: colors.surfaceRaised,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: 'rgba(198, 255, 77, 0.3)',
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  noDataEyebrow: {
+    ...typography.sectionLabel,
+    color: colors.lime,
+    fontSize: 10,
+    marginBottom: 4,
+  },
+  noDataTitle: {
+    ...typography.h3,
+    color: colors.textPrimary,
+    marginBottom: 4,
+  },
+  noDataDesc: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    lineHeight: 18,
+    marginBottom: spacing.md,
+  },
+  noDataActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  noDataPrimaryBtn: {
+    backgroundColor: colors.lime,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: radius.sm,
+  },
+  noDataPrimaryBtnText: {
+    ...typography.captionBold,
+    color: colors.black,
+    fontWeight: '700',
+  },
+  noDataSecondaryBtn: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: radius.sm,
+  },
+  noDataSecondaryBtnText: {
+    ...typography.captionBold,
+    color: colors.textPrimary,
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -296,6 +537,21 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     padding: spacing.md,
   },
+  cardHighlight: {
+    borderColor: 'rgba(198, 255, 77, 0.35)',
+  },
+  cardAlertOverdue: {
+    borderColor: 'rgba(224, 90, 90, 0.45)',
+  },
+  cardAlertUpcoming: {
+    borderColor: 'rgba(245, 200, 66, 0.4)',
+  },
+  cardEyebrow: {
+    ...typography.sectionLabel,
+    color: colors.textMuted,
+    fontSize: 9,
+    marginBottom: 2,
+  },
   cardLabel: {
     ...typography.caption,
     color: colors.textSecondary,
@@ -304,6 +560,21 @@ const styles = StyleSheet.create({
     ...typography.h2,
     color: colors.lime,
     marginTop: 6,
+  },
+  cardValueWhite: {
+    ...typography.h2,
+    color: colors.textPrimary,
+    marginTop: 6,
+  },
+  cardMaintValue: {
+    ...typography.h3,
+    marginTop: 6,
+  },
+  cardSubtext: {
+    ...typography.caption,
+    color: colors.textMuted,
+    fontSize: 10,
+    marginTop: 4,
   },
   detailsCard: {
     backgroundColor: colors.surfaceRaised,
@@ -318,10 +589,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.sm,
+    flexWrap: 'wrap',
+    gap: spacing.xs,
   },
   detailsHeaderActions: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     gap: spacing.xs,
   },
   detailsTitle: {
@@ -379,6 +653,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
+    marginBottom: spacing.md,
   },
   fipeTitle: {
     ...typography.captionBold,

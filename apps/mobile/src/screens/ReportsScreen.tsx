@@ -9,15 +9,17 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { Expense } from '@autogest/shared-types';
+import { Expense, FixedCost } from '@autogest/shared-types';
 import { useAppStore } from '../store/useAppStore';
 import { ExpenseService } from '../services/expenseService';
+import { FixedCostService } from '../services/fixedCostService';
 import {
   obterDetalhamentoGastosDoPeriodo,
   GastosDetalhadosPeriodo,
 } from '../services/expenseAggregation';
 import {
   ExpenseFormModal,
+  FixedCostFormModal,
   ConfirmModal,
   VehicleHeaderSelector,
   UsageAndCostIndicatorsCard,
@@ -48,32 +50,43 @@ export const ReportsScreen: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1); // 1-12
 
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [fixedCosts, setFixedCosts] = useState<FixedCost[]>([]);
+  const [fixedCostsMonthlyTotal, setFixedCostsMonthlyTotal] = useState<number>(0);
   const [breakdown, setBreakdown] = useState<GastosDetalhadosPeriodo | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Modais de criação / edição / exclusão
+  // Modais de criação / edição / exclusão de Despesas
   const [formModalVisible, setFormModalVisible] = useState(false);
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null);
 
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
 
+  // Modais de criação / edição / exclusão de Custos Fixos Mensais (US23.2)
+  const [fixedCostModalVisible, setFixedCostModalVisible] = useState(false);
+  const [fixedCostToEdit, setFixedCostToEdit] = useState<FixedCost | null>(null);
+  const [fixedCostToDelete, setFixedCostToDelete] = useState<FixedCost | null>(null);
+
   const loadData = useCallback(async () => {
     if (!selectedVehicle) {
       setExpenses([]);
+      setFixedCosts([]);
+      setFixedCostsMonthlyTotal(0);
       setBreakdown(null);
       return;
     }
 
     setLoading(true);
     try {
-      // Lista de despesas do mês selecionado
-      const monthExpenses = await ExpenseService.listByMonth(
-        selectedVehicle.id,
-        selectedYear,
-        selectedMonth,
-      );
+      // Lista de despesas do mês selecionado e custos fixos do veículo
+      const [monthExpenses, vehicleFixedCosts, monthlyFixedSum] = await Promise.all([
+        ExpenseService.listByMonth(selectedVehicle.id, selectedYear, selectedMonth),
+        FixedCostService.listByVehicle(selectedVehicle.id),
+        FixedCostService.getMonthlyTotalByVehicle(selectedVehicle.id),
+      ]);
       setExpenses(monthExpenses);
+      setFixedCosts(vehicleFixedCosts);
+      setFixedCostsMonthlyTotal(monthlyFixedSum);
 
       // Agregação de gastos do mês (despesas + abastecimentos)
       const startDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`;
@@ -140,6 +153,28 @@ export const ReportsScreen: React.FC = () => {
     } finally {
       setDeleteModalVisible(false);
       setExpenseToDelete(null);
+    }
+  };
+
+  const handleOpenCreateFixedCost = () => {
+    setFixedCostToEdit(null);
+    setFixedCostModalVisible(true);
+  };
+
+  const handleOpenEditFixedCost = (fixedCost: FixedCost) => {
+    setFixedCostToEdit(fixedCost);
+    setFixedCostModalVisible(true);
+  };
+
+  const handleConfirmDeleteFixedCost = async () => {
+    if (!fixedCostToDelete) return;
+    try {
+      await FixedCostService.deleteFixedCost(fixedCostToDelete.id);
+      await loadData();
+    } catch (e) {
+      console.error('Erro ao excluir custo fixo:', e);
+    } finally {
+      setFixedCostToDelete(null);
     }
   };
 
@@ -214,7 +249,7 @@ export const ReportsScreen: React.FC = () => {
           </View>
         ) : (
           <>
-            {/* Card de Indicadores de Uso e Custo (US24.1, US24.2, US24.3) */}
+            {/* Card de Indicadores de Uso e Custo (US24.1, US24.2, US24.3 e US23.3) */}
             <UsageAndCostIndicatorsCard
               vehicle={selectedVehicle}
               externalRange={{
@@ -222,7 +257,7 @@ export const ReportsScreen: React.FC = () => {
                 fim: currentEndDate,
                 label: `${MONTH_NAMES[selectedMonth - 1].substring(0, 3)}/${selectedYear}`,
               }}
-              refreshTrigger={expenses.length + (breakdown?.total || 0)}
+              refreshTrigger={expenses.length + (breakdown?.total || 0) + fixedCostsMonthlyTotal}
             />
 
             {/* Card de Resumo Agregado do Mês (US22.3 e US22.4) */}
@@ -280,6 +315,66 @@ export const ReportsScreen: React.FC = () => {
                 </View>
               </View>
             </View>
+
+            {/* Seção de Custos Fixos Mensais por Veículo (US23.2 & US23.3) */}
+            <View style={styles.sectionHeader}>
+              <View>
+                <Text style={styles.sectionTitle}>Custos Fixos Mensais</Text>
+                <Text style={styles.sectionSubtitle}>
+                  Total fixo: {formatCurrency(fixedCostsMonthlyTotal)}/mês • Integrado ao Custo/Km
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.addExpenseBtn}
+                onPress={handleOpenCreateFixedCost}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.addExpenseBtnText}>+ Custo Fixo</Text>
+              </TouchableOpacity>
+            </View>
+
+            {fixedCosts.length === 0 ? (
+              <View style={styles.emptyExpensesBox}>
+                <Text style={styles.emptyExpensesTitle}>Nenhum custo fixo mensal</Text>
+                <Text style={styles.emptyExpensesText}>
+                  Cadastre seguro, estacionamento ou mensalidades para compor o custo real por km.
+                </Text>
+              </View>
+            ) : (
+              fixedCosts.map(fc => (
+                <View key={fc.id} style={styles.expenseCard}>
+                  <View style={styles.expenseLeft}>
+                    <View style={styles.categoryIconCircle}>
+                      <Text style={styles.categoryIconText}>📌</Text>
+                    </View>
+                    <View style={styles.expenseInfo}>
+                      <Text style={styles.expenseCategory}>{fc.description}</Text>
+                      <Text style={styles.expenseDate}>Recorrência mensal</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.expenseRight}>
+                    <Text style={styles.expenseAmount}>{formatCurrency(fc.monthlyAmount)}/mês</Text>
+                    <View style={styles.itemActions}>
+                      <TouchableOpacity
+                        style={styles.itemActionBtn}
+                        onPress={() => handleOpenEditFixedCost(fc)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.itemActionBtnText}>✏️</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.itemActionBtn, styles.itemDeleteBtn]}
+                        onPress={() => setFixedCostToDelete(fc)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.itemActionBtnText}>🗑️</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              ))
+            )}
 
             {/* Cabeçalho da Seção de Despesas com Botão + Nova Despesa */}
             <View style={styles.sectionHeader}>
@@ -377,7 +472,16 @@ export const ReportsScreen: React.FC = () => {
           onSuccess={() => loadData()}
         />
 
-        {/* Modal de Confirmação de Exclusão (US22.3) */}
+        {/* Modal de Formulário de Custo Fixo Mensal (US23.2) */}
+        <FixedCostFormModal
+          visible={fixedCostModalVisible}
+          vehicle={selectedVehicle}
+          fixedCostToEdit={fixedCostToEdit}
+          onClose={() => setFixedCostModalVisible(false)}
+          onSuccess={() => loadData()}
+        />
+
+        {/* Modal de Confirmação de Exclusão de Despesa (US22.3) */}
         <ConfirmModal
           visible={deleteModalVisible}
           title="Excluir Despesa?"
@@ -391,6 +495,19 @@ export const ReportsScreen: React.FC = () => {
             setDeleteModalVisible(false);
             setExpenseToDelete(null);
           }}
+        />
+
+        {/* Modal de Confirmação de Exclusão de Custo Fixo (US23.2) */}
+        <ConfirmModal
+          visible={!!fixedCostToDelete}
+          title="Remover Custo Fixo?"
+          message={
+            fixedCostToDelete
+              ? `Tem certeza que deseja remover o custo fixo "${fixedCostToDelete.description}" de ${formatCurrency(fixedCostToDelete.monthlyAmount)}/mês?`
+              : 'Tem certeza que deseja remover este custo fixo?'
+          }
+          onConfirm={handleConfirmDeleteFixedCost}
+          onCancel={() => setFixedCostToDelete(null)}
         />
       </ScrollView>
     </SafeAreaView>

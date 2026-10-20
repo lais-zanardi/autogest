@@ -4,6 +4,8 @@ import './migrations/003_create_local_fueling_schema';
 import './migrations/004_create_local_despesas';
 import './migrations/005_create_local_manutencoes';
 import './migrations/006_create_local_regras_manutencao';
+import './migrations/007_create_local_custos_fixos';
+import './migrations/008_create_local_dashboard_indexes';
 import { localMigrator } from './migrations/localMigrator';
 
 export * from './DatabaseConnection';

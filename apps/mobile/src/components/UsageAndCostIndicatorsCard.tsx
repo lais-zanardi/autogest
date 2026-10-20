@@ -190,6 +190,11 @@ export const UsageAndCostIndicatorsCard: React.FC<UsageAndCostIndicatorsCardProp
                 <Text style={styles.costBoxSubtext}>
                   Total: {formatCurrency(indicators.custo.custoTotal)}
                 </Text>
+                {indicators.custo.custoFixoProporcional > 0 && (
+                  <Text style={styles.costBoxSubtext}>
+                    Fixo incl.: {formatCurrency(indicators.custo.custoFixoProporcional)}
+                  </Text>
+                )}
               </View>
 
               <View style={styles.costBox}>

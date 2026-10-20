@@ -6,10 +6,7 @@ export class RefuelRepository {
   private static TABLE = 'local_refuels';
 
   static async listByVehicle(vehicleId: string): Promise<Refuel[]> {
-    const all = await db.find<Refuel>(
-      this.TABLE,
-      r => r.vehicleId === vehicleId && !(r as any).deletedAt && !(r as any).excluido_em,
-    );
+    const all = await db.findByVehicleIndex<Refuel>(this.TABLE, vehicleId);
     return all.sort((a, b) => {
       const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
       if (dateDiff !== 0) return dateDiff;
@@ -18,10 +15,7 @@ export class RefuelRepository {
   }
 
   static async listByVehicleAsc(vehicleId: string): Promise<Refuel[]> {
-    const all = await db.find<Refuel>(
-      this.TABLE,
-      r => r.vehicleId === vehicleId && !(r as any).deletedAt && !(r as any).excluido_em,
-    );
+    const all = await db.findByVehicleIndex<Refuel>(this.TABLE, vehicleId);
     return all.sort((a, b) => {
       const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
       if (dateDiff !== 0) return dateDiff;
@@ -43,11 +37,7 @@ export class RefuelRepository {
     const startTime = new Date(inicio).getTime();
     const endTime = new Date(fim).getTime();
 
-    const list = await this.listByVehicle(vehicleId);
-    return list.filter(item => {
-      const itemTime = new Date(item.date).getTime();
-      return itemTime >= startTime && itemTime <= endTime;
-    });
+    return db.findByVehicleIndex<Refuel>(this.TABLE, vehicleId, startTime, endTime);
   }
 
   static async getPreviousRefuel(

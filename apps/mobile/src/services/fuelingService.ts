@@ -70,6 +70,10 @@ export class FuelingService {
     const { MaintenanceAlertService } = await import('./maintenanceAlertService');
     MaintenanceAlertService.evaluateVehicleAlerts(dto.vehicleId).catch(() => {});
 
+    // US13.3: Recalcula indicadores globais do dashboard ao salvar abastecimento
+    const { DashboardIndicatorsService } = await import('./dashboardIndicators');
+    await DashboardIndicatorsService.refreshForVehicle(dto.vehicleId).catch(() => {});
+
     return savedRefuel;
   }
 
@@ -99,6 +103,10 @@ export class FuelingService {
     // Enfileira na outbox de sincronização offline-first
     await SyncQueueRepository.enqueue('UPDATE_REFUEL', `/api/v1/refuels/${id}`, saved);
 
+    // US13.3: Recalcula indicadores globais do dashboard ao editar abastecimento
+    const { DashboardIndicatorsService } = await import('./dashboardIndicators');
+    await DashboardIndicatorsService.refreshForVehicle(existing.vehicleId).catch(() => {});
+
     return saved;
   }
 
@@ -120,6 +128,10 @@ export class FuelingService {
       id,
       vehicleId: existing.vehicleId,
     });
+
+    // US13.3: Recalcula indicadores globais do dashboard ao excluir abastecimento
+    const { DashboardIndicatorsService } = await import('./dashboardIndicators');
+    await DashboardIndicatorsService.refreshForVehicle(existing.vehicleId).catch(() => {});
 
     return true;
   }

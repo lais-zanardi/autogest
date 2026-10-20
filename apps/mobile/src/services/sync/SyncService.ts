@@ -160,6 +160,9 @@ export class SyncService {
           const { VehicleRepository } = await import('../../repositories/VehicleRepository');
           const vehicles = await VehicleRepository.listAll();
           store.setVehicles(vehicles);
+
+          const { DashboardIndicatorsService } = await import('../dashboardIndicators');
+          await DashboardIndicatorsService.refreshForSelectedVehicle().catch(() => {});
         } catch {
           // Ignore in headless test runs
         }

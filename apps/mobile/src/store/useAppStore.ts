@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Vehicle, User, Refuel, DashboardStats } from '@autogest/shared-types';
+import { Vehicle, User, Refuel, DashboardStats, DashboardIndicators } from '@autogest/shared-types';
 
 interface AppState {
   user: User | null;
@@ -10,6 +10,8 @@ interface AppState {
   selectedVehicle: Vehicle | null;
   refuels: Refuel[];
   stats: DashboardStats | null;
+  dashboardIndicators: DashboardIndicators | null;
+  isLoadingDashboard: boolean;
   isOnline: boolean;
   syncStatus: 'idle' | 'syncing' | 'synced' | 'error';
   lastSyncAt: string | null;
@@ -22,6 +24,8 @@ interface AppState {
   setVehicles: (vehicles: Vehicle[]) => void;
   setSelectedVehicle: (vehicle: Vehicle | null) => void;
   setRefuels: (refuels: Refuel[], stats: DashboardStats) => void;
+  setDashboardIndicators: (indicators: DashboardIndicators | null) => void;
+  setIsLoadingDashboard: (loading: boolean) => void;
   setOnlineStatus: (status: boolean) => void;
   setSyncState: (
     status: 'idle' | 'syncing' | 'synced' | 'error',
@@ -39,6 +43,8 @@ export const useAppStore = create<AppState>(set => ({
   selectedVehicle: null,
   refuels: [],
   stats: null,
+  dashboardIndicators: null,
+  isLoadingDashboard: false,
   isOnline: true,
   syncStatus: 'idle',
   lastSyncAt: null,
@@ -56,6 +62,8 @@ export const useAppStore = create<AppState>(set => ({
       selectedVehicle: null,
       refuels: [],
       stats: null,
+      dashboardIndicators: null,
+      isLoadingDashboard: false,
       syncStatus: 'idle',
       lastSyncAt: null,
       pendingSyncCount: 0,
@@ -72,6 +80,8 @@ export const useAppStore = create<AppState>(set => ({
     }),
   setSelectedVehicle: selectedVehicle => set({ selectedVehicle }),
   setRefuels: (refuels, stats) => set({ refuels, stats }),
+  setDashboardIndicators: dashboardIndicators => set({ dashboardIndicators }),
+  setIsLoadingDashboard: isLoadingDashboard => set({ isLoadingDashboard }),
   setOnlineStatus: isOnline => set({ isOnline }),
   setSyncState: (syncStatus, lastSyncAt, pendingSyncCount) =>
     set(state => ({

@@ -312,21 +312,28 @@ function normalizeDateRange(inicio: string | Date, fim: string | Date): { start:
 }
 
 /**
- * US24.1 & US24.2: Serviço de aplicação que consulta os repositórios locais e a camada
- * de agregação da US22.4 (obterDetalhamentoGastosDoPeriodo) para retornar os indicadores consolidados.
+ * US24.1, US24.2 & US23.3: Serviço de aplicação que consulta os repositórios locais,
+ * a camada de agregação da US22.4 (obterDetalhamentoGastosDoPeriodo) e os custos fixos
+ * da US23 (valor cheio em período mensal ou proporcional aos dias em outros períodos)
+ * para retornar os indicadores consolidados.
  */
 export async function obterIndicadoresUsoECustoDoPeriodo(
   veiculo: string | { id: string },
   inicio: string | Date,
   fim: string | Date,
-  custoFixoProporcional: number = 0,
+  custoFixoProporcionalOverride?: number,
 ): Promise<UsageAndCostIndicators> {
   const vehicleId = typeof veiculo === 'string' ? veiculo : veiculo.id;
   const { start, end } = normalizeDateRange(inicio, fim);
 
-  const [detalhamentoGastos, leiturasHodometro] = await Promise.all([
+  const { FixedCostService } = await import('./fixedCostService');
+
+  const [detalhamentoGastos, leiturasHodometro, custoFixoCalculado] = await Promise.all([
     obterDetalhamentoGastosDoPeriodo(vehicleId, inicio, fim),
     OdometerRepository.listByVehicleAndPeriod(vehicleId, start, end),
+    custoFixoProporcionalOverride !== undefined
+      ? Promise.resolve(custoFixoProporcionalOverride)
+      : FixedCostService.getPeriodTotalByVehicle(vehicleId, inicio, fim),
   ]);
 
   const inicioStr = typeof inicio === 'string' ? inicio : start.toISOString().split('T')[0];
@@ -339,6 +346,6 @@ export async function obterIndicadoresUsoECustoDoPeriodo(
     abastecimentos: detalhamentoGastos.abastecimentos,
     manutencoes: detalhamentoGastos.manutencoes,
     despesas: detalhamentoGastos.despesas,
-    custoFixoProporcional,
+    custoFixoProporcional: custoFixoCalculado,
   });
 }

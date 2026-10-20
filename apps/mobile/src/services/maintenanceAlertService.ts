@@ -128,6 +128,7 @@ export class MaintenanceAlertService {
   static async evaluateVehicleAlerts(
     vehicleId: string,
     dataReferencia?: Date | string,
+    autoCreateDefaultRules: boolean = true,
   ): Promise<MaintenanceAlert[]> {
     const vehicle = await VehicleRepository.findById(vehicleId);
     if (!vehicle) return [];
@@ -143,7 +144,7 @@ export class MaintenanceAlertService {
 
     // Obtém regras ativas
     let rules = await MaintenanceRuleRepository.listByVehicle(vehicleId, true);
-    if (rules.length === 0) {
+    if (rules.length === 0 && autoCreateDefaultRules) {
       rules = await this.ensureDefaultRules(vehicleId);
     }
 
@@ -270,6 +271,10 @@ export class MaintenanceAlertService {
       '/sync/regras_manutencao',
       rule,
     ).catch(() => {});
+
+    const { DashboardIndicatorsService } = await import('./dashboardIndicators');
+    await DashboardIndicatorsService.refreshForVehicle(dto.vehicleId).catch(() => {});
+
     return rule;
   }
 
@@ -286,11 +291,15 @@ export class MaintenanceAlertService {
       ).catch(() => {});
       // Limpa ciclo para reavaliar com os novos parâmetros
       await NotificationService.clearNotificationCycleForRule(id);
+
+      const { DashboardIndicatorsService } = await import('./dashboardIndicators');
+      await DashboardIndicatorsService.refreshForVehicle(updated.vehicleId).catch(() => {});
     }
     return updated;
   }
 
   static async deleteRule(id: string): Promise<boolean> {
+    const existing = await MaintenanceRuleRepository.findById(id);
     const success = await MaintenanceRuleRepository.delete(id);
     if (success) {
       await SyncQueueRepository.enqueue(
@@ -299,6 +308,11 @@ export class MaintenanceAlertService {
         { id },
       ).catch(() => {});
       await NotificationService.clearNotificationCycleForRule(id);
+
+      if (existing?.vehicleId) {
+        const { DashboardIndicatorsService } = await import('./dashboardIndicators');
+        await DashboardIndicatorsService.refreshForVehicle(existing.vehicleId).catch(() => {});
+      }
     }
     return success;
   }

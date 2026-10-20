@@ -27,6 +27,10 @@ export class ExpenseService {
     // Enfileira na fila outbox de sincronização offline-first (US02)
     await SyncQueueRepository.enqueue('CREATE_EXPENSE', '/api/v1/sync/despesas', newExpense);
 
+    // US13.3: Recalcula indicadores globais do dashboard ao salvar despesa
+    const { DashboardIndicatorsService } = await import('./dashboardIndicators');
+    await DashboardIndicatorsService.refreshForVehicle(newExpense.vehicleId).catch(() => {});
+
     return newExpense;
   }
 
@@ -56,6 +60,10 @@ export class ExpenseService {
 
     await SyncQueueRepository.enqueue('UPDATE_EXPENSE', `/api/v1/sync/despesas/${id}`, updated);
 
+    // US13.3: Recalcula indicadores globais do dashboard ao editar despesa
+    const { DashboardIndicatorsService } = await import('./dashboardIndicators');
+    await DashboardIndicatorsService.refreshForVehicle(existing.vehicleId).catch(() => {});
+
     return updated;
   }
 
@@ -73,6 +81,10 @@ export class ExpenseService {
       id,
       vehicleId: existing.vehicleId,
     });
+
+    // US13.3: Recalcula indicadores globais do dashboard ao excluir despesa
+    const { DashboardIndicatorsService } = await import('./dashboardIndicators');
+    await DashboardIndicatorsService.refreshForVehicle(existing.vehicleId).catch(() => {});
 
     return true;
   }

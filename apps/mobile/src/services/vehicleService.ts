@@ -2,6 +2,7 @@ import { Vehicle, CreateVehicleDTO, UpdateVehicleDTO } from '@autogest/shared-ty
 import { VehicleRepository } from '../repositories/VehicleRepository';
 import { RefuelRepository } from '../repositories/RefuelRepository';
 import { ExpenseRepository } from '../repositories/ExpenseRepository';
+import { FixedCostRepository } from '../repositories/FixedCostRepository';
 import { SyncQueueRepository } from '../repositories/SyncQueueRepository';
 import { useAppStore } from '../store/useAppStore';
 import { validateVehicleForm } from './vehicleValidation';
@@ -16,6 +17,12 @@ export class VehicleService {
 
     // Mantém a sincronização do estado global
     store.setVehicles(list);
+
+    const active = useAppStore.getState().selectedVehicle;
+    if (active) {
+      const { DashboardIndicatorsService } = await import('./dashboardIndicators');
+      await DashboardIndicatorsService.refreshForVehicle(active.id).catch(() => {});
+    }
 
     return list;
   }
@@ -69,6 +76,12 @@ export class VehicleService {
     const updatedList = [...store.vehicles.filter(v => v.id !== newVehicle.id), newVehicle];
     store.setVehicles(updatedList);
 
+    const active = useAppStore.getState().selectedVehicle;
+    if (active?.id === newVehicle.id) {
+      const { DashboardIndicatorsService } = await import('./dashboardIndicators');
+      await DashboardIndicatorsService.refreshForVehicle(newVehicle.id).catch(() => {});
+    }
+
     return newVehicle;
   }
 
@@ -90,6 +103,8 @@ export class VehicleService {
 
     if (store.selectedVehicle?.id === id) {
       store.setSelectedVehicle(updated);
+      const { DashboardIndicatorsService } = await import('./dashboardIndicators');
+      await DashboardIndicatorsService.refreshForVehicle(id).catch(() => {});
     }
 
     return updated;
@@ -102,9 +117,10 @@ export class VehicleService {
     const success = await VehicleRepository.delete(id);
     if (!success) return false;
 
-    // US04.6: Ocultação lógica em cascata dos registros vinculados (abastecimentos, despesas, etc)
+    // US04.6: Ocultação lógica em cascata dos registros vinculados (abastecimentos, despesas, custos fixos)
     await RefuelRepository.softDeleteByVehicle(id);
     await ExpenseRepository.softDeleteByVehicle(id);
+    await FixedCostRepository.softDeleteByVehicle(id);
 
     // Enfileira sincronização de exclusão
     await SyncQueueRepository.enqueue('DELETE_VEHICLE', `/api/v1/sync/veiculos/${id}`, { id });
@@ -114,17 +130,23 @@ export class VehicleService {
     const remaining = store.vehicles.filter(v => v.id !== id);
     store.setVehicles(remaining);
 
+    const { DashboardIndicatorsService } = await import('./dashboardIndicators');
+    await DashboardIndicatorsService.refreshForSelectedVehicle().catch(() => {});
+
     return true;
   }
 
   /**
-   * Seleciona o veículo ativo global
+   * Seleciona o veículo ativo global e recalcula os indicadores do painel (US13.3)
    */
   static selectVehicle(vehicleId: string): void {
     const store = useAppStore.getState();
     const found = store.vehicles.find(v => v.id === vehicleId);
     if (found) {
       store.setSelectedVehicle(found);
+      import('./dashboardIndicators').then(({ DashboardIndicatorsService }) => {
+        DashboardIndicatorsService.refreshForVehicle(found.id).catch(() => {});
+      });
     }
   }
 }

@@ -5,14 +5,8 @@ export class OdometerRepository {
   private static TABLE = 'local_leituras_hodometro';
 
   static async listByVehicle(vehicleId: string): Promise<OdometerReading[]> {
-    const primary = await db.find<OdometerReading>(
-      this.TABLE,
-      item => item.vehicleId === vehicleId && !item.deletedAt && !(item as any).excluido_em,
-    );
-    const synced = await db.find<OdometerReading>(
-      'leituras_hodometro',
-      item => item.vehicleId === vehicleId && !item.deletedAt && !(item as any).excluido_em,
-    );
+    const primary = await db.findByVehicleIndex<OdometerReading>(this.TABLE, vehicleId);
+    const synced = await db.findByVehicleIndex<OdometerReading>('leituras_hodometro', vehicleId);
 
     const map = new Map<string, OdometerReading>();
     for (const item of [...synced, ...primary]) {

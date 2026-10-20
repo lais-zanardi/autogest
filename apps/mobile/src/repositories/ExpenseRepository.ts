@@ -5,10 +5,7 @@ export class ExpenseRepository {
   private static TABLE = 'local_despesas';
 
   static async listByVehicle(vehicleId: string): Promise<Expense[]> {
-    const all = await db.find<Expense>(
-      this.TABLE,
-      item => item.vehicleId === vehicleId && !item.deletedAt && !(item as any).excluido_em,
-    );
+    const all = await db.findByVehicleIndex<Expense>(this.TABLE, vehicleId);
     return all.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
 
@@ -35,11 +32,7 @@ export class ExpenseRepository {
     const startTime = new Date(inicio).getTime();
     const endTime = new Date(fim).getTime();
 
-    const list = await this.listByVehicle(vehicleId);
-    return list.filter(item => {
-      const itemTime = new Date(item.date).getTime();
-      return itemTime >= startTime && itemTime <= endTime;
-    });
+    return db.findByVehicleIndex<Expense>(this.TABLE, vehicleId, startTime, endTime);
   }
 
   static async findById(id: string): Promise<Expense | null> {
