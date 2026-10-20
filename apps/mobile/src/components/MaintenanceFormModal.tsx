@@ -34,6 +34,9 @@ interface MaintenanceFormModalProps {
 
 const SERVICE_TYPE_OPTIONS: Array<{ key: MaintenanceServiceType; label: string; icon: string }> = [
   { key: 'troca_oleo', label: 'Óleo', icon: '🛢️' },
+  { key: 'calibragem_pneus', label: 'Calibragem', icon: '💨' },
+  { key: 'fluido_freio', label: 'Fluido Freio', icon: '🛑' },
+  { key: 'agua_radiador', label: 'Radiador', icon: '💧' },
   { key: 'filtros', label: 'Filtros', icon: '💨' },
   { key: 'correia_dentada', label: 'Correia', icon: '⚙️' },
   { key: 'velas', label: 'Velas', icon: '⚡' },

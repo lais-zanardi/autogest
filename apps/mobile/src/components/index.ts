@@ -13,3 +13,5 @@ export * from './MaintenanceAlertsCard';
 export * from './MaintenanceRuleModal';
 export * from './UsageAndCostIndicatorsCard';
 export * from './FixedCostFormModal';
+export * from './TireAndFluidModal';
+export * from './TireAndFluidCard';

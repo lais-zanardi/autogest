@@ -8,6 +8,8 @@ import {
 } from '@autogest/shared-types';
 import { MaintenanceRuleRepository } from '../repositories/MaintenanceRuleRepository';
 import { MaintenanceRepository } from '../repositories/MaintenanceRepository';
+import { TireRecordRepository } from '../repositories/TireRecordRepository';
+import { FluidRecordRepository } from '../repositories/FluidRecordRepository';
 import { VehicleRepository } from '../repositories/VehicleRepository';
 import { OdometerRepository } from '../repositories/OdometerRepository';
 import { SyncQueueRepository } from '../repositories/SyncQueueRepository';
@@ -16,6 +18,9 @@ import { NotificationService } from './notificationService';
 
 export const SERVICE_TYPE_LABELS: Record<MaintenanceServiceType, string> = {
   troca_oleo: 'Troca de Óleo',
+  calibragem_pneus: 'Calibragem de Pneus',
+  fluido_freio: 'Fluido de Freio',
+  agua_radiador: 'Água do Radiador',
   filtros: 'Filtros (Ar/Combustível/Cabine)',
   correia_dentada: 'Correia Dentada',
   velas: 'Velas de Ignição',
@@ -38,6 +43,30 @@ export const DEFAULT_MAINTENANCE_RULES: Array<{
     intervalKm: 10000,
     intervalDays: 180,
     advanceKm: 500,
+    advanceDays: 15,
+  },
+  {
+    serviceType: 'calibragem_pneus',
+    name: 'Calibragem Periódica dos Pneus',
+    intervalKm: 0,
+    intervalDays: 15,
+    advanceKm: 0,
+    advanceDays: 3,
+  },
+  {
+    serviceType: 'fluido_freio',
+    name: 'Troca de Fluido de Freio',
+    intervalKm: 20000,
+    intervalDays: 365,
+    advanceKm: 1000,
+    advanceDays: 15,
+  },
+  {
+    serviceType: 'agua_radiador',
+    name: 'Troca de Água/Aditivo do Radiador',
+    intervalKm: 30000,
+    intervalDays: 365,
+    advanceKm: 1000,
     advanceDays: 15,
   },
   {
@@ -66,7 +95,7 @@ export const DEFAULT_MAINTENANCE_RULES: Array<{
   },
   {
     serviceType: 'pneus',
-    name: 'Rodízio e Calibragem de Pneus',
+    name: 'Rodízio e Troca de Pneus',
     intervalKm: 10000,
     intervalDays: 180,
     advanceKm: 500,
@@ -139,8 +168,12 @@ export class MaintenanceAlertService {
     const leituras = await OdometerRepository.listByVehicle(vehicleId);
     const mediaKmDia = calcularMediaKmDia(leituras, dataReferencia);
 
-    // Obtém histórico de manutenções realizadas (US09)
-    const allMaintenances = await MaintenanceRepository.listByVehicle(vehicleId);
+    // Obtém histórico de manutenções realizadas (US09) e registros de pneus/fluidos (US11.5)
+    const [allMaintenances, allTireRecords, allFluidRecords] = await Promise.all([
+      MaintenanceRepository.listByVehicle(vehicleId),
+      TireRecordRepository.listByVehicle(vehicleId),
+      FluidRecordRepository.listByVehicle(vehicleId),
+    ]);
 
     // Obtém regras ativas
     let rules = await MaintenanceRuleRepository.listByVehicle(vehicleId, true);
@@ -151,12 +184,51 @@ export class MaintenanceAlertService {
     const alerts: MaintenanceAlert[] = [];
 
     for (const rule of rules) {
-      // Encontra a manutenção mais recente realizada deste tipo de serviço
-      const maintenancesOfType = allMaintenances
+      // Encontra a execução mais recente realizada deste tipo de serviço (US09 + US11.5)
+      const candidates: Array<{ odometer: number; date: string }> = allMaintenances
         .filter(m => m.serviceType === rule.serviceType)
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        .map(m => ({ odometer: m.odometer, date: m.date }));
 
-      const ultimaManutencao: Maintenance | null = maintenancesOfType[0] || null;
+      if (rule.serviceType === 'calibragem_pneus') {
+        for (const t of allTireRecords) {
+          if (t.type === 'calibragem') {
+            candidates.push({ odometer: t.km, date: t.date });
+          }
+        }
+      } else if (rule.serviceType === 'pneus') {
+        for (const t of allTireRecords) {
+          if (t.type === 'troca') {
+            candidates.push({ odometer: t.km, date: t.date });
+          }
+        }
+      } else if (rule.serviceType === 'troca_oleo') {
+        for (const f of allFluidRecords) {
+          if (f.fluidType === 'oleo_motor' && f.level !== 'baixo') {
+            candidates.push({ odometer: f.km, date: f.date });
+          }
+        }
+      } else if (rule.serviceType === 'fluido_freio') {
+        for (const f of allFluidRecords) {
+          if (f.fluidType === 'freio' && f.level !== 'baixo') {
+            candidates.push({ odometer: f.km, date: f.date });
+          }
+        }
+      } else if (rule.serviceType === 'agua_radiador') {
+        for (const f of allFluidRecords) {
+          if (f.fluidType === 'radiador' && f.level !== 'baixo') {
+            candidates.push({ odometer: f.km, date: f.date });
+          }
+        }
+      }
+
+      candidates.sort((a, b) => {
+        const timeDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+        if (timeDiff !== 0) return timeDiff;
+        return b.odometer - a.odometer;
+      });
+
+      const ultimaManutencao: Maintenance | { odometer: number; date: string } | null =
+        candidates[0] || null;
 
       // Executa cálculo puro (US10.3)
       const calculation = calcularProximoVencimento({

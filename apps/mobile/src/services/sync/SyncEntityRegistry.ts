@@ -11,6 +11,7 @@ export interface SyncEntityDefinition {
   endpoint: string;
   localTable: string;
   applyRemote: (remoteItem: any) => Promise<void>;
+  applyServerChange?: (remoteItem: any) => Promise<void>;
 }
 
 /**
@@ -21,7 +22,10 @@ export class SyncEntityRegistry {
   private static registry: Map<string, SyncEntityDefinition> = new Map();
 
   static register(definition: SyncEntityDefinition): void {
-    this.registry.set(definition.name, definition);
+    this.registry.set(definition.name, {
+      ...definition,
+      applyServerChange: definition.applyServerChange || definition.applyRemote,
+    });
   }
 
   static get(name: string): SyncEntityDefinition | undefined {
@@ -30,6 +34,10 @@ export class SyncEntityRegistry {
 
   static getAll(): SyncEntityDefinition[] {
     return Array.from(this.registry.values());
+  }
+
+  static listRegisteredEntities(): string[] {
+    return Array.from(this.registry.keys());
   }
 }
 
@@ -417,6 +425,114 @@ SyncEntityRegistry.register({
           remote.valor_mensal !== undefined
             ? Number(remote.valor_mensal)
             : Number(remote.monthlyAmount || 0),
+        createdAt: remote.criado_em || remote.createdAt || new Date().toISOString(),
+        updatedAt: remote.atualizado_em || remote.updatedAt || new Date().toISOString(),
+        deletedAt: null,
+      });
+    }
+  },
+});
+
+// 9. Entidade Registros de Pneu (US11.1 / US02.7)
+SyncEntityRegistry.register({
+  name: 'registros_pneu',
+  endpoint: '/api/v1/sync/registros_pneu',
+  localTable: 'registros_pneu',
+  applyRemote: async (remote: any) => {
+    const { TireRecordRepository } = await import('../../repositories/TireRecordRepository');
+    const existing = await TireRecordRepository.findById(remote.id);
+    const remoteUpdatedAt = new Date(remote.atualizado_em || remote.updatedAt || 0).getTime();
+
+    if (remote.excluido_em || remote.deletedAt) {
+      if (existing) {
+        await TireRecordRepository.delete(remote.id);
+      }
+      return;
+    }
+
+    if (existing) {
+      const localUpdatedAt = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
+      if (remoteUpdatedAt >= localUpdatedAt) {
+        await TireRecordRepository.update(remote.id, {
+          date: remote.data || remote.date,
+          km: remote.km !== undefined ? Number(remote.km) : existing.km,
+          type: remote.tipo || remote.type,
+          pressurePsi:
+            remote.pressao_psi !== undefined
+              ? Number(remote.pressao_psi)
+              : Number(remote.pressurePsi),
+          treadDepthMm:
+            remote.sulco_mm !== undefined
+              ? remote.sulco_mm !== null
+                ? Number(remote.sulco_mm)
+                : null
+              : remote.treadDepthMm !== undefined
+                ? remote.treadDepthMm !== null
+                  ? Number(remote.treadDepthMm)
+                  : null
+                : existing.treadDepthMm,
+        });
+      }
+    } else {
+      await db.insert('registros_pneu', {
+        id: remote.id,
+        vehicleId: remote.veiculo_id || remote.vehicleId,
+        date: remote.data || remote.date,
+        km: Number(remote.km || 0),
+        type: remote.tipo || remote.type || 'calibragem',
+        pressurePsi:
+          remote.pressao_psi !== undefined
+            ? Number(remote.pressao_psi)
+            : Number(remote.pressurePsi || 0),
+        treadDepthMm:
+          remote.sulco_mm !== undefined && remote.sulco_mm !== null
+            ? Number(remote.sulco_mm)
+            : remote.treadDepthMm !== undefined && remote.treadDepthMm !== null
+              ? Number(remote.treadDepthMm)
+              : null,
+        createdAt: remote.criado_em || remote.createdAt || new Date().toISOString(),
+        updatedAt: remote.atualizado_em || remote.updatedAt || new Date().toISOString(),
+        deletedAt: null,
+      });
+    }
+  },
+});
+
+// 10. Entidade Registros de Fluido (US11.1 / US02.7)
+SyncEntityRegistry.register({
+  name: 'registros_fluido',
+  endpoint: '/api/v1/sync/registros_fluido',
+  localTable: 'registros_fluido',
+  applyRemote: async (remote: any) => {
+    const { FluidRecordRepository } = await import('../../repositories/FluidRecordRepository');
+    const existing = await FluidRecordRepository.findById(remote.id);
+    const remoteUpdatedAt = new Date(remote.atualizado_em || remote.updatedAt || 0).getTime();
+
+    if (remote.excluido_em || remote.deletedAt) {
+      if (existing) {
+        await FluidRecordRepository.delete(remote.id);
+      }
+      return;
+    }
+
+    if (existing) {
+      const localUpdatedAt = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
+      if (remoteUpdatedAt >= localUpdatedAt) {
+        await FluidRecordRepository.update(remote.id, {
+          fluidType: remote.tipo_fluido || remote.fluidType,
+          date: remote.data || remote.date,
+          km: remote.km !== undefined ? Number(remote.km) : existing.km,
+          level: remote.nivel || remote.level || 'normal',
+        });
+      }
+    } else {
+      await db.insert('registros_fluido', {
+        id: remote.id,
+        vehicleId: remote.veiculo_id || remote.vehicleId,
+        fluidType: remote.tipo_fluido || remote.fluidType || 'oleo_motor',
+        date: remote.data || remote.date,
+        km: Number(remote.km || 0),
+        level: remote.nivel || remote.level || 'normal',
         createdAt: remote.criado_em || remote.createdAt || new Date().toISOString(),
         updatedAt: remote.atualizado_em || remote.updatedAt || new Date().toISOString(),
         deletedAt: null,

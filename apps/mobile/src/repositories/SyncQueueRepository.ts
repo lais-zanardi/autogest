@@ -23,7 +23,13 @@ export type SyncOperationType =
   | 'DELETE_MAINTENANCE_RULE'
   | 'CREATE_FIXED_COST'
   | 'UPDATE_FIXED_COST'
-  | 'DELETE_FIXED_COST';
+  | 'DELETE_FIXED_COST'
+  | 'CREATE_TIRE_RECORD'
+  | 'UPDATE_TIRE_RECORD'
+  | 'DELETE_TIRE_RECORD'
+  | 'CREATE_FLUID_RECORD'
+  | 'UPDATE_FLUID_RECORD'
+  | 'DELETE_FLUID_RECORD';
 
 export type SyncStatus = 'PENDING' | 'SYNCING' | 'FAILED' | 'COMPLETED';
 
@@ -96,6 +102,10 @@ export class SyncQueueRepository {
     return items
       .filter(item => !item.nextRetryAt || new Date(item.nextRetryAt).getTime() <= now)
       .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  }
+
+  static async listPending(): Promise<SyncQueueItem[]> {
+    return this.getPendingItems();
   }
 
   /**

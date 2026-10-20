@@ -9,6 +9,8 @@ import { RefuelRepository } from '../repositories/RefuelRepository';
 import { OdometerRepository } from '../repositories/OdometerRepository';
 import { ExpenseRepository } from '../repositories/ExpenseRepository';
 import { MaintenanceRepository } from '../repositories/MaintenanceRepository';
+import { TireRecordRepository } from '../repositories/TireRecordRepository';
+import { FluidRecordRepository } from '../repositories/FluidRecordRepository';
 import {
   obterIndicadoresUsoECustoDoPeriodo,
   resolverIntervaloPeriodo,
@@ -47,6 +49,8 @@ export interface CalcularIndicadoresDashboardPuroParams {
   }>;
   despesasCount?: number;
   manutencoesCount?: number;
+  pneusCount?: number;
+  fluidosCount?: number;
   leituras?: Array<{ km: number; date?: string }>;
   alertasAtivos?: MaintenanceAlert[];
   loadDurationMs?: number;
@@ -200,6 +204,8 @@ export function calcularIndicadoresDashboardPuro(
     (params.abastecimentos?.length || 0) > 0 ||
     (params.despesasCount || 0) > 0 ||
     (params.manutencoesCount || 0) > 0 ||
+    (params.pneusCount || 0) > 0 ||
+    (params.fluidosCount || 0) > 0 ||
     custoFixo > 0 ||
     (params.leituras?.length || 0) > 0 ||
     alertas.length > 0;
@@ -246,6 +252,8 @@ export class DashboardIndicatorsService {
       todasLeituras,
       todasDespesas,
       todasManutencoes,
+      todosPneus,
+      todosFluidos,
       alertasAtivos,
     ] = await Promise.all([
       obterIndicadoresUsoECustoDoPeriodo(vehicleId, inicio, fim),
@@ -253,6 +261,8 @@ export class DashboardIndicatorsService {
       OdometerRepository.listByVehicle(vehicleId),
       ExpenseRepository.listByVehicle(vehicleId),
       MaintenanceRepository.listByVehicle(vehicleId),
+      TireRecordRepository.listByVehicle(vehicleId),
+      FluidRecordRepository.listByVehicle(vehicleId),
       MaintenanceAlertService.evaluateVehicleAlerts(vehicleId, dataReferencia, false),
     ]);
 
@@ -279,6 +289,8 @@ export class DashboardIndicatorsService {
       abastecimentos: todosAbastecimentos,
       despesasCount: todasDespesas.length,
       manutencoesCount: todasManutencoes.length,
+      pneusCount: todosPneus.length,
+      fluidosCount: todosFluidos.length,
       leituras: todasLeituras,
       alertasAtivos,
       loadDurationMs,

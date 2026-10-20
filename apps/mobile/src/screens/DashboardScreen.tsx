@@ -13,6 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useAppStore } from '../store/useAppStore';
 import { VehicleService } from '../services/vehicleService';
 import { MaintenanceService } from '../services/maintenanceService';
+import { TireAndFluidService } from '../services/tireAndFluidService';
 import { DashboardIndicatorsService } from '../services/dashboardIndicators';
 import {
   VehicleHeaderSelector,
@@ -24,11 +25,14 @@ import {
   MaintenanceAlertsCard,
   MaintenanceRuleModal,
   UsageAndCostIndicatorsCard,
+  TireAndFluidModal,
+  TireAndFluidCard,
+  TireFluidTab,
   ConfirmModal,
 } from '../components';
 import { formatCurrency, formatKml, formatDecimal } from '../utils/formatters';
 import { colors, spacing, radius, typography } from '../theme';
-import { Maintenance } from '@autogest/shared-types';
+import { Maintenance, TireRecord, FluidRecord } from '@autogest/shared-types';
 
 export const DashboardScreen: React.FC = () => {
   const { user, selectedVehicle, dashboardIndicators, isLoadingDashboard } = useAppStore();
@@ -42,6 +46,13 @@ export const DashboardScreen: React.FC = () => {
   const [refreshMaintTrigger, setRefreshMaintTrigger] = useState(0);
   const [rulesModalVisible, setRulesModalVisible] = useState(false);
   const [refreshAlertsTrigger, setRefreshAlertsTrigger] = useState(0);
+  const [tireFluidModalVisible, setTireFluidModalVisible] = useState(false);
+  const [tireFluidTab, setTireFluidTab] = useState<TireFluidTab>('pneu');
+  const [tireToEdit, setTireToEdit] = useState<TireRecord | null>(null);
+  const [fluidToEdit, setFluidToEdit] = useState<FluidRecord | null>(null);
+  const [tireToDelete, setTireToDelete] = useState<TireRecord | null>(null);
+  const [fluidToDelete, setFluidToDelete] = useState<FluidRecord | null>(null);
+  const [refreshTireFluidTrigger, setRefreshTireFluidTrigger] = useState(0);
 
   useEffect(() => {
     VehicleService.listVehicles();
@@ -351,6 +362,30 @@ export const DashboardScreen: React.FC = () => {
               refreshTrigger={refreshAlertsTrigger + refreshMaintTrigger}
             />
 
+            {/* Controle de Pneus e Fluidos (US11.2, US11.3, US11.4) */}
+            <TireAndFluidCard
+              vehicle={selectedVehicle}
+              onAddNewPress={tab => {
+                setTireToEdit(null);
+                setFluidToEdit(null);
+                setTireFluidTab(tab);
+                setTireFluidModalVisible(true);
+              }}
+              onEditTirePress={record => {
+                setFluidToEdit(null);
+                setTireToEdit(record);
+                setTireFluidModalVisible(true);
+              }}
+              onDeleteTirePress={record => setTireToDelete(record)}
+              onEditFluidPress={record => {
+                setTireToEdit(null);
+                setFluidToEdit(record);
+                setTireFluidModalVisible(true);
+              }}
+              onDeleteFluidPress={record => setFluidToDelete(record)}
+              refreshTrigger={refreshTireFluidTrigger + refreshAlertsTrigger}
+            />
+
             {/* Histórico e Ações de Manutenção (US09.7) */}
             <MaintenanceHistoryCard
               vehicle={selectedVehicle}
@@ -364,6 +399,49 @@ export const DashboardScreen: React.FC = () => {
               }}
               onDeletePress={m => setMaintenanceToDelete(m)}
               refreshTrigger={refreshMaintTrigger}
+            />
+
+            <TireAndFluidModal
+              visible={tireFluidModalVisible}
+              vehicle={selectedVehicle}
+              initialTab={tireFluidTab}
+              tireToEdit={tireToEdit}
+              fluidToEdit={fluidToEdit}
+              onClose={() => setTireFluidModalVisible(false)}
+              onSuccess={() => {
+                setRefreshTireFluidTrigger(prev => prev + 1);
+                setRefreshAlertsTrigger(prev => prev + 1);
+              }}
+            />
+
+            <ConfirmModal
+              visible={!!tireToDelete}
+              title="Excluir Registro de Pneu"
+              message="Deseja realmente excluir este registro de pneu? Esta ação ocultará o registro do histórico."
+              onConfirm={async () => {
+                if (tireToDelete) {
+                  await TireAndFluidService.deleteTireRecord(tireToDelete.id);
+                  setTireToDelete(null);
+                  setRefreshTireFluidTrigger(prev => prev + 1);
+                  setRefreshAlertsTrigger(prev => prev + 1);
+                }
+              }}
+              onCancel={() => setTireToDelete(null)}
+            />
+
+            <ConfirmModal
+              visible={!!fluidToDelete}
+              title="Excluir Registro de Fluido"
+              message="Deseja realmente excluir este registro de fluido? Esta ação ocultará o registro do histórico."
+              onConfirm={async () => {
+                if (fluidToDelete) {
+                  await TireAndFluidService.deleteFluidRecord(fluidToDelete.id);
+                  setFluidToDelete(null);
+                  setRefreshTireFluidTrigger(prev => prev + 1);
+                  setRefreshAlertsTrigger(prev => prev + 1);
+                }
+              }}
+              onCancel={() => setFluidToDelete(null)}
             />
 
             <UpdateOdometerModal

@@ -231,7 +231,16 @@ export interface DashboardIndicators {
 export type MaintenanceType = 'preventiva' | 'corretiva';
 
 export type MaintenanceServiceType =
-  'troca_oleo' | 'filtros' | 'correia_dentada' | 'velas' | 'pneus' | 'freios' | 'outros';
+  | 'troca_oleo'
+  | 'calibragem_pneus'
+  | 'fluido_freio'
+  | 'agua_radiador'
+  | 'filtros'
+  | 'correia_dentada'
+  | 'velas'
+  | 'pneus'
+  | 'freios'
+  | 'outros';
 
 export type AttachmentUploadStatus = 'pendente' | 'enviado' | 'erro';
 
@@ -442,4 +451,67 @@ export interface CreateFixedCostDTO {
 export interface UpdateFixedCostDTO {
   description?: string;
   monthlyAmount?: number;
+}
+
+export type TireRecordType = 'calibragem' | 'troca';
+
+export interface TireRecord {
+  id: string;
+  vehicleId: string;
+  date: string;
+  km: number;
+  type: TireRecordType;
+  pressurePsi: number;
+  treadDepthMm?: number | null;
+  createdAt: string;
+  updatedAt?: string;
+  deletedAt?: string | null;
+}
+
+export interface CreateTireRecordDTO {
+  vehicleId: string;
+  date: string;
+  km: number;
+  type: TireRecordType;
+  pressurePsi: number;
+  treadDepthMm?: number | null;
+}
+
+export interface UpdateTireRecordDTO {
+  date?: string;
+  km?: number;
+  type?: TireRecordType;
+  pressurePsi?: number;
+  treadDepthMm?: number | null;
+}
+
+export type FluidType = 'oleo_motor' | 'freio' | 'radiador';
+
+export type FluidLevel = 'normal' | 'baixo';
+
+export interface FluidRecord {
+  id: string;
+  vehicleId: string;
+  fluidType: FluidType;
+  date: string;
+  km: number;
+  level: FluidLevel;
+  createdAt: string;
+  updatedAt?: string;
+  deletedAt?: string | null;
+}
+
+export interface CreateFluidRecordDTO {
+  vehicleId: string;
+  fluidType: FluidType;
+  date: string;
+  km: number;
+  level?: FluidLevel;
+}
+
+export interface UpdateFluidRecordDTO {
+  fluidType?: FluidType;
+  date?: string;
+  km?: number;
+  level?: FluidLevel;
 }

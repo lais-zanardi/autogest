@@ -60,7 +60,7 @@ export function calcularMediaKmDia(
 
 export interface CalcularProximoVencimentoParams {
   regra: MaintenanceRule;
-  ultimaManutencao?: Maintenance | null;
+  ultimaManutencao?: Maintenance | { odometer: number; date: string } | null;
   kmAtual: number;
   mediaKmDia?: number;
   dataReferencia?: Date | string;

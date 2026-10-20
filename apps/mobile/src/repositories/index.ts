@@ -7,3 +7,5 @@ export * from './MaintenanceRepository';
 export * from './AttachmentRepository';
 export * from './MaintenanceRuleRepository';
 export * from './FixedCostRepository';
+export * from './TireRecordRepository';
+export * from './FluidRecordRepository';

@@ -69,6 +69,12 @@ export const MaintenanceHistoryCard: React.FC<MaintenanceHistoryCardProps> = ({
     switch (type) {
       case 'troca_oleo':
         return '🛢️ Troca de Óleo';
+      case 'calibragem_pneus':
+        return '💨 Calibragem de Pneus';
+      case 'fluido_freio':
+        return '🛑 Fluido de Freio';
+      case 'agua_radiador':
+        return '💧 Água do Radiador';
       case 'filtros':
         return '💨 Filtros';
       case 'correia_dentada':

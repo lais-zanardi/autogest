@@ -174,6 +174,57 @@ const custosFixosSyncRouter = createSyncResourceRouter({
   },
 });
 
+// 9. Registros de Pneu (US11.1)
+const registrosPneuSyncRouter = createSyncResourceRouter({
+  tableName: 'registros_pneu',
+  ownershipType: 'via_vehicle',
+  allowedFields: ['veiculo_id', 'data', 'km', 'tipo', 'pressao_psi', 'sulco_mm'],
+  validatePayload: body => {
+    const vId = body.veiculo_id || body.vehicleId;
+    if (!vId) return { isValid: false, error: 'veiculo_id é obrigatório.' };
+    const tipo = body.tipo || body.type;
+    if (!tipo || !['calibragem', 'troca'].includes(tipo)) {
+      return { isValid: false, error: 'tipo deve ser calibragem ou troca.' };
+    }
+    const km = body.km;
+    if (km === undefined || km === null || isNaN(Number(km)) || Number(km) <= 0) {
+      return { isValid: false, error: 'km deve ser maior que zero.' };
+    }
+    const pressao = body.pressao_psi !== undefined ? body.pressao_psi : body.pressurePsi;
+    if (pressao === undefined || pressao === null || Number(pressao) <= 0) {
+      return { isValid: false, error: 'pressao_psi deve ser maior que zero.' };
+    }
+    const sulco = body.sulco_mm !== undefined ? body.sulco_mm : body.treadDepthMm;
+    if (sulco !== undefined && sulco !== null && (isNaN(Number(sulco)) || Number(sulco) < 0)) {
+      return { isValid: false, error: 'sulco_mm deve ser maior ou igual a zero.' };
+    }
+    return { isValid: true };
+  },
+});
+
+// 10. Registros de Fluido (US11.1)
+const registrosFluidoSyncRouter = createSyncResourceRouter({
+  tableName: 'registros_fluido',
+  ownershipType: 'via_vehicle',
+  allowedFields: ['veiculo_id', 'tipo_fluido', 'data', 'km', 'nivel'],
+  validatePayload: body => {
+    const vId = body.veiculo_id || body.vehicleId;
+    if (!vId) return { isValid: false, error: 'veiculo_id é obrigatório.' };
+    const tipoFluido = body.tipo_fluido || body.fluidType;
+    if (!tipoFluido || !['oleo_motor', 'freio', 'radiador'].includes(tipoFluido)) {
+      return {
+        isValid: false,
+        error: 'tipo_fluido deve ser oleo_motor, freio ou radiador.',
+      };
+    }
+    const km = body.km;
+    if (km === undefined || km === null || isNaN(Number(km)) || Number(km) <= 0) {
+      return { isValid: false, error: 'km deve ser maior que zero.' };
+    }
+    return { isValid: true };
+  },
+});
+
 // Monta rotas em português e inglês para conveniência
 router.use('/veiculos', veiculosSyncRouter);
 router.use('/vehicles', veiculosSyncRouter);
@@ -198,5 +249,11 @@ router.use('/maintenance_rules', regrasManutencaoSyncRouter);
 
 router.use('/custos_fixos', custosFixosSyncRouter);
 router.use('/fixed_costs', custosFixosSyncRouter);
+
+router.use('/registros_pneu', registrosPneuSyncRouter);
+router.use('/tire_records', registrosPneuSyncRouter);
+
+router.use('/registros_fluido', registrosFluidoSyncRouter);
+router.use('/fluid_records', registrosFluidoSyncRouter);
 
 export default router;

@@ -16,5 +16,6 @@ export * from './notificationService';
 export * from './maintenanceAlertService';
 export * from './usageAndCostIndicators';
 export * from './fixedCostService';
+export * from './tireAndFluidService';
 export * from './dashboardIndicators';
 export * from './sync';

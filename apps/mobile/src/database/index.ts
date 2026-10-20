@@ -6,6 +6,7 @@ import './migrations/005_create_local_manutencoes';
 import './migrations/006_create_local_regras_manutencao';
 import './migrations/007_create_local_custos_fixos';
 import './migrations/008_create_local_dashboard_indexes';
+import './migrations/009_create_local_pneus_e_fluidos';
 import { localMigrator } from './migrations/localMigrator';
 
 export * from './DatabaseConnection';
