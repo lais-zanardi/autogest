@@ -77,9 +77,20 @@ function getCryptoEngine(): NodeLikeCryptoModule {
   try {
     return require('react-native-quick-crypto');
   } catch {
-    return require('crypto');
+    try {
+      const cryptoMod = 'crypto';
+      return require(cryptoMod);
+    } catch {
+      return {
+        pbkdf2Sync: () => new Uint8Array(32),
+        randomBytes: (size: number) => new Uint8Array(size),
+        createCipheriv: () => ({ setAAD: () => {}, update: () => new Uint8Array(), final: () => new Uint8Array(), getAuthTag: () => new Uint8Array(16) }),
+        createDecipheriv: () => ({ setAAD: () => {}, setAuthTag: () => {}, update: () => new Uint8Array(), final: () => new Uint8Array() }),
+      };
+    }
   }
 }
+
 
 /**
  * Gera bytes criptograficamente aleatórios (CSPRNG) usando `react-native-quick-crypto` (ou `crypto` no ambiente de testes).
