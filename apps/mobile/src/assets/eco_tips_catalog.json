@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "dicas": [
+    {
+      "id": "tip-tire-calibration",
+      "titulo": "Calibragem dos pneus em atraso",
+      "descricao": "Pneus com pressão abaixo do ideal aumentam a resistência de rolagem e podem elevar o consumo em até 10%.",
+      "prioridade": 1,
+      "condicao": {
+        "calibragemAtrasada": true
+      }
+    },
+    {
+      "id": "tip-anomaly-check",
+      "titulo": "Alerta de queda brusca de consumo",
+      "descricao": "Detectamos uma anomalia recente no consumo. Verifique velas, bicos injetores e filtros de combustível.",
+      "prioridade": 1,
+      "condicao": {
+        "temAnomalia": true
+      }
+    },
+    {
+      "id": "tip-below-goal",
+      "titulo": "Consumo abaixo da sua meta",
+      "descricao": "Acelere suavemente e troque de marchas no tempo correto para manter a rotação ideal do motor.",
+      "prioridade": 1,
+      "condicao": {
+        "situacaoMeta": "abaixo"
+      }
+    },
+    {
+      "id": "tip-urban-stop-go",
+      "titulo": "Trânsito urbano e freio motor",
+      "descricao": "Antecipe as paradas no trânsito. Em desacelerações engrenadas (cut-off), o consumo de combustível é zero.",
+      "prioridade": 2,
+      "condicao": {
+        "percurso": "urbano"
+      }
+    },
+    {
+      "id": "tip-urban-ac",
+      "titulo": "Ar-condicionado na cidade",
+      "descricao": "Em baixas velocidades na cidade, abrir as janelas pode ser mais econômico do que ligar o ar-condicionado.",
+      "prioridade": 2,
+      "condicao": {
+        "percurso": "urbano"
+      }
+    },
+    {
+      "id": "tip-highway-speed",
+      "titulo": "Velocidade constante na estrada",
+      "descricao": "Na rodovia, velocidades acima de 100 km/h aumentam exponencialmente o consumo devido ao arrasto aerodinâmico.",
+      "prioridade": 2,
+      "condicao": {
+        "percurso": "rodoviario"
+      }
+    },
+    {
+      "id": "tip-highway-windows",
+      "titulo": "Janelas fechadas em alta velocidade",
+      "descricao": "Em rodovias acima de 80 km/h, manter as janelas abertas gera turbulência. Use a ventilação interna ou ar-condicionado.",
+      "prioridade": 2,
+      "condicao": {
+        "percurso": "rodoviario"
+      }
+    },
+    {
+      "id": "tip-mixed-anticipation",
+      "titulo": "Condução preditiva em rotas mistas",
+      "descricao": "Evite frenagens e reacelerações repentinas nas transições de anel viário e vias arteriais.",
+      "prioridade": 2,
+      "condicao": {
+        "percurso": "misto"
+      }
+    },
+    {
+      "id": "tip-general-weight",
+      "titulo": "Evite peso inútil no veículo",
+      "descricao": "Cada 50 kg extras no porta-malas aumentam o consumo de combustível em aproximadamente 1 a 2%.",
+      "prioridade": 3,
+      "condicao": {}
+    },
+    {
+      "id": "tip-general-maintenance",
+      "titulo": "Manutenção preventiva em dia",
+      "descricao": "Troca de óleo, filtro de ar e alinhamento da direção em dia garantem a eficiência máxima do motor.",
+      "prioridade": 3,
+      "condicao": {}
+    }
+  ]
+}
