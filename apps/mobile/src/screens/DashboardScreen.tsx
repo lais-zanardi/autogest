@@ -28,11 +28,20 @@ import {
   TireAndFluidModal,
   TireAndFluidCard,
   TireFluidTab,
+  CoachMarkTarget,
   ConfirmModal,
+  BudgetCard,
+  BudgetModal,
 } from '../components';
+import { EfficiencyGoalCard } from '../components/EfficiencyGoalCard';
 import { formatCurrency, formatKml, formatDecimal } from '../utils/formatters';
 import { colors, spacing, radius, typography } from '../theme';
-import { Maintenance, TireRecord, FluidRecord } from '@autogest/shared-types';
+import { Maintenance, TireRecord, FluidRecord, Trip, EfficiencyGoal, GoalStatusResult, EcoTip } from '@autogest/shared-types';
+import { TripService } from '../services/tripService';
+import { EfficiencyGoalRepository } from '../repositories/EfficiencyGoalRepository';
+import { RefuelRepository } from '../repositories/RefuelRepository';
+import { statusDaMeta, perfilDeRodagem, recomendar } from '../services/efficiencyGoalService';
+import catalogJson from '../assets/eco_tips_catalog.json';
 
 export const DashboardScreen: React.FC = () => {
   const { user, selectedVehicle, dashboardIndicators, isLoadingDashboard } = useAppStore();
@@ -46,6 +55,8 @@ export const DashboardScreen: React.FC = () => {
   const [refreshMaintTrigger, setRefreshMaintTrigger] = useState(0);
   const [rulesModalVisible, setRulesModalVisible] = useState(false);
   const [refreshAlertsTrigger, setRefreshAlertsTrigger] = useState(0);
+  const [budgetModalVisible, setBudgetModalVisible] = useState(false);
+  const [refreshBudgetTrigger, setRefreshBudgetTrigger] = useState(0);
   const [tireFluidModalVisible, setTireFluidModalVisible] = useState(false);
   const [tireFluidTab, setTireFluidTab] = useState<TireFluidTab>('pneu');
   const [tireToEdit, setTireToEdit] = useState<TireRecord | null>(null);
@@ -53,6 +64,49 @@ export const DashboardScreen: React.FC = () => {
   const [tireToDelete, setTireToDelete] = useState<TireRecord | null>(null);
   const [fluidToDelete, setFluidToDelete] = useState<FluidRecord | null>(null);
   const [refreshTireFluidTrigger, setRefreshTireFluidTrigger] = useState(0);
+  const [activeTrip, setActiveTrip] = useState<Trip | null>(null);
+  const [efficiencyGoal, setEfficiencyGoal] = useState<EfficiencyGoal | null>(null);
+  const [goalStatus, setGoalStatus] = useState<GoalStatusResult>({
+    progresso: 0,
+    situacao: 'sem_dados',
+    percentual: 0,
+  });
+  const [topEcoTip, setTopEcoTip] = useState<EcoTip | undefined>(undefined);
+
+  useEffect(() => {
+    if (selectedVehicle?.id) {
+      const loadGoalData = async () => {
+        try {
+          const g = await EfficiencyGoalRepository.findByVehicle(selectedVehicle.id);
+          setEfficiencyGoal(g);
+          const refuels = await RefuelRepository.listByVehicle(selectedVehicle.id);
+          const profile = perfilDeRodagem(refuels, g?.targetKml);
+          const st = statusDaMeta(profile.consumoMedioKml, g?.targetKml);
+          setGoalStatus(st);
+          const catalog = (catalogJson as any)?.dicas || [];
+          const tips = recomendar(profile, catalog);
+          setTopEcoTip(tips[0]);
+        } catch (e) {
+          console.error('Erro ao carregar meta de eficiência no dashboard:', e);
+        }
+      };
+      loadGoalData();
+    } else {
+      setEfficiencyGoal(null);
+      setGoalStatus({ progresso: 0, situacao: 'sem_dados', percentual: 0 });
+      setTopEcoTip(undefined);
+    }
+  }, [selectedVehicle?.id, refreshAlertsTrigger, refreshMaintTrigger]);
+
+  useEffect(() => {
+    if (selectedVehicle?.id) {
+      TripService.obterViagemAtiva(selectedVehicle.id)
+        .then(setActiveTrip)
+        .catch(() => setActiveTrip(null));
+    } else {
+      setActiveTrip(null);
+    }
+  }, [selectedVehicle?.id]);
 
   useEffect(() => {
     VehicleService.listVehicles();
@@ -83,15 +137,104 @@ export const DashboardScreen: React.FC = () => {
         <VehicleHeaderSelector onAddNewPress={() => navigation.navigate('Garage')} />
 
         <View style={styles.header}>
-          <Text style={styles.greeting}>
-            Olá, {user?.name ? user.name.split(' ')[0] : 'Motorista'}! 👋
-          </Text>
-          <Text style={styles.vehicleSubtitle}>
-            {selectedVehicle
-              ? `${selectedVehicle.model} • ${selectedVehicle.plate}`
-              : 'Nenhum veículo ativo selecionado'}
-          </Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <View>
+              <Text style={styles.greeting}>
+                Olá, {user?.name ? user.name.split(' ')[0] : 'Motorista'}! 👋
+              </Text>
+              <Text style={styles.vehicleSubtitle}>
+                {selectedVehicle
+                  ? `${selectedVehicle.model} • ${selectedVehicle.plate}`
+                  : 'Nenhum veículo ativo selecionado'}
+              </Text>
+            </View>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <TouchableOpacity
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: colors.surfaceRaised,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                onPress={() => navigation.navigate('MaintenanceScheduleModal', { vehicleId: selectedVehicle?.id })}
+                accessibilityLabel="Agendamentos de Manutenção"
+              >
+                <Text style={{ fontSize: 18 }}>📅</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: colors.surfaceRaised,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                onPress={() => navigation.navigate('TripModal')}
+                accessibilityLabel="Modo Viagem"
+              >
+                <Text style={{ fontSize: 18 }}>🛣️</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: colors.surfaceRaised,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                onPress={() => navigation.navigate('SearchModal')}
+                accessibilityLabel="Buscar registros do veículo"
+              >
+                <Text style={{ fontSize: 18 }}>🔍</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
+
+        {/* US07.3: Banner de Viagem Ativa no Topo do Dashboard */}
+        {activeTrip && (
+          <TouchableOpacity
+            style={{
+              backgroundColor: colors.surfaceRaised,
+              borderColor: colors.lime,
+              borderWidth: 1.5,
+              borderRadius: 12,
+              padding: 12,
+              marginBottom: 12,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+            onPress={() => navigation.navigate('TripModal')}
+            activeOpacity={0.8}
+            accessibilityLabel="Ver viagem em andamento"
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={{ ...typography.caption, color: colors.lime, fontWeight: '700' }}>
+                🛣️ VIAGEM EM ANDAMENTO
+              </Text>
+              <Text style={{ ...typography.bodyBold, color: colors.textPrimary, marginTop: 2 }}>
+                {activeTrip.origin} ➔ {activeTrip.destination}
+              </Text>
+              <Text style={{ ...typography.caption, color: colors.textSecondary }}>
+                Km inicial: {activeTrip.startOdometer} km
+              </Text>
+            </View>
+            <View style={{ backgroundColor: colors.lime, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 }}>
+              <Text style={{ color: colors.black, fontWeight: '700', fontSize: 11 }}>Ver Viagem</Text>
+            </View>
+          </TouchableOpacity>
+        )}
 
         {!selectedVehicle ? (
           <View style={styles.emptyCard}>
@@ -145,131 +288,140 @@ export const DashboardScreen: React.FC = () => {
             )}
 
             {/* US13.1, US13.2 & US13.4: Cartões Consolidados de Indicadores do Dashboard */}
-            <View style={styles.grid}>
-              {/* 1. Gasto Total do Mês */}
-              <TouchableOpacity
-                style={[styles.card, styles.cardHighlight]}
-                onPress={() => navigation.navigate('Reports')}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.cardEyebrow}>RESUMO FINANCEIRO</Text>
-                <Text style={styles.cardLabel}>Gasto Total do Mês</Text>
-                <Text style={styles.cardValue}>
-                  {formatCurrency(dashboardIndicators?.monthTotalSpent || 0)}
-                </Text>
-                <Text style={styles.cardSubtext}>Toque para ver detalhes →</Text>
-              </TouchableOpacity>
+            <CoachMarkTarget targetId="tour-target-dashboard-metrics">
+              <View style={styles.grid}>
+                {/* 1. Gasto Total do Mês */}
+                <TouchableOpacity
+                  style={[styles.card, styles.cardHighlight]}
+                  onPress={() => navigation.navigate('Reports')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.cardEyebrow}>RESUMO FINANCEIRO</Text>
+                  <Text style={styles.cardLabel}>Gasto Total do Mês</Text>
+                  <Text style={styles.cardValue}>
+                    {formatCurrency(dashboardIndicators?.monthTotalSpent || 0)}
+                  </Text>
+                  <Text style={styles.cardSubtext}>Toque para ver detalhes →</Text>
+                </TouchableOpacity>
 
-              {/* 2. Custo Médio / Km */}
-              <TouchableOpacity
-                style={styles.card}
-                onPress={() => navigation.navigate('Reports')}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.cardEyebrow}>EFICIÊNCIA</Text>
-                <Text style={styles.cardLabel}>Custo Médio / Km</Text>
-                <Text style={styles.cardValue}>
-                  {dashboardIndicators && dashboardIndicators.averageCostPerKm > 0
-                    ? `${formatCurrency(dashboardIndicators.averageCostPerKm)}/km`
-                    : 'R$ 0,00/km'}
-                </Text>
-                <Text style={styles.cardSubtext}>Variáveis + fixos</Text>
-              </TouchableOpacity>
+                {/* 2. Custo Médio / Km */}
+                <TouchableOpacity
+                  style={styles.card}
+                  onPress={() => navigation.navigate('Reports')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.cardEyebrow}>EFICIÊNCIA</Text>
+                  <Text style={styles.cardLabel}>Custo Médio / Km</Text>
+                  <Text style={styles.cardValue}>
+                    {dashboardIndicators && dashboardIndicators.averageCostPerKm > 0
+                      ? `${formatCurrency(dashboardIndicators.averageCostPerKm)}/km`
+                      : 'R$ 0,00/km'}
+                  </Text>
+                  <Text style={styles.cardSubtext}>Variáveis + fixos</Text>
+                </TouchableOpacity>
 
-              {/* 3. Consumo Médio */}
-              <View style={styles.card}>
-                <Text style={styles.cardEyebrow}>RENDIMENTO</Text>
-                <Text style={styles.cardLabel}>Consumo Médio</Text>
-                <Text style={styles.cardValue}>
-                  {formatKml(dashboardIndicators?.averageConsumptionKml)}
-                </Text>
-                <Text style={styles.cardSubtext}>Combustível: {selectedVehicle.preferredFuel}</Text>
-              </View>
+                {/* 3. Consumo Médio (Toque abre tela de Consumo e Média Móvel US25) */}
+                <TouchableOpacity
+                  style={styles.card}
+                  onPress={() => navigation.navigate('ConsumptionModal')}
+                  activeOpacity={0.8}
+                  accessibilityLabel="Ver gráfico e média móvel de consumo"
+                >
+                  <Text style={styles.cardEyebrow}>RENDIMENTO</Text>
+                  <Text style={styles.cardLabel}>Consumo Médio</Text>
+                  <Text style={styles.cardValue}>
+                    {formatKml(dashboardIndicators?.averageConsumptionKml)}
+                  </Text>
+                  <Text style={styles.cardSubtext}>
+                    Toque para ver histórico e média móvel
+                  </Text>
+                </TouchableOpacity>
 
-              {/* 4. Autonomia Projetada (US13.2) */}
-              <View style={styles.card}>
-                <Text style={styles.cardEyebrow}>TANQUE ({selectedVehicle.tankCapacityL} L)</Text>
-                <Text style={styles.cardLabel}>Autonomia Projetada</Text>
-                <Text style={styles.cardValue}>
-                  {formatDecimal(dashboardIndicators?.projectedAutonomyKm || 0, 0)} km
-                </Text>
-                <Text style={styles.cardSubtext}>Estimativa restante</Text>
-              </View>
+                {/* 4. Autonomia Projetada (US13.2) */}
+                <View style={styles.card}>
+                  <Text style={styles.cardEyebrow}>TANQUE ({selectedVehicle.tankCapacityL} L)</Text>
+                  <Text style={styles.cardLabel}>Autonomia Projetada</Text>
+                  <Text style={styles.cardValue}>
+                    {formatDecimal(dashboardIndicators?.projectedAutonomyKm || 0, 0)} km
+                  </Text>
+                  <Text style={styles.cardSubtext}>Estimativa restante</Text>
+                </View>
 
-              {/* 5. Quilometragem Total */}
-              <TouchableOpacity
-                style={styles.card}
-                onPress={() => setOdometerModalVisible(true)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.cardEyebrow}>HODÔMETRO</Text>
-                <Text style={styles.cardLabel}>Quilometragem Total</Text>
-                <Text style={styles.cardValueWhite}>
-                  {(
-                    dashboardIndicators?.totalMileageKm ||
-                    selectedVehicle.currentOdometer ||
-                    selectedVehicle.initialOdometer ||
-                    0
-                  ).toLocaleString('pt-BR')}{' '}
-                  km
-                </Text>
-                <Text style={styles.cardSubtext}>Toque para atualizar km</Text>
-              </TouchableOpacity>
+                {/* 5. Quilometragem Total */}
+                <TouchableOpacity
+                  style={styles.card}
+                  onPress={() => setOdometerModalVisible(true)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.cardEyebrow}>HODÔMETRO</Text>
+                  <Text style={styles.cardLabel}>Quilometragem Total</Text>
+                  <Text style={styles.cardValueWhite}>
+                    {(
+                      dashboardIndicators?.totalMileageKm ||
+                      selectedVehicle.currentOdometer ||
+                      selectedVehicle.initialOdometer ||
+                      0
+                    ).toLocaleString('pt-BR')}{' '}
+                    km
+                  </Text>
+                  <Text style={styles.cardSubtext}>Toque para atualizar km</Text>
+                </TouchableOpacity>
 
-              {/* 6. Próxima Manutenção (US10.6) */}
-              <TouchableOpacity
-                style={[
-                  styles.card,
-                  nextMaint?.status === 'vencido'
-                    ? styles.cardAlertOverdue
-                    : nextMaint?.status === 'proximo'
-                      ? styles.cardAlertUpcoming
-                      : null,
-                ]}
-                onPress={() => setRulesModalVisible(true)}
-                activeOpacity={0.8}
-              >
-                <Text
+                {/* 6. Próxima Manutenção (US10.6) */}
+                <TouchableOpacity
                   style={[
-                    styles.cardEyebrow,
+                    styles.card,
                     nextMaint?.status === 'vencido'
-                      ? { color: colors.error }
+                      ? styles.cardAlertOverdue
                       : nextMaint?.status === 'proximo'
-                        ? { color: colors.amber }
+                        ? styles.cardAlertUpcoming
                         : null,
                   ]}
+                  onPress={() => setRulesModalVisible(true)}
+                  activeOpacity={0.8}
                 >
-                  {nextMaint?.status === 'vencido'
-                    ? '⚠️ MANUTENÇÃO VENCIDA'
-                    : '🔔 PRÓXIMA MANUTENÇÃO'}
-                </Text>
-                <Text style={styles.cardLabel} numberOfLines={1}>
-                  {nextMaint ? nextMaint.serviceName : 'Revisões em Dia'}
-                </Text>
-                <Text
-                  style={[
-                    styles.cardMaintValue,
-                    nextMaint?.status === 'vencido'
-                      ? { color: colors.error }
-                      : nextMaint?.status === 'proximo'
-                        ? { color: colors.amber }
-                        : { color: colors.textPrimary },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {nextMaint
-                    ? nextMaint.remainingKm !== null && nextMaint.remainingKm !== undefined
-                      ? `${nextMaint.remainingKm} km`
-                      : nextMaint.remainingDays !== null && nextMaint.remainingDays !== undefined
-                        ? `${nextMaint.remainingDays} dias`
-                        : nextMaint.status.toUpperCase()
-                    : 'Sem alertas'}
-                </Text>
-                <Text style={styles.cardSubtext} numberOfLines={1}>
-                  {nextMaint ? nextMaint.message : 'Configurar alertas →'}
-                </Text>
-              </TouchableOpacity>
-            </View>
+                  <Text
+                    style={[
+                      styles.cardEyebrow,
+                      nextMaint?.status === 'vencido'
+                        ? { color: colors.error }
+                        : nextMaint?.status === 'proximo'
+                          ? { color: colors.amber }
+                          : null,
+                    ]}
+                  >
+                    {nextMaint?.status === 'vencido'
+                      ? '⚠️ MANUTENÇÃO VENCIDA'
+                      : '🔔 PRÓXIMA MANUTENÇÃO'}
+                  </Text>
+                  <Text style={styles.cardLabel} numberOfLines={1}>
+                    {nextMaint ? nextMaint.serviceName : 'Revisões em Dia'}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.cardMaintValue,
+                      nextMaint?.status === 'vencido'
+                        ? { color: colors.error }
+                        : nextMaint?.status === 'proximo'
+                          ? { color: colors.amber }
+                          : { color: colors.textPrimary },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {nextMaint
+                      ? nextMaint.remainingKm !== null && nextMaint.remainingKm !== undefined
+                        ? `${nextMaint.remainingKm} km`
+                        : nextMaint.remainingDays !== null && nextMaint.remainingDays !== undefined
+                          ? `${nextMaint.remainingDays} dias`
+                          : nextMaint.status.toUpperCase()
+                      : 'Sem alertas'}
+                  </Text>
+                  <Text style={styles.cardSubtext} numberOfLines={1}>
+                    {nextMaint ? nextMaint.message : 'Configurar alertas →'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </CoachMarkTarget>
 
             <View style={styles.detailsCard}>
               <View style={styles.detailsHeader}>
@@ -334,12 +486,40 @@ export const DashboardScreen: React.FC = () => {
               </View>
             </View>
 
-            {selectedVehicle.fipeValue && (
-              <View style={styles.fipeBox}>
-                <Text style={styles.fipeTitle}>💡 Cotação de Mercado (Tabela FIPE)</Text>
+            {selectedVehicle.fipeValue ? (
+              <TouchableOpacity
+                style={styles.fipeBox}
+                onPress={() => navigation.navigate('VehicleMarketValueModal')}
+                activeOpacity={0.8}
+              >
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={styles.fipeTitle}>💡 Cotação de Mercado (Tabela FIPE)</Text>
+                  <Text style={{ color: colors.lime, fontSize: 12 }}>Histórico ›</Text>
+                </View>
                 <Text style={styles.fipeValue}>{formatCurrency(selectedVehicle.fipeValue)}</Text>
-              </View>
-            )}
+              </TouchableOpacity>
+            ) : null}
+
+            {/* US08.6: Cartão de Metas de Eficiência e Dicas */}
+            <EfficiencyGoalCard
+              goal={efficiencyGoal}
+              status={goalStatus}
+              averageKml={dashboardIndicators?.averageConsumptionKml || null}
+              topTip={topEcoTip}
+              onPressManage={() => navigation.navigate('EfficiencyGoalsModal')}
+            />
+
+            {/* Cartão de Teto Orçamentário Mensal (US15.6) */}
+            <BudgetCard
+              vehicle={selectedVehicle}
+              onConfigurePress={() => setBudgetModalVisible(true)}
+              refreshTrigger={
+                refreshBudgetTrigger +
+                refreshAlertsTrigger +
+                refreshMaintTrigger +
+                (dashboardIndicators?.monthTotalSpent || 0)
+              }
+            />
 
             {/* Indicadores de Uso (km/dia, semana, mês) e Custo/Km Detalhado (US24.1, US24.2, US24.3) */}
             <UsageAndCostIndicatorsCard
@@ -481,6 +661,13 @@ export const DashboardScreen: React.FC = () => {
               vehicle={selectedVehicle}
               onClose={() => setRulesModalVisible(false)}
               onSuccess={() => setRefreshAlertsTrigger(prev => prev + 1)}
+            />
+
+            <BudgetModal
+              visible={budgetModalVisible}
+              vehicle={selectedVehicle}
+              onClose={() => setBudgetModalVisible(false)}
+              onSuccess={() => setRefreshBudgetTrigger(prev => prev + 1)}
             />
 
             <ConfirmModal

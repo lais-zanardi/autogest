@@ -1,6 +1,7 @@
 import { Refuel, CreateRefuelDTO, UpdateRefuelDTO } from '@autogest/shared-types';
 import { db } from '../database/DatabaseConnection';
 import { calcularConsumo } from '../services/fuelingCalculations';
+import { AuditRepository } from './AuditRepository';
 
 export class RefuelRepository {
   private static TABLE = 'local_refuels';
@@ -66,6 +67,12 @@ export class RefuelRepository {
       stationName: dto.stationName || null,
       latitude: dto.latitude ?? null,
       longitude: dto.longitude ?? null,
+      routeType: dto.routeType || dto.tipo_percurso || null,
+      notes: dto.notes ? dto.notes.trim() : dto.nota ? dto.nota.trim() : null,
+      tipo_percurso: dto.tipo_percurso || dto.routeType || null,
+      nota: dto.nota ? dto.nota.trim() : dto.notes ? dto.notes.trim() : null,
+      tripId: dto.tripId || dto.viagem_id || null,
+      viagem_id: dto.viagem_id || dto.tripId || null,
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
@@ -81,8 +88,54 @@ export class RefuelRepository {
 
     const updated = await db.update<Refuel>(this.TABLE, id, {
       ...updates,
+      routeType:
+        updates.routeType !== undefined
+          ? updates.routeType
+          : updates.tipo_percurso !== undefined
+            ? updates.tipo_percurso
+            : existing.routeType,
+      tipo_percurso:
+        updates.tipo_percurso !== undefined
+          ? updates.tipo_percurso
+          : updates.routeType !== undefined
+            ? updates.routeType
+            : existing.tipo_percurso,
+      notes:
+        updates.notes !== undefined
+          ? (updates.notes ? updates.notes.trim() : null)
+          : updates.nota !== undefined
+            ? (updates.nota ? updates.nota.trim() : null)
+            : existing.notes,
+      nota:
+        updates.nota !== undefined
+          ? (updates.nota ? updates.nota.trim() : null)
+          : updates.notes !== undefined
+            ? (updates.notes ? updates.notes.trim() : null)
+            : existing.nota,
+      tripId:
+        updates.tripId !== undefined
+          ? updates.tripId
+          : updates.viagem_id !== undefined
+            ? updates.viagem_id
+            : existing.tripId,
+      viagem_id:
+        updates.viagem_id !== undefined
+          ? updates.viagem_id
+          : updates.tripId !== undefined
+            ? updates.tripId
+            : existing.viagem_id,
       updatedAt: new Date().toISOString(),
     });
+
+    if (updated) {
+      await AuditRepository.recordMutation({
+        entidade: 'abastecimentos',
+        entidade_id: id,
+        acao: 'edicao',
+        antes: existing as any,
+        depois: updated as any,
+      });
+    }
 
     return updated;
   }
@@ -120,12 +173,24 @@ export class RefuelRepository {
   }
 
   static async delete(id: string): Promise<boolean> {
+    const existing = await this.findById(id);
     const now = new Date().toISOString();
     const updated = await db.update<Refuel>(this.TABLE, id, {
       deletedAt: now,
       excluido_em: now,
       updatedAt: now,
     } as any);
+
+    if (updated && existing) {
+      await AuditRepository.recordMutation({
+        entidade: 'abastecimentos',
+        entidade_id: id,
+        acao: 'exclusao',
+        antes: existing as any,
+        depois: updated as any,
+      });
+    }
+
     return !!updated;
   }
 

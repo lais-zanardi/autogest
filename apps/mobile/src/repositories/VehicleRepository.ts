@@ -1,6 +1,7 @@
 import { Vehicle, CreateVehicleDTO, UpdateVehicleDTO } from '@autogest/shared-types';
 import { db } from '../database/DatabaseConnection';
 import { validatePlate } from '../services/vehicleValidation';
+import { AuditRepository } from './AuditRepository';
 
 export class VehicleRepository {
   private static TABLE = 'local_vehicles';
@@ -41,6 +42,14 @@ export class VehicleRepository {
     };
 
     await db.insert(this.TABLE, newVehicle);
+    await AuditRepository.recordMutation({
+      usuario_id: userId,
+      entidade: 'veiculos',
+      entidade_id: newVehicle.id,
+      acao: 'criacao',
+      antes: null,
+      depois: newVehicle as any,
+    });
     return newVehicle;
   }
 
@@ -58,6 +67,17 @@ export class VehicleRepository {
       updatedAt: new Date().toISOString(),
     });
 
+    if (updated) {
+      await AuditRepository.recordMutation({
+        usuario_id: existing.userId || 'local_user',
+        entidade: 'veiculos',
+        entidade_id: id,
+        acao: 'edicao',
+        antes: existing as any,
+        depois: updated as any,
+      });
+    }
+
     return updated;
   }
 
@@ -69,12 +89,24 @@ export class VehicleRepository {
   }
 
   static async delete(id: string): Promise<boolean> {
+    const existing = await this.findById(id);
     const now = new Date().toISOString();
     const updated = await db.update<Vehicle>(this.TABLE, id, {
       deletedAt: now,
       excluido_em: now,
       updatedAt: now,
     } as any);
+
+    if (updated && existing) {
+      await AuditRepository.recordMutation({
+        usuario_id: existing.userId || 'local_user',
+        entidade: 'veiculos',
+        entidade_id: id,
+        acao: 'exclusao',
+        antes: existing as any,
+        depois: updated as any,
+      });
+    }
 
     return !!updated;
   }

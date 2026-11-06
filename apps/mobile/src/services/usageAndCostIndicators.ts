@@ -260,12 +260,14 @@ export function calcularIndicadoresUsoECustoPuro(
 }
 
 /**
- * US24.2: Resolve o intervalo de datas (YYYY-MM-DD) para um filtro de período predefinido.
+ * US24.2 & US14.3: Resolve o intervalo de datas (YYYY-MM-DD) para um filtro de período predefinido
+ * ou personalizado ('mes_atual', 'mes_anterior', 'personalizado', 'ultimos_30_dias', 'ultimos_90_dias', 'ano_atual').
  * O padrão é 'mes_atual' (mês atual por padrão).
  */
 export function resolverIntervaloPeriodo(
   preset: IndicatorPeriodPreset = 'mes_atual',
   dataReferencia: Date = new Date(),
+  intervaloPersonalizado?: { inicio?: string; fim?: string },
 ): { inicio: string; fim: string; label: string } {
   const year = dataReferencia.getUTCFullYear();
   const month = dataReferencia.getUTCMonth(); // 0-11
@@ -275,6 +277,37 @@ export function resolverIntervaloPeriodo(
     const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
     const endStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
     return { inicio: startStr, fim: endStr, label: 'Mês Atual' };
+  }
+
+  if (preset === 'mes_anterior') {
+    const prevDate = new Date(Date.UTC(year, month - 1, 1));
+    const prevYear = prevDate.getUTCFullYear();
+    const prevMonth = prevDate.getUTCMonth(); // 0-11
+    const startStr = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}-01`;
+    const lastDay = new Date(Date.UTC(prevYear, prevMonth + 1, 0)).getUTCDate();
+    const endStr = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    return { inicio: startStr, fim: endStr, label: 'Mês Anterior' };
+  }
+
+  if (preset === 'personalizado') {
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    const defaultStart = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+    const defaultLastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+    const defaultEnd = `${year}-${String(month + 1).padStart(2, '0')}-${String(defaultLastDay).padStart(2, '0')}`;
+
+    const rawStart = intervaloPersonalizado?.inicio?.trim() || '';
+    const rawEnd = intervaloPersonalizado?.fim?.trim() || '';
+
+    let startStr = dateRegex.test(rawStart) ? rawStart : defaultStart;
+    let endStr = dateRegex.test(rawEnd) ? rawEnd : defaultEnd;
+
+    if (startStr > endStr) {
+      const temp = startStr;
+      startStr = endStr;
+      endStr = temp;
+    }
+
+    return { inicio: startStr, fim: endStr, label: 'Personalizado' };
   }
 
   const endStr = dataReferencia.toISOString().split('T')[0];

@@ -334,6 +334,11 @@ const FIELD_ALIASES: Record<string, string[]> = {
   categoria: ['category'],
   valor: ['amount'],
   descricao: ['description'],
+  // orcamentos
+  teto_mensal: ['monthlyLimitCents', 'tetoMensal', 'tetoMensalCentavos'],
+  percentual_aviso: ['warningPercentage', 'percentualAviso'],
+  aviso_enviado_mes: ['warningSentMonth', 'avisoEnviadoMes'],
+  critico_enviado_mes: ['criticalSentMonth', 'criticoEnviadoMes'],
 };
 
 function resolveFieldValue(body: any, field: string): any {

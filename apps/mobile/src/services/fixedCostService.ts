@@ -159,9 +159,11 @@ export class FixedCostService {
       atualizado_em: created.updatedAt,
     });
 
-    // US13.3: Recalcula indicadores globais do dashboard ao cadastrar custo fixo
+    // US13.3 & US15.4: Recalcula indicadores globais do dashboard e reavalia teto orçamentário ao cadastrar custo fixo
     const { DashboardIndicatorsService } = await import('./dashboardIndicators');
     await DashboardIndicatorsService.refreshForVehicle(created.vehicleId).catch(() => {});
+    const { BudgetService } = await import('./budgetService');
+    await BudgetService.reavaliarOrcamentoDoVeiculo(created.vehicleId).catch(() => {});
 
     return created;
   }

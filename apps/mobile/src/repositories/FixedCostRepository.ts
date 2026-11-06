@@ -1,5 +1,6 @@
 import { FixedCost, CreateFixedCostDTO, UpdateFixedCostDTO } from '@autogest/shared-types';
 import { db } from '../database/DatabaseConnection';
+import { AuditRepository } from './AuditRepository';
 
 /**
  * US23.1 & US23.2: Repositório de Custos Fixos Mensais (custos_fixos).
@@ -80,6 +81,13 @@ export class FixedCostRepository {
     } catch {
       // Ignore
     }
+    await AuditRepository.recordMutation({
+      entidade: 'custos_fixos',
+      entidade_id: id,
+      acao: 'edicao',
+      antes: existing as any,
+      depois: updated as any,
+    });
     return updated;
   }
 
@@ -100,6 +108,13 @@ export class FixedCostRepository {
     } catch {
       // Ignore
     }
+    await AuditRepository.recordMutation({
+      entidade: 'custos_fixos',
+      entidade_id: id,
+      acao: 'exclusao',
+      antes: existing as any,
+      depois: deleted as any,
+    });
     return true;
   }
 

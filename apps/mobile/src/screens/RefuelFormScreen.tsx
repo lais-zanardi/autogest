@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -24,9 +24,22 @@ import {
 } from '../services/fuelingCalculations';
 import { parseDecimalInput } from '../services/vehicleValidation';
 import { ConfirmModal } from '../components/ConfirmModal';
-import { FuelType, Refuel } from '@autogest/shared-types';
+import { CoachMarkTarget } from '../components/CoachMarkTour';
+import { FuelType, Refuel, RouteType, Tag } from '@autogest/shared-types';
 import { colors, spacing, radius, typography } from '../theme';
 import { formatCurrency, formatKml } from '../utils/formatters';
+import {
+  identificarAnomaliasNoHistorico,
+  avaliarAnomaliaConsumo,
+} from '../services/consumptionAnomalyService';
+import { MaintenanceFormModal } from '../components/MaintenanceFormModal';
+import { TagSelector } from '../components/TagSelector';
+import { TagService } from '../services/tagService';
+import { TripService } from '../services/tripService';
+import { validarNota, LIMITE_MAXIMO_NOTA } from '../services/routeContextService';
+import { EfficiencyGoalRepository } from '../repositories/EfficiencyGoalRepository';
+import { statusDaMeta, perfilDeRodagem, recomendar } from '../services/efficiencyGoalService';
+import catalogJson from '../assets/eco_tips_catalog.json';
 
 const FUEL_TYPES: FuelType[] = ['Gasolina', 'Etanol', 'Flex', 'Diesel', 'GNV'];
 
@@ -47,7 +60,13 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [refuelToDelete, setRefuelToDelete] = useState<Refuel | null>(null);
 
-  // Campos do formulário
+  // US26.3: Modal de criação de manutenção preventiva disparado via atalho de alerta de anomalia
+  const [maintenanceModalVisible, setMaintenanceModalVisible] = useState(false);
+
+  // Mapa dinâmico de anomalias calculado sob demanda no histórico (US26.4 - nada persistido)
+  const anomaliasMap = useMemo(() => {
+    return identificarAnomaliasNoHistorico(historyList);
+  }, [historyList]);
   const [date, setDate] = useState('');
   const [odometer, setOdometer] = useState('');
   const [liters, setLiters] = useState('');
@@ -56,6 +75,19 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
   const [fuelType, setFuelType] = useState<FuelType>('Gasolina');
   const [stationName, setStationName] = useState('');
   const [isFullTank, setIsFullTank] = useState(true);
+  // US27.2 & US27.3 & US27.4
+  const [routeType, setRouteType] = useState<RouteType | null>('misto');
+  const [notes, setNotes] = useState('');
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  // US07.3: Vínculo automático à viagem ativa
+  const [activeTrip, setActiveTrip] = useState<any>(null);
+  const [linkToTrip, setLinkToTrip] = useState(true);
+
+  // US27.5: Filtros do histórico
+  const [filterRouteType, setFilterRouteType] = useState<string>('todos');
+  const [filterTagId, setFilterTagId] = useState<string>('todas');
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+  const [historyTagsMap, setHistoryTagsMap] = useState<Record<string, Tag[]>>({});
 
   // Status e validação
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -75,12 +107,27 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
       setFuelType(editingRefuel.fuelType || 'Gasolina');
       setStationName(editingRefuel.stationName || '');
       setIsFullTank(editingRefuel.isFullTank ?? true);
+      setRouteType(editingRefuel.routeType || editingRefuel.tipo_percurso || 'misto');
+      setNotes(editingRefuel.notes || editingRefuel.nota || '');
+      TagService.listarEtiquetasDoRegistro('abastecimento', editingRefuel.id)
+        .then(tags => setSelectedTagIds(tags.map(t => t.id)))
+        .catch(() => setSelectedTagIds([]));
       setActiveTab('form');
     } else {
       resetForm();
     }
     loadHistory();
     fetchLocation();
+    if (selectedVehicle?.id) {
+      TripService.obterViagemAtiva(selectedVehicle.id)
+        .then(trip => {
+          setActiveTrip(trip);
+          setLinkToTrip(!!trip);
+        })
+        .catch(() => setActiveTrip(null));
+    } else {
+      setActiveTrip(null);
+    }
   }, [editingRefuel, selectedVehicle]);
 
   const resetForm = () => {
@@ -92,6 +139,9 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
     setTotalValue('');
     setStationName('');
     setIsFullTank(true);
+    setRouteType('misto');
+    setNotes('');
+    setSelectedTagIds([]);
     if (selectedVehicle?.preferredFuel) {
       setFuelType(selectedVehicle.preferredFuel);
     } else {
@@ -105,6 +155,15 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
     try {
       const list = await FuelingService.listRefuels(selectedVehicle.id);
       setHistoryList(list);
+
+      // Carrega etiquetas para filtros e tags de cada abastecimento
+      const allTags = await TagService.listarEtiquetas();
+      setAvailableTags(allTags);
+      const tagMap = await TagService.obterMapaTagsRegistros(
+        'abastecimento',
+        list.map(r => r.id),
+      );
+      setHistoryTagsMap(tagMap);
     } catch (e) {
       console.error('Erro ao carregar histórico de abastecimentos:', e);
     }
@@ -244,6 +303,12 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
       newErrors.totalValue = 'Informe o valor total pago.';
     }
 
+    // US27.4: Validação de nota (limite de 500 caracteres)
+    const validacaoNota = validarNota(notes);
+    if (!validacaoNota.isValid) {
+      newErrors.notes = validacaoNota.error || 'A nota excede 500 caracteres.';
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -253,8 +318,10 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
     setIsSubmitting(true);
 
     try {
+      let savedResult: Refuel | null = null;
+
       if (editingRefuel) {
-        await FuelingService.updateRefuel(editingRefuel.id, {
+        savedResult = await FuelingService.updateRefuel(editingRefuel.id, {
           odometer: numOdometer!,
           liters: numLiters!,
           pricePerLiter: numPrice!,
@@ -262,9 +329,15 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
           fuelType,
           stationName: stationName.trim() || null,
           isFullTank,
+          routeType,
+          notes: notes.trim() || null,
+          tipo_percurso: routeType,
+          nota: notes.trim() || null,
+          tripId: linkToTrip && activeTrip ? activeTrip.id : null,
+          viagem_id: linkToTrip && activeTrip ? activeTrip.id : null,
         });
       } else {
-        await FuelingService.createRefuel(
+        savedResult = await FuelingService.createRefuel(
           {
             vehicleId: selectedVehicle.id,
             date: date || new Date().toISOString(),
@@ -275,14 +348,89 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
             fuelType,
             stationName: stationName.trim() || null,
             isFullTank,
+            routeType,
+            notes: notes.trim() || null,
+            tipo_percurso: routeType,
+            nota: notes.trim() || null,
+            tripId: linkToTrip && activeTrip ? activeTrip.id : null,
+            viagem_id: linkToTrip && activeTrip ? activeTrip.id : null,
           },
           coords,
         );
       }
 
-      await loadHistory();
+      // US27.3: Salva vínculo de etiquetas
+      if (savedResult?.id) {
+        await TagService.vincularEtiquetas('abastecimento', savedResult.id, selectedTagIds);
+      }
+
+      const updatedHistory = await FuelingService.listRefuels(selectedVehicle.id);
+      setHistoryList(updatedHistory);
       resetForm();
       setActiveTab('history');
+
+      // US26.3: Avalia se o abastecimento salvo representou anomalia mecânica
+      if (savedResult?.calculatedKml) {
+        // Coleta consumos dos abastecimentos estritamente anteriores
+        const sortedAsc = [...updatedHistory]
+          .filter(r => !r.deletedAt && !(r as any).excluido_em)
+          .sort((a, b) => {
+            const diff = new Date(a.date).getTime() - new Date(b.date).getTime();
+            if (diff !== 0) return diff;
+            return a.odometer - b.odometer;
+          });
+
+        const targetIndex = sortedAsc.findIndex(r => r.id === savedResult?.id);
+        if (targetIndex >= 3) {
+          const anteriores = sortedAsc
+            .slice(0, targetIndex)
+            .map(r => r.calculatedKml)
+            .filter((k): k is number => typeof k === 'number' && k > 0);
+
+          const anomalia = avaliarAnomaliaConsumo(anteriores, savedResult.calculatedKml);
+          if (anomalia.isAnomalia && anomalia.percentualQueda !== null) {
+            const percFormatado = anomalia.percentualQueda.toFixed(1).replace('.', ',');
+            const mediaFormatada = formatKml(anomalia.mediaAnterior);
+            Alert.alert(
+              '⚠️ Alerta de Rendimento',
+              `Possível problema mecânico: consumo ${percFormatado}% abaixo da média recente (${mediaFormatada}).`,
+              [
+                {
+                  text: 'Fechar',
+                  style: 'cancel',
+                },
+                {
+                  text: '🔧 Registrar Manutenção',
+                  style: 'default',
+                  onPress: () => setMaintenanceModalVisible(true),
+                },
+              ],
+            );
+          } else {
+            // US08.6: Se não houve anomalia, verifica se o consumo ficou abaixo da meta de eficiência ativa
+            try {
+              const activeGoal = await EfficiencyGoalRepository.findByVehicle(selectedVehicle.id);
+              if (activeGoal && activeGoal.targetKml > 0) {
+                const goalSt = statusDaMeta(savedResult.calculatedKml, activeGoal.targetKml);
+                if (goalSt.situacao === 'abaixo') {
+                  const profile = perfilDeRodagem(updatedHistory, activeGoal.targetKml);
+                  const catalog = (catalogJson as any)?.dicas || [];
+                  const tips = recomendar(profile, catalog);
+                  const tipDestaque = tips[0];
+                  if (tipDestaque) {
+                    Alert.alert(
+                      '🎯 Dica de Eficiência',
+                      `Seu rendimento neste abastecimento (${savedResult.calculatedKml.toFixed(1).replace('.', ',')} km/l) ficou abaixo da sua meta (${activeGoal.targetKml.toFixed(1).replace('.', ',')} km/l).\n\n💡 ${tipDestaque.titulo}: ${tipDestaque.descricao}`,
+                    );
+                  }
+                }
+              }
+            } catch (goalErr) {
+              console.warn('Erro ao verificar meta após salvar abastecimento:', goalErr);
+            }
+          }
+        }
+      }
     } catch (e: any) {
       Alert.alert('Erro ao Salvar', e.message || 'Falha ao registrar abastecimento.');
     } finally {
@@ -318,32 +466,36 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
       <StatusBar barStyle="light-content" backgroundColor={colors.background} />
       <View style={styles.container}>
         {/* Cabeçalho */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.backButton}>
-            <Text style={styles.backButtonText}>✕ Fechar</Text>
-          </TouchableOpacity>
-          <View style={styles.tabSelector}>
-            <TouchableOpacity
-              style={[styles.tabBtn, activeTab === 'form' && styles.tabBtnActive]}
-              onPress={() => setActiveTab('form')}
-            >
-              <Text style={[styles.tabBtnText, activeTab === 'form' && styles.tabBtnTextActive]}>
-                {editingRefuel ? 'Editar' : 'Novo'}
-              </Text>
+        <CoachMarkTarget targetId="tour-target-first-refuel">
+          <View style={styles.header}>
+            <TouchableOpacity onPress={onClose} style={styles.backButton}>
+              <Text style={styles.backButtonText}>✕ Fechar</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.tabBtn, activeTab === 'history' && styles.tabBtnActive]}
-              onPress={() => {
-                setActiveTab('history');
-                loadHistory();
-              }}
-            >
-              <Text style={[styles.tabBtnText, activeTab === 'history' && styles.tabBtnTextActive]}>
-                Histórico ({historyList.length})
-              </Text>
-            </TouchableOpacity>
+            <View style={styles.tabSelector}>
+              <TouchableOpacity
+                style={[styles.tabBtn, activeTab === 'form' && styles.tabBtnActive]}
+                onPress={() => setActiveTab('form')}
+              >
+                <Text style={[styles.tabBtnText, activeTab === 'form' && styles.tabBtnTextActive]}>
+                  {editingRefuel ? 'Editar' : 'Novo'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.tabBtn, activeTab === 'history' && styles.tabBtnActive]}
+                onPress={() => {
+                  setActiveTab('history');
+                  loadHistory();
+                }}
+              >
+                <Text
+                  style={[styles.tabBtnText, activeTab === 'history' && styles.tabBtnTextActive]}
+                >
+                  Histórico ({historyList.length})
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        </CoachMarkTarget>
 
         {/* Informação do Veículo Ativo */}
         <View style={styles.vehicleInfoBar}>
@@ -381,7 +533,7 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
             {previewConsumption !== null && (
               <View style={styles.previewBox}>
                 <Text style={styles.previewEyebrow}>ESTIMATIVA DE CONSUMO</Text>
-                <Text style={styles.previewValue}>{previewConsumption} km/l</Text>
+                <Text style={styles.previewValue}>{formatKml(previewConsumption)}</Text>
                 <Text style={styles.previewSub}>
                   Calculado sobre os últimos {parsedCurrentKm! - lastOdo} km percorridos
                 </Text>
@@ -494,6 +646,36 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
               />
             </View>
 
+            {/* US07.3: Vínculo automático à viagem ativa com opção desmarcável */}
+            {activeTrip && (
+              <View
+                style={[
+                  styles.switchRow,
+                  {
+                    backgroundColor: colors.surfaceRaised,
+                    padding: 12,
+                    borderRadius: 8,
+                    marginVertical: 8,
+                  },
+                ]}
+              >
+                <View style={{ flex: 1, paddingRight: 8 }}>
+                  <Text style={[styles.switchLabel, { color: colors.lime }]}>
+                    🛣️ Viagem em andamento
+                  </Text>
+                  <Text style={[styles.switchSub, { color: colors.textSecondary }]}>
+                    Vincular a {activeTrip.origin} ➔ {activeTrip.destination}
+                  </Text>
+                </View>
+                <Switch
+                  value={linkToTrip}
+                  onValueChange={setLinkToTrip}
+                  trackColor={{ false: colors.surface, true: colors.lime }}
+                  thumbColor={linkToTrip ? colors.black : colors.textSecondary}
+                />
+              </View>
+            )}
+
             {/* Switch Tanque Cheio */}
             <View style={styles.switchRow}>
               <View>
@@ -508,6 +690,76 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
                 trackColor={{ false: colors.surface, true: colors.lime }}
                 thumbColor={isFullTank ? colors.black : colors.textSecondary}
               />
+            </View>
+
+            {/* US27.2: Tipo de Percurso */}
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>Tipo de Percurso</Text>
+              <View style={styles.chipRow}>
+                {(['urbano', 'rodoviario', 'misto'] as RouteType[]).map(rt => {
+                  const isSelected = routeType === rt;
+                  const label =
+                    rt === 'urbano'
+                      ? '🏙️ Urbano'
+                      : rt === 'rodoviario'
+                        ? '🛣️ Rodoviário'
+                        : '🔀 Misto';
+                  return (
+                    <TouchableOpacity
+                      key={rt}
+                      style={[styles.chip, isSelected && styles.chipSelected]}
+                      onPress={() => setRouteType(rt)}
+                      disabled={isSubmitting}
+                    >
+                      <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* US27.3: Etiquetas com autocomplete e criação */}
+            <TagSelector
+              selectedTagIds={selectedTagIds}
+              onChangeSelectedTagIds={setSelectedTagIds}
+            />
+
+            {/* US27.4: Campo de Nota com limite de 500 caracteres */}
+            <View style={styles.fieldGroup}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={styles.label}>Nota / Observações (opcional)</Text>
+                <Text
+                  style={{
+                    ...typography.caption,
+                    color: notes.length > LIMITE_MAXIMO_NOTA ? colors.error : colors.textSecondary,
+                  }}
+                >
+                  {notes.length}/{LIMITE_MAXIMO_NOTA}
+                </Text>
+              </View>
+              <TextInput
+                style={[
+                  styles.input,
+                  { height: 80, textAlignVertical: 'top', paddingTop: 8 },
+                  errors.notes ? styles.inputError : null,
+                ]}
+                multiline
+                maxLength={500}
+                value={notes}
+                onChangeText={setNotes}
+                placeholder="Ex: Viagem para o litoral, trânsito pesado na serra"
+                placeholderTextColor={colors.textMuted}
+                editable={!isSubmitting}
+              />
+              {errors.notes && <Text style={styles.errorText}>{errors.notes}</Text>}
             </View>
 
             {/* Status GPS */}
@@ -549,6 +801,83 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
         ) : (
           /* Aba Histórico de Abastecimentos */
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            {/* US27.5: Barra de Filtros por Percurso e por Etiqueta */}
+            <View
+              style={{
+                marginBottom: 12,
+                paddingBottom: 10,
+                borderBottomWidth: 1,
+                borderBottomColor: colors.border,
+              }}
+            >
+              <Text style={[styles.label, { marginBottom: 6 }]}>Filtrar por Percurso</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{ marginBottom: 10 }}
+              >
+                <View style={{ flexDirection: 'row', gap: 6 }}>
+                  {[
+                    { key: 'todos', label: 'Todos' },
+                    { key: 'urbano', label: '🏙️ Urbano' },
+                    { key: 'rodoviario', label: '🛣️ Rodoviário' },
+                    { key: 'misto', label: '🔀 Misto' },
+                    { key: 'sem_tipo', label: 'Sem tipo' },
+                  ].map(f => {
+                    const isSelected = filterRouteType === f.key;
+                    return (
+                      <TouchableOpacity
+                        key={f.key}
+                        style={[styles.chip, isSelected && styles.chipSelected]}
+                        onPress={() => setFilterRouteType(f.key)}
+                      >
+                        <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
+                          {f.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </ScrollView>
+
+              {availableTags.length > 0 && (
+                <>
+                  <Text style={[styles.label, { marginBottom: 6 }]}>Filtrar por Etiqueta</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <View style={{ flexDirection: 'row', gap: 6 }}>
+                      <TouchableOpacity
+                        style={[styles.chip, filterTagId === 'todas' && styles.chipSelected]}
+                        onPress={() => setFilterTagId('todas')}
+                      >
+                        <Text
+                          style={[
+                            styles.chipText,
+                            filterTagId === 'todas' && styles.chipTextSelected,
+                          ]}
+                        >
+                          Todas
+                        </Text>
+                      </TouchableOpacity>
+                      {availableTags.map(tag => {
+                        const isSelected = filterTagId === tag.id;
+                        return (
+                          <TouchableOpacity
+                            key={tag.id}
+                            style={[styles.chip, isSelected && styles.chipSelected]}
+                            onPress={() => setFilterTagId(tag.id)}
+                          >
+                            <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
+                              🏷️ {tag.name || tag.nome}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </ScrollView>
+                </>
+              )}
+            </View>
+
             {historyList.length === 0 ? (
               <View style={styles.emptyHistory}>
                 <Text style={styles.emptyHistoryIcon}>⛽</Text>
@@ -558,67 +887,182 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
                 </Text>
               </View>
             ) : (
-              historyList.map(item => (
-                <View key={item.id} style={styles.historyCard}>
-                  <View style={styles.historyCardHeader}>
-                    <View>
-                      <Text style={styles.historyDate}>
-                        {new Date(item.date).toLocaleDateString('pt-BR')} •{' '}
-                        {item.odometer.toLocaleString('pt-BR')} km
-                      </Text>
-                      <Text style={styles.historyStation}>
-                        {item.stationName || 'Posto não informado'} • {item.fuelType}
-                      </Text>
+              historyList
+                .filter(item => {
+                  if (filterRouteType !== 'todos') {
+                    const itemRoute = item.routeType || item.tipo_percurso;
+                    if (filterRouteType === 'sem_tipo' && itemRoute) return false;
+                    if (filterRouteType !== 'sem_tipo' && itemRoute !== filterRouteType)
+                      return false;
+                  }
+                  if (filterTagId !== 'todas') {
+                    const itemTags = historyTagsMap[item.id] || [];
+                    if (!itemTags.some(t => t.id === filterTagId)) return false;
+                  }
+                  return true;
+                })
+                .map(item => {
+                  const itemTags = historyTagsMap[item.id] || [];
+                  const itemRoute = item.routeType || item.tipo_percurso;
+                  const itemNote = item.notes || item.nota;
+
+                  return (
+                    <View key={item.id} style={styles.historyCard}>
+                      <View style={styles.historyCardHeader}>
+                        <View>
+                          <Text style={styles.historyDate}>
+                            {new Date(item.date).toLocaleDateString('pt-BR')} •{' '}
+                            {item.odometer.toLocaleString('pt-BR')} km
+                          </Text>
+                          <Text style={styles.historyStation}>
+                            {item.stationName || 'Posto não informado'} • {item.fuelType}
+                          </Text>
+                        </View>
+
+                        {item.calculatedKml ? (
+                          <View style={styles.badgeCol}>
+                            <View style={styles.kmlBadge}>
+                              <Text style={styles.kmlBadgeText}>
+                                {formatKml(item.calculatedKml)}
+                              </Text>
+                            </View>
+                            {/* US26.4: Ícone e badge de alerta em registros anômalos recalculados na hora */}
+                            {anomaliasMap.has(item.id) && (
+                              <TouchableOpacity
+                                style={styles.anomalyBadge}
+                                activeOpacity={0.8}
+                                onPress={() => {
+                                  const anom = anomaliasMap.get(item.id);
+                                  const mediaFormatada = formatKml(anom?.mediaAnterior);
+                                  Alert.alert(
+                                    '⚠️ Anomalia de Consumo',
+                                    `Neste abastecimento, o consumo foi de ${formatKml(item.calculatedKml)}, ficando ${anom?.percentualQueda?.toFixed(1).replace('.', ',')}% abaixo da média dos 3 abastecimentos anteriores (${mediaFormatada}).`,
+                                    [
+                                      { text: 'OK', style: 'cancel' },
+                                      {
+                                        text: '🔧 Agendar Manutenção',
+                                        onPress: () => setMaintenanceModalVisible(true),
+                                      },
+                                    ],
+                                  );
+                                }}
+                                accessibilityLabel={`Alerta de anomalia de consumo no abastecimento de ${item.odometer} km`}
+                              >
+                                <Text style={styles.anomalyBadgeText}>
+                                  ⚠️ Anomalia (
+                                  {anomaliasMap.get(item.id)?.percentualQueda?.toFixed(0)}%)
+                                </Text>
+                              </TouchableOpacity>
+                            )}
+                          </View>
+                        ) : (
+                          <View style={styles.firstBadge}>
+                            <Text style={styles.firstBadgeText}>1º / Base</Text>
+                          </View>
+                        )}
+                      </View>
+
+                      {/* US27.5: Exibição de tipo de percurso, etiquetas e nota */}
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          flexWrap: 'wrap',
+                          gap: 6,
+                          marginVertical: 6,
+                          alignItems: 'center',
+                        }}
+                      >
+                        {itemRoute && (
+                          <View
+                            style={{
+                              backgroundColor: colors.surfaceRaised,
+                              paddingHorizontal: 8,
+                              paddingVertical: 2,
+                              borderRadius: 12,
+                            }}
+                          >
+                            <Text
+                              style={{
+                                ...typography.caption,
+                                color: colors.lime,
+                                fontWeight: '600',
+                              }}
+                            >
+                              {itemRoute === 'urbano'
+                                ? '🏙️ Urbano'
+                                : itemRoute === 'rodoviario'
+                                  ? '🛣️ Rodoviário'
+                                  : '🔀 Misto'}
+                            </Text>
+                          </View>
+                        )}
+
+                        {itemTags.map(tag => (
+                          <View
+                            key={tag.id}
+                            style={{
+                              backgroundColor: colors.surface,
+                              borderWidth: 1,
+                              borderColor: colors.border,
+                              paddingHorizontal: 8,
+                              paddingVertical: 2,
+                              borderRadius: 12,
+                            }}
+                          >
+                            <Text style={{ ...typography.caption, color: colors.textSecondary }}>
+                              🏷️ {tag.name || tag.nome}
+                            </Text>
+                          </View>
+                        ))}
+
+                        {itemNote ? (
+                          <TouchableOpacity
+                            onPress={() => Alert.alert('📝 Nota do Abastecimento', itemNote)}
+                            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                          >
+                            <Text style={{ fontSize: 13 }}>📝</Text>
+                          </TouchableOpacity>
+                        ) : null}
+                      </View>
+
+                      <View style={styles.historyCardDetails}>
+                        <Text style={styles.historyDetailItem}>
+                          Litros: <Text style={styles.historyDetailBold}>{item.liters} L</Text>
+                        </Text>
+                        <Text style={styles.historyDetailItem}>
+                          Preço/L:{' '}
+                          <Text style={styles.historyDetailBold}>
+                            R$ {item.pricePerLiter.toFixed(2)}
+                          </Text>
+                        </Text>
+                        <Text style={styles.historyDetailItem}>
+                          Total:{' '}
+                          <Text style={styles.historyDetailBold}>
+                            {formatCurrency(item.totalValue)}
+                          </Text>
+                        </Text>
+                      </View>
+
+                      <View style={styles.historyCardActions}>
+                        <TouchableOpacity
+                          style={styles.historyActionBtn}
+                          onPress={() => handleEditPress(item)}
+                        >
+                          <Text style={styles.historyActionText}>✏️ Editar</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          style={[styles.historyActionBtn, styles.deleteActionBtn]}
+                          onPress={() => handleDeletePress(item)}
+                        >
+                          <Text style={[styles.historyActionText, styles.deleteActionText]}>
+                            🗑️ Excluir
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
                     </View>
-
-                    {item.calculatedKml ? (
-                      <View style={styles.kmlBadge}>
-                        <Text style={styles.kmlBadgeText}>{formatKml(item.calculatedKml)}</Text>
-                      </View>
-                    ) : (
-                      <View style={styles.firstBadge}>
-                        <Text style={styles.firstBadgeText}>1º / Base</Text>
-                      </View>
-                    )}
-                  </View>
-
-                  <View style={styles.historyCardDetails}>
-                    <Text style={styles.historyDetailItem}>
-                      Litros: <Text style={styles.historyDetailBold}>{item.liters} L</Text>
-                    </Text>
-                    <Text style={styles.historyDetailItem}>
-                      Preço/L:{' '}
-                      <Text style={styles.historyDetailBold}>
-                        R$ {item.pricePerLiter.toFixed(2)}
-                      </Text>
-                    </Text>
-                    <Text style={styles.historyDetailItem}>
-                      Total:{' '}
-                      <Text style={styles.historyDetailBold}>
-                        {formatCurrency(item.totalValue)}
-                      </Text>
-                    </Text>
-                  </View>
-
-                  <View style={styles.historyCardActions}>
-                    <TouchableOpacity
-                      style={styles.historyActionBtn}
-                      onPress={() => handleEditPress(item)}
-                    >
-                      <Text style={styles.historyActionText}>✏️ Editar</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[styles.historyActionBtn, styles.deleteActionBtn]}
-                      onPress={() => handleDeletePress(item)}
-                    >
-                      <Text style={[styles.historyActionText, styles.deleteActionText]}>
-                        🗑️ Excluir
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ))
+                  );
+                })
             )}
           </ScrollView>
         )}
@@ -638,6 +1082,16 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
             setRefuelToDelete(null);
           }}
         />
+
+        {/* US26.3: Modal de cadastro de manutenção preventiva aberto via atalho de alerta */}
+        {selectedVehicle && (
+          <MaintenanceFormModal
+            visible={maintenanceModalVisible}
+            vehicle={selectedVehicle}
+            onClose={() => setMaintenanceModalVisible(false)}
+            onSuccess={() => setMaintenanceModalVisible(false)}
+          />
+        )}
       </View>
     </SafeAreaView>
   );
@@ -918,6 +1372,10 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
+  badgeCol: {
+    alignItems: 'flex-end',
+    gap: 4,
+  },
   kmlBadge: {
     backgroundColor: colors.limeDim,
     borderWidth: 1,
@@ -929,6 +1387,19 @@ const styles = StyleSheet.create({
   kmlBadgeText: {
     ...typography.captionBold,
     color: colors.lime,
+  },
+  anomalyBadge: {
+    backgroundColor: 'rgba(245, 200, 66, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 200, 66, 0.4)',
+    borderRadius: radius.full,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  anomalyBadgeText: {
+    ...typography.captionBold,
+    color: colors.amber,
+    fontSize: 10,
   },
   firstBadge: {
     backgroundColor: colors.surface,

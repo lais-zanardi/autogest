@@ -9,3 +9,5 @@ export * from './MaintenanceRuleRepository';
 export * from './FixedCostRepository';
 export * from './TireRecordRepository';
 export * from './FluidRecordRepository';
+export * from './AuditRepository';
+export * from './BudgetRepository';

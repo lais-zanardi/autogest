@@ -1,5 +1,6 @@
 import { Expense, CreateExpenseDTO, UpdateExpenseDTO } from '@autogest/shared-types';
 import { db } from '../database/DatabaseConnection';
+import { AuditRepository } from './AuditRepository';
 
 export class ExpenseRepository {
   private static TABLE = 'local_despesas';
@@ -50,6 +51,10 @@ export class ExpenseRepository {
       amount: Number(dto.amount),
       date: dto.date || now,
       description: dto.description?.trim() || null,
+      tripId: dto.tripId || dto.viagem_id || null,
+      viagem_id: dto.viagem_id || dto.tripId || null,
+      subtipoViagem: dto.subtipoViagem || dto.subtipo_viagem || null,
+      subtipo_viagem: dto.subtipo_viagem || dto.subtipoViagem || null,
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
@@ -70,19 +75,64 @@ export class ExpenseRepository {
         updates.description !== undefined
           ? updates.description?.trim() || null
           : existing.description,
+      tripId:
+        updates.tripId !== undefined
+          ? updates.tripId
+          : updates.viagem_id !== undefined
+            ? updates.viagem_id
+            : existing.tripId,
+      viagem_id:
+        updates.viagem_id !== undefined
+          ? updates.viagem_id
+          : updates.tripId !== undefined
+            ? updates.tripId
+            : existing.viagem_id,
+      subtipoViagem:
+        updates.subtipoViagem !== undefined
+          ? updates.subtipoViagem
+          : updates.subtipo_viagem !== undefined
+            ? updates.subtipo_viagem
+            : existing.subtipoViagem,
+      subtipo_viagem:
+        updates.subtipo_viagem !== undefined
+          ? updates.subtipo_viagem
+          : updates.subtipo_viagem !== undefined
+            ? updates.subtipo_viagem
+            : existing.subtipo_viagem,
       updatedAt: new Date().toISOString(),
     });
+
+    if (updated) {
+      await AuditRepository.recordMutation({
+        entidade: 'despesas',
+        entidade_id: id,
+        acao: 'edicao',
+        antes: existing as any,
+        depois: updated as any,
+      });
+    }
 
     return updated;
   }
 
   static async delete(id: string): Promise<boolean> {
+    const existing = await this.findById(id);
     const now = new Date().toISOString();
     const updated = await db.update<Expense>(this.TABLE, id, {
       deletedAt: now,
       excluido_em: now,
       updatedAt: now,
     } as any);
+
+    if (updated && existing) {
+      await AuditRepository.recordMutation({
+        entidade: 'despesas',
+        entidade_id: id,
+        acao: 'exclusao',
+        antes: existing as any,
+        depois: updated as any,
+      });
+    }
 
     return !!updated;
   }

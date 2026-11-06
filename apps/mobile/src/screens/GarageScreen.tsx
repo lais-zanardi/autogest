@@ -11,7 +11,12 @@ import {
 import { Vehicle } from '@autogest/shared-types';
 import { useAppStore } from '../store/useAppStore';
 import { VehicleService } from '../services/vehicleService';
-import { VehicleFormModal, ConfirmModal, UpdateOdometerModal } from '../components';
+import {
+  VehicleFormModal,
+  ConfirmModal,
+  UpdateOdometerModal,
+  CoachMarkTarget,
+} from '../components';
 import { colors, spacing, radius, typography } from '../theme';
 
 export const GarageScreen: React.FC = () => {
@@ -78,9 +83,11 @@ export const GarageScreen: React.FC = () => {
             </Text>
           </View>
 
-          <TouchableOpacity style={styles.addBtn} onPress={handleOpenCreate} activeOpacity={0.8}>
-            <Text style={styles.addBtnText}>+ Novo</Text>
-          </TouchableOpacity>
+          <CoachMarkTarget targetId="tour-target-vehicle-create">
+            <TouchableOpacity style={styles.addBtn} onPress={handleOpenCreate} activeOpacity={0.8}>
+              <Text style={styles.addBtnText}>+ Novo</Text>
+            </TouchableOpacity>
+          </CoachMarkTarget>
         </View>
 
         {/* Lista de Veículos ou Estado Vazio */}

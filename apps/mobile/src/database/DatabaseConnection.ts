@@ -239,6 +239,30 @@ export class DatabaseConnection {
     const data = await this.getTableData<T>(tableName);
     return data.find(item => item.id === id) || null;
   }
+
+  /**
+   * US38.5: Executa um bloco de operações em uma única transação atômica sobre as tabelas especificadas.
+   * Caso qualquer exceção ocorra durante a execução, todas as tabelas afetadas são restauradas
+   * integralmente ao snapshot anterior (rollback completo).
+   */
+  public async runInTransaction<T>(tableNames: string[], fn: () => Promise<T>): Promise<T> {
+    const uniqueTables = Array.from(new Set(tableNames));
+    const snapshot = new Map<string, any[]>();
+
+    for (const table of uniqueTables) {
+      const currentRows = await this.getTableData(table);
+      snapshot.set(table, JSON.parse(JSON.stringify(currentRows)));
+    }
+
+    try {
+      return await fn();
+    } catch (error) {
+      for (const [table, rows] of snapshot.entries()) {
+        await this.saveTableData(table, rows);
+      }
+      throw error;
+    }
+  }
 }
 
 export const db = DatabaseConnection.getInstance();

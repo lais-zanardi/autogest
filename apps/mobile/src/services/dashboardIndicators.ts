@@ -325,6 +325,12 @@ export class DashboardIndicatorsService {
       store.setDashboardIndicators(indicators);
     }
 
+    // US15.4: Reavalia teto orçamentário mensal com o mesmo monthTotalSpent do dashboard
+    const { BudgetService } = await import('./budgetService');
+    await BudgetService.reavaliarOrcamentoDoVeiculo(vehicleId, dataReferencia, {
+      gastoMesReaisPreCalculado: indicators.monthTotalSpent,
+    }).catch(() => {});
+
     return indicators;
   }
 

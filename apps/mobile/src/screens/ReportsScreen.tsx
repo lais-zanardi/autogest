@@ -9,10 +9,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { Expense, FixedCost } from '@autogest/shared-types';
+import { Expense, FixedCost, Tag } from '@autogest/shared-types';
 import { useAppStore } from '../store/useAppStore';
+import { useNavigation } from '@react-navigation/native';
 import { ExpenseService } from '../services/expenseService';
 import { FixedCostService } from '../services/fixedCostService';
+import { TagService } from '../services/tagService';
 import {
   obterDetalhamentoGastosDoPeriodo,
   GastosDetalhadosPeriodo,
@@ -23,6 +25,7 @@ import {
   ConfirmModal,
   VehicleHeaderSelector,
   UsageAndCostIndicatorsCard,
+  ExpenseCategoryChartCard,
 } from '../components';
 import { formatCurrency } from '../utils/formatters';
 import { colors, spacing, radius, typography } from '../theme';
@@ -44,12 +47,14 @@ const MONTH_NAMES = [
 
 export const ReportsScreen: React.FC = () => {
   const { selectedVehicle } = useAppStore();
+  const navigation = useNavigation<any>();
 
   const currentDate = new Date();
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1); // 1-12
 
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [expenseTagsMap, setExpenseTagsMap] = useState<Record<string, Tag[]>>({});
   const [fixedCosts, setFixedCosts] = useState<FixedCost[]>([]);
   const [fixedCostsMonthlyTotal, setFixedCostsMonthlyTotal] = useState<number>(0);
   const [breakdown, setBreakdown] = useState<GastosDetalhadosPeriodo | null>(null);
@@ -70,6 +75,7 @@ export const ReportsScreen: React.FC = () => {
   const loadData = useCallback(async () => {
     if (!selectedVehicle) {
       setExpenses([]);
+      setExpenseTagsMap({});
       setFixedCosts([]);
       setFixedCostsMonthlyTotal(0);
       setBreakdown(null);
@@ -87,6 +93,14 @@ export const ReportsScreen: React.FC = () => {
       setExpenses(monthExpenses);
       setFixedCosts(vehicleFixedCosts);
       setFixedCostsMonthlyTotal(monthlyFixedSum);
+
+      if (monthExpenses.length > 0) {
+        const ids = monthExpenses.map(e => e.id);
+        const tagsMap = await TagService.obterMapaTagsRegistros('despesa', ids);
+        setExpenseTagsMap(tagsMap);
+      } else {
+        setExpenseTagsMap({});
+      }
 
       // Agregação de gastos do mês (despesas + abastecimentos)
       const startDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`;
@@ -208,8 +222,27 @@ export const ReportsScreen: React.FC = () => {
 
         {/* Cabeçalho */}
         <View style={styles.header}>
-          <Text style={styles.eyebrow}>ANÁLISE FINANCEIRA</Text>
-          <Text style={styles.title}>Relatórios & Despesas</Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={styles.eyebrow}>ANÁLISE FINANCEIRA</Text>
+              <Text style={styles.title}>Relatórios & Despesas</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.exportReportBtn}
+              onPress={() => navigation.navigate('ReportExportModal')}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Exportar Relatório em PDF ou CSV"
+            >
+              <Text style={styles.exportReportBtnText}>📤 Exportar</Text>
+            </TouchableOpacity>
+          </View>
           <Text style={styles.subtitle}>
             {selectedVehicle
               ? `${selectedVehicle.model} • ${selectedVehicle.plate}`
@@ -258,6 +291,18 @@ export const ReportsScreen: React.FC = () => {
                 label: `${MONTH_NAMES[selectedMonth - 1].substring(0, 3)}/${selectedYear}`,
               }}
               refreshTrigger={expenses.length + (breakdown?.total || 0) + fixedCostsMonthlyTotal}
+            />
+
+            {/* Gráficos de Categorização de Gastos (US14.1, US14.2, US14.3, US14.4 e US14.5) */}
+            <ExpenseCategoryChartCard
+              vehicle={selectedVehicle}
+              externalRange={{
+                inicio: currentStartDate,
+                fim: currentEndDate,
+                label: `${MONTH_NAMES[selectedMonth - 1].substring(0, 3)}/${selectedYear}`,
+              }}
+              refreshTrigger={expenses.length + (breakdown?.total || 0) + fixedCostsMonthlyTotal}
+              onOpenFullScreen={() => navigation.navigate('ExpenseCategoryChartModal')}
             />
 
             {/* Card de Resumo Agregado do Mês (US22.3 e US22.4) */}
@@ -433,6 +478,40 @@ export const ReportsScreen: React.FC = () => {
                           <Text style={styles.expenseDesc} numberOfLines={1}>
                             {item.description}
                           </Text>
+                        )}
+                        {(expenseTagsMap[item.id] || []).length > 0 && (
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              flexWrap: 'wrap',
+                              gap: 4,
+                              marginTop: 4,
+                            }}
+                          >
+                            {(expenseTagsMap[item.id] || []).map(tag => (
+                              <View
+                                key={tag.id}
+                                style={{
+                                  backgroundColor: colors.surface,
+                                  borderWidth: 1,
+                                  borderColor: colors.border,
+                                  paddingHorizontal: 6,
+                                  paddingVertical: 1,
+                                  borderRadius: 8,
+                                }}
+                              >
+                                <Text
+                                  style={{
+                                    ...typography.caption,
+                                    fontSize: 10,
+                                    color: colors.textSecondary,
+                                  }}
+                                >
+                                  🏷️ {tag.name || tag.nome}
+                                </Text>
+                              </View>
+                            ))}
+                          </View>
                         )}
                       </View>
                     </View>
@@ -780,6 +859,21 @@ const styles = StyleSheet.create({
   },
   itemDeleteBtn: {
     borderColor: 'rgba(224, 90, 90, 0.3)',
+  },
+  exportReportBtn: {
+    backgroundColor: colors.surfaceRaised,
+    borderWidth: 1,
+    borderColor: colors.lime,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  exportReportBtnText: {
+    ...typography.caption,
+    color: colors.lime,
+    fontWeight: '700',
   },
   emptyContainer: {
     backgroundColor: colors.card,

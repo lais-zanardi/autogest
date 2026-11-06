@@ -5,6 +5,7 @@ import {
   MaintenanceType,
 } from '@autogest/shared-types';
 import { db } from '../database/DatabaseConnection';
+import { AuditRepository } from './AuditRepository';
 
 /**
  * US09.1 & US09.7: Repositório de Manutenções (manutencoes).
@@ -31,6 +32,8 @@ export class MaintenanceRepository {
       mechanic: dto.mechanic ? dto.mechanic.trim() : null,
       executionTimeMin: dto.executionTimeMin ? Number(dto.executionTimeMin) : null,
       totalValue: Number(dto.totalValue),
+      notes: dto.notes ? dto.notes.trim() : dto.nota ? dto.nota.trim() : null,
+      nota: dto.nota ? dto.nota.trim() : dto.notes ? dto.notes.trim() : null,
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
@@ -107,10 +110,22 @@ export class MaintenanceRepository {
         ? { executionTimeMin: updates.executionTimeMin ? Number(updates.executionTimeMin) : null }
         : {}),
       ...(updates.totalValue !== undefined ? { totalValue: Number(updates.totalValue) } : {}),
+      ...(updates.notes !== undefined
+        ? { notes: updates.notes ? updates.notes.trim() : null, nota: updates.notes ? updates.notes.trim() : null }
+        : updates.nota !== undefined
+          ? { notes: updates.nota ? updates.nota.trim() : null, nota: updates.nota ? updates.nota.trim() : null }
+          : {}),
       updatedAt: new Date().toISOString(),
     };
 
     await db.update<Maintenance>(this.TABLE, id, updated);
+    await AuditRepository.recordMutation({
+      entidade: 'manutencoes',
+      entidade_id: id,
+      acao: 'edicao',
+      antes: existing as any,
+      depois: updated as any,
+    });
     return updated;
   }
 
@@ -126,6 +141,13 @@ export class MaintenanceRepository {
     };
 
     await db.update<Maintenance>(this.TABLE, id, deleted);
+    await AuditRepository.recordMutation({
+      entidade: 'manutencoes',
+      entidade_id: id,
+      acao: 'exclusao',
+      antes: existing as any,
+      depois: deleted as any,
+    });
     return true;
   }
 

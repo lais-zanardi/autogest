@@ -134,3 +134,12 @@ export async function obterDetalhamentoGastosDoPeriodo(
     manutencoes,
   };
 }
+
+export {
+  distribuicaoPorCategoria,
+  obterDistribuicaoGastosPorCategoriaDoPeriodo,
+} from './expenseCategoryDistribution';
+export type {
+  GastosPorCategoriaInput,
+  DistribuicaoPorCategoriaOptions,
+} from './expenseCategoryDistribution';

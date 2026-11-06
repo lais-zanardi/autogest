@@ -6,11 +6,15 @@ import { ThemeProvider, theme } from './src/theme';
 import { RootNavigator } from './src/navigation';
 import { initDatabase } from './src/database';
 import { SyncService } from './src/services/sync';
+import { NotificacaoService } from './src/services/notificationService';
 
 export default function App() {
   useEffect(() => {
     initDatabase();
     SyncService.init();
+    NotificacaoService.reconciliarAoAbrirApp().catch(err => {
+      console.warn('Erro ao reconciliar agendamentos ao abrir o app:', err);
+    });
   }, []);
 
   return (

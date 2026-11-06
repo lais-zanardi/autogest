@@ -18,16 +18,22 @@ import {
   MaintenanceType,
   MaintenanceServiceType,
   MaintenanceAttachment,
+  MaintenanceSchedule,
 } from '@autogest/shared-types';
 import { MaintenanceService } from '../services/maintenanceService';
+import { MaintenanceScheduleService } from '../services/maintenanceScheduleService';
 import { AttachmentRepository } from '../repositories/AttachmentRepository';
 import { CameraService } from '../services/cameraService';
 import { colors, spacing, radius, typography } from '../theme';
+import { TagSelector } from './TagSelector';
+import { TagService } from '../services/tagService';
+import { validarNota, LIMITE_MAXIMO_NOTA } from '../services/routeContextService';
 
 interface MaintenanceFormModalProps {
   visible: boolean;
   vehicle: Vehicle | null;
   maintenanceToEdit?: Maintenance | null;
+  scheduleToComplete?: MaintenanceSchedule | null;
   onClose: () => void;
   onSuccess?: (maintenance: Maintenance) => void;
 }
@@ -49,6 +55,7 @@ export const MaintenanceFormModal: React.FC<MaintenanceFormModalProps> = ({
   visible,
   vehicle,
   maintenanceToEdit,
+  scheduleToComplete,
   onClose,
   onSuccess,
 }) => {
@@ -64,6 +71,8 @@ export const MaintenanceFormModal: React.FC<MaintenanceFormModalProps> = ({
   const [workshop, setWorkshop] = useState('');
   const [mechanic, setMechanic] = useState('');
   const [executionTimeMin, setExecutionTimeMin] = useState('');
+  const [notes, setNotes] = useState('');
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 
   const [attachments, setAttachments] = useState<MaintenanceAttachment[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -93,7 +102,25 @@ export const MaintenanceFormModal: React.FC<MaintenanceFormModalProps> = ({
         setExecutionTimeMin(
           maintenanceToEdit.executionTimeMin ? String(maintenanceToEdit.executionTimeMin) : '',
         );
+        setNotes(maintenanceToEdit.notes || maintenanceToEdit.nota || '');
         setAttachments(maintenanceToEdit.attachments || []);
+        TagService.listarEtiquetasDoRegistro('manutencao', maintenanceToEdit.id)
+          .then(tags => setSelectedTagIds(tags.map(t => t.id)))
+          .catch(() => setSelectedTagIds([]));
+      } else if (scheduleToComplete) {
+        setDate(scheduleToComplete.date);
+        setKm(vehicle?.currentOdometer ? String(vehicle.currentOdometer) : '');
+        setType('preventiva');
+        setServiceType(scheduleToComplete.serviceType);
+        setAmount('');
+        setDescription(scheduleToComplete.description || '');
+        setReplacedParts('');
+        setWorkshop('');
+        setMechanic('');
+        setExecutionTimeMin('');
+        setNotes('');
+        setSelectedTagIds([]);
+        setAttachments([]);
       } else {
         setDate(new Date().toISOString().split('T')[0]);
         setKm(vehicle?.currentOdometer ? String(vehicle.currentOdometer) : '');
@@ -105,10 +132,12 @@ export const MaintenanceFormModal: React.FC<MaintenanceFormModalProps> = ({
         setWorkshop('');
         setMechanic('');
         setExecutionTimeMin('');
+        setNotes('');
+        setSelectedTagIds([]);
         setAttachments([]);
       }
     }
-  }, [visible, maintenanceToEdit, vehicle]);
+  }, [visible, maintenanceToEdit, scheduleToComplete, vehicle]);
 
   const handlePickAttachment = async (source: 'camera' | 'gallery') => {
     try {
@@ -162,6 +191,11 @@ export const MaintenanceFormModal: React.FC<MaintenanceFormModalProps> = ({
       newErrors.amount = 'Valor inválido.';
     }
 
+    const validacaoNota = validarNota(notes);
+    if (!validacaoNota.isValid) {
+      newErrors.notes = validacaoNota.error || 'A nota excede 500 caracteres.';
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -172,6 +206,7 @@ export const MaintenanceFormModal: React.FC<MaintenanceFormModalProps> = ({
 
     try {
       const attachmentIds = attachments.map(a => a.id);
+      let targetId: string | null = null;
 
       if (isEditing && maintenanceToEdit) {
         const updated = await MaintenanceService.updateMaintenance(maintenanceToEdit.id, {
@@ -185,10 +220,13 @@ export const MaintenanceFormModal: React.FC<MaintenanceFormModalProps> = ({
           mechanic: mechanic.trim() || null,
           executionTimeMin: executionTimeMin.trim() ? Number(executionTimeMin) : null,
           totalValue: numericAmount,
+          notes: notes.trim() || null,
+          nota: notes.trim() || null,
           attachmentIds,
         });
 
         if (updated) {
+          targetId = updated.id;
           onSuccess?.(updated);
         }
       } else {
@@ -204,10 +242,23 @@ export const MaintenanceFormModal: React.FC<MaintenanceFormModalProps> = ({
           mechanic: mechanic.trim() || null,
           executionTimeMin: executionTimeMin.trim() ? Number(executionTimeMin) : null,
           totalValue: numericAmount,
+          notes: notes.trim() || null,
+          nota: notes.trim() || null,
           attachmentIds,
         });
 
+        targetId = created.id;
+
+        if (scheduleToComplete) {
+          // US30.5: vincula manutencao_id e marca o agendamento como concluído
+          await MaintenanceScheduleService.concluirAgendamento(scheduleToComplete.id, created.id);
+        }
+
         onSuccess?.(created);
+      }
+
+      if (targetId) {
+        await TagService.vincularEtiquetas('manutencao', targetId, selectedTagIds);
       }
 
       onClose();
@@ -391,6 +442,36 @@ export const MaintenanceFormModal: React.FC<MaintenanceFormModalProps> = ({
               placeholderTextColor={colors.textMuted}
               keyboardType="numeric"
             />
+
+            {/* US27.3: Etiquetas com autocomplete e criação */}
+            <TagSelector
+              selectedTagIds={selectedTagIds}
+              onChangeSelectedTagIds={setSelectedTagIds}
+            />
+
+            {/* US27.4: Campo de Nota com limite de 500 caracteres */}
+            <View style={{ marginVertical: 6 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={styles.fieldLabel}>NOTAS ADICIONAIS (OPCIONAL)</Text>
+                <Text style={{ ...typography.caption, color: notes.length > LIMITE_MAXIMO_NOTA ? colors.error : colors.textMuted }}>
+                  {notes.length}/{LIMITE_MAXIMO_NOTA}
+                </Text>
+              </View>
+              <TextInput
+                style={[
+                  styles.input,
+                  { height: 75, textAlignVertical: 'top', paddingTop: 8 },
+                  errors.notes ? styles.inputError : null,
+                ]}
+                multiline
+                maxLength={500}
+                value={notes}
+                onChangeText={setNotes}
+                placeholder="Observações sobre a peça, garantia ou instrução do mecânico"
+                placeholderTextColor={colors.textMuted}
+              />
+              {errors.notes && <Text style={styles.errorText}>{errors.notes}</Text>}
+            </View>
 
             {/* Seção de Anexos / Notas Fiscais (US09.4) */}
             <View style={styles.attachmentSection}>

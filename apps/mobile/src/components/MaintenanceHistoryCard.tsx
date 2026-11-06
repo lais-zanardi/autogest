@@ -8,8 +8,9 @@ import {
   Modal,
   ScrollView,
 } from 'react-native';
-import { Maintenance, MaintenanceType, Vehicle } from '@autogest/shared-types';
+import { Maintenance, MaintenanceType, Vehicle, Tag } from '@autogest/shared-types';
 import { MaintenanceService } from '../services/maintenanceService';
+import { TagService } from '../services/tagService';
 import { formatCurrency } from '../utils/formatters';
 import { colors, spacing, radius, typography } from '../theme';
 
@@ -30,12 +31,14 @@ export const MaintenanceHistoryCard: React.FC<MaintenanceHistoryCardProps> = ({
 }) => {
   const [filter, setFilter] = useState<'todas' | MaintenanceType>('todas');
   const [maintenances, setMaintenances] = useState<Maintenance[]>([]);
+  const [maintenanceTagsMap, setMaintenanceTagsMap] = useState<Record<string, Tag[]>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [viewingAttachments, setViewingAttachments] = useState<Maintenance | null>(null);
 
   const loadData = async () => {
     if (!vehicle?.id) {
       setMaintenances([]);
+      setMaintenanceTagsMap({});
       return;
     }
     setIsLoading(true);
@@ -43,6 +46,14 @@ export const MaintenanceHistoryCard: React.FC<MaintenanceHistoryCardProps> = ({
       const filterType = filter === 'todas' ? undefined : filter;
       const list = await MaintenanceService.listByVehicle(vehicle.id, filterType);
       setMaintenances(list);
+
+      if (list.length > 0) {
+        const ids = list.map(m => m.id);
+        const tagsMap = await TagService.obterMapaTagsRegistros('manutencao', ids);
+        setMaintenanceTagsMap(tagsMap);
+      } else {
+        setMaintenanceTagsMap({});
+      }
     } catch (e) {
       console.warn('Erro ao carregar manutenções:', e);
     } finally {
@@ -211,6 +222,39 @@ export const MaintenanceHistoryCard: React.FC<MaintenanceHistoryCardProps> = ({
                 <Text style={styles.detailValue}>
                   {[maint.workshop, maint.mechanic].filter(Boolean).join(' • ')}
                 </Text>
+              </View>
+            )}
+
+            {/* US27.5: Exibição de chips de etiquetas na manutenção */}
+            {(maintenanceTagsMap[maint.id] || []).length > 0 && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  gap: 6,
+                  marginTop: 6,
+                  marginBottom: 4,
+                }}
+              >
+                {(maintenanceTagsMap[maint.id] || []).map(tag => (
+                  <View
+                    key={tag.id}
+                    style={{
+                      backgroundColor: colors.surface,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      paddingHorizontal: 8,
+                      paddingVertical: 2,
+                      borderRadius: 12,
+                    }}
+                  >
+                    <Text
+                      style={{ ...typography.caption, fontSize: 11, color: colors.textSecondary }}
+                    >
+                      🏷️ {tag.name || tag.nome}
+                    </Text>
+                  </View>
+                ))}
               </View>
             )}
 

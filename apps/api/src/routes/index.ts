@@ -6,6 +6,8 @@ import odometerRoutes from './odometerRoutes';
 import expenseRoutes from './expenseRoutes';
 import syncRoutes from './syncRoutes';
 import attachmentRoutes from './attachmentRoutes';
+import reportRoutes from './reportRoutes';
+import fipeRoutes from './fipeRoutes';
 import { AuthController } from '../controllers/authController';
 import { authMiddleware } from '../middlewares/authMiddleware';
 
@@ -18,6 +20,8 @@ router.use('/refuels', authMiddleware as any, refuelRoutes);
 router.use('/odometer', authMiddleware as any, odometerRoutes);
 router.use('/expenses', authMiddleware as any, expenseRoutes);
 router.use('/anexos', authMiddleware as any, attachmentRoutes);
+router.use('/relatorios', authMiddleware as any, reportRoutes);
+router.use('/fipe', authMiddleware as any, fipeRoutes);
 router.use('/sync', authMiddleware as any, syncRoutes);
 
 export default router;

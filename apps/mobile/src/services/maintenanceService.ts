@@ -132,9 +132,14 @@ export class MaintenanceService {
     }
     MaintenanceAlertService.evaluateVehicleAlerts(dto.vehicleId).catch(() => {});
 
-    // US13.3: Recalcula indicadores globais do dashboard ao salvar manutenção
+    // US13.3 & US15.4: Recalcula indicadores globais do dashboard e reavalia teto orçamentário ao salvar manutenção
     const { DashboardIndicatorsService } = await import('./dashboardIndicators');
     await DashboardIndicatorsService.refreshForVehicle(dto.vehicleId).catch(() => {});
+    const { BudgetService } = await import('./budgetService');
+    await BudgetService.reavaliarOrcamentoDoVeiculo(
+      dto.vehicleId,
+      dto.date ? new Date(dto.date) : new Date(),
+    ).catch(() => {});
 
     return {
       ...maintenance,
@@ -166,9 +171,14 @@ export class MaintenanceService {
       updated,
     ).catch(() => {});
 
-    // US13.3: Recalcula indicadores globais do dashboard ao editar manutenção
+    // US13.3 & US15.4: Recalcula indicadores globais do dashboard e reavalia teto orçamentário ao editar manutenção
     const { DashboardIndicatorsService } = await import('./dashboardIndicators');
     await DashboardIndicatorsService.refreshForVehicle(updated.vehicleId).catch(() => {});
+    const { BudgetService } = await import('./budgetService');
+    await BudgetService.reavaliarOrcamentoDoVeiculo(
+      updated.vehicleId,
+      updated.date ? new Date(updated.date) : new Date(),
+    ).catch(() => {});
 
     const attachments = await AttachmentRepository.listByMaintenance(id);
     return {
@@ -194,10 +204,15 @@ export class MaintenanceService {
         id,
       }).catch(() => {});
 
-      // US13.3: Recalcula indicadores globais do dashboard ao excluir manutenção
+      // US13.3 & US15.4: Recalcula indicadores globais do dashboard e reavalia teto orçamentário ao excluir manutenção
       if (existing?.vehicleId) {
         const { DashboardIndicatorsService } = await import('./dashboardIndicators');
         await DashboardIndicatorsService.refreshForVehicle(existing.vehicleId).catch(() => {});
+        const { BudgetService } = await import('./budgetService');
+        await BudgetService.reavaliarOrcamentoDoVeiculo(
+          existing.vehicleId,
+          existing.date ? new Date(existing.date) : new Date(),
+        ).catch(() => {});
       }
     }
     return success;

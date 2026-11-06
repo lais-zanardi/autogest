@@ -15,11 +15,15 @@ import {
   Vehicle,
   Expense,
   ExpenseCategory,
+  TripSubtype,
   MANUAL_EXPENSE_CATEGORIES,
 } from '@autogest/shared-types';
 import { ExpenseService } from '../services/expenseService';
+import { TripService } from '../services/tripService';
 import { validateExpenseForm } from '../services/expenseValidation';
 import { colors, spacing, radius, typography } from '../theme';
+import { TagSelector } from './TagSelector';
+import { TagService } from '../services/tagService';
 
 interface ExpenseFormModalProps {
   visible: boolean;
@@ -42,6 +46,11 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState('');
   const [description, setDescription] = useState('');
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  // US07.3: Vínculo à viagem ativa e escolha de subtipo
+  const [activeTrip, setActiveTrip] = useState<any>(null);
+  const [linkToTrip, setLinkToTrip] = useState(true);
+  const [subtipoViagem, setSubtipoViagem] = useState<TripSubtype>('outros');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -59,14 +68,32 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
         const d = new Date(expenseToEdit.date);
         setDate(d.toISOString().split('T')[0]);
         setDescription(expenseToEdit.description || '');
+        setSubtipoViagem(expenseToEdit.subtipoViagem || (expenseToEdit as any).subtipo_viagem || 'outros');
+        setLinkToTrip(!!expenseToEdit.tripId);
+        TagService.listarEtiquetasDoRegistro('despesa', expenseToEdit.id)
+          .then(tags => setSelectedTagIds(tags.map(t => t.id)))
+          .catch(() => setSelectedTagIds([]));
       } else {
         setCategory('Lavagem');
         setAmount('');
         setDate(new Date().toISOString().split('T')[0]);
         setDescription('');
+        setSelectedTagIds([]);
+        setSubtipoViagem('outros');
+      }
+
+      if (vehicle?.id) {
+        TripService.obterViagemAtiva(vehicle.id)
+          .then(trip => {
+            setActiveTrip(trip);
+            if (!expenseToEdit) setLinkToTrip(!!trip);
+          })
+          .catch(() => setActiveTrip(null));
+      } else {
+        setActiveTrip(null);
       }
     }
-  }, [visible, expenseToEdit]);
+  }, [visible, expenseToEdit, vehicle]);
 
   const handleAmountChange = (text: string) => {
     // Permite dígitos e apenas uma vírgula ou ponto
@@ -103,6 +130,10 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
           amount: validation.data.amount,
           date: validation.data.date,
           description: validation.data.description,
+          tripId: linkToTrip && activeTrip ? activeTrip.id : null,
+          viagem_id: linkToTrip && activeTrip ? activeTrip.id : null,
+          subtipoViagem: linkToTrip && activeTrip ? subtipoViagem : null,
+          subtipo_viagem: linkToTrip && activeTrip ? subtipoViagem : null,
         });
       } else {
         saved = await ExpenseService.createExpense({
@@ -111,7 +142,15 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
           amount: validation.data.amount,
           date: validation.data.date,
           description: validation.data.description,
+          tripId: linkToTrip && activeTrip ? activeTrip.id : null,
+          viagem_id: linkToTrip && activeTrip ? activeTrip.id : null,
+          subtipoViagem: linkToTrip && activeTrip ? subtipoViagem : null,
+          subtipo_viagem: linkToTrip && activeTrip ? subtipoViagem : null,
         });
+      }
+
+      if (saved?.id) {
+        await TagService.vincularEtiquetas('despesa', saved.id, selectedTagIds);
       }
 
       if (onSuccess) {
@@ -152,6 +191,75 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.formBody}>
+            {/* US07.3: Vínculo à Viagem Ativa e Subtipo */}
+            {activeTrip && (
+              <View style={{ backgroundColor: colors.surfaceRaised, padding: 12, borderRadius: 8, marginBottom: 16 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <View style={{ flex: 1, paddingRight: 8 }}>
+                    <Text style={{ ...typography.bodyBold, color: colors.lime }}>
+                      🛣️ Viagem em andamento
+                    </Text>
+                    <Text style={{ ...typography.caption, color: colors.textSecondary }}>
+                      {activeTrip.origin} ➔ {activeTrip.destination}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => setLinkToTrip(!linkToTrip)}
+                    style={{
+                      paddingHorizontal: 10,
+                      paddingVertical: 4,
+                      borderRadius: 12,
+                      backgroundColor: linkToTrip ? colors.lime : colors.surface,
+                    }}
+                  >
+                    <Text style={{ ...typography.caption, color: linkToTrip ? colors.black : colors.textSecondary, fontWeight: '700' }}>
+                      {linkToTrip ? 'Vinculada' : 'Não vincular'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                {linkToTrip && (
+                  <View style={{ marginTop: 6 }}>
+                    <Text style={[styles.label, { fontSize: 12 }]}>Subtipo da Viagem</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                      {(
+                        [
+                          { key: 'pedagio', label: '🛣️ Pedágio' },
+                          { key: 'alimentacao', label: '🍔 Alimentação' },
+                          { key: 'hospedagem', label: '🏨 Hospedagem' },
+                          { key: 'estacionamento', label: '🅿️ Estacionamento' },
+                          { key: 'outros', label: 'Outros' },
+                        ] as Array<{ key: TripSubtype; label: string }>
+                      ).map(sub => {
+                        const isSelected = subtipoViagem === sub.key;
+                        return (
+                          <TouchableOpacity
+                            key={sub.key}
+                            style={[
+                              styles.categoryChip,
+                              isSelected && styles.categoryChipSelected,
+                              { paddingHorizontal: 10, paddingVertical: 4 },
+                            ]}
+                            onPress={() => setSubtipoViagem(sub.key)}
+                          >
+                            <Text
+                              style={[
+                                styles.categoryChipText,
+                                isSelected && styles.categoryChipTextSelected,
+                                { fontSize: 11 },
+                              ]}
+                            >
+                              {sub.label}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+                )}
+              </View>
+            )}
+
             {/* Seletor de Categoria Manual (US22.2) */}
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>Categoria *</Text>
@@ -230,6 +338,12 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
                 editable={!isSubmitting}
               />
             </View>
+
+            {/* US27.3: Etiquetas com autocomplete e criação */}
+            <TagSelector
+              selectedTagIds={selectedTagIds}
+              onChangeSelectedTagIds={setSelectedTagIds}
+            />
 
             {submitError && <Text style={styles.globalErrorText}>{submitError}</Text>}
           </ScrollView>

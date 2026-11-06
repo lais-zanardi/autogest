@@ -540,3 +540,289 @@ SyncEntityRegistry.register({
     }
   },
 });
+
+// 15. Viagens (US07.1)
+SyncEntityRegistry.register({
+  name: 'viagens',
+  endpoint: '/sync/viagens',
+  localTable: 'viagens',
+  applyRemote: async (remote: any) => {
+    const existing = await db.findById<any>('viagens', remote.id);
+    const remoteUpdatedAt = new Date(remote.atualizado_em || remote.updatedAt || 0).getTime();
+
+    if (existing) {
+      const localUpdatedAt = new Date(existing.atualizado_em || existing.updatedAt || 0).getTime();
+      if (remoteUpdatedAt >= localUpdatedAt) {
+        await db.update<any>('viagens', remote.id, {
+          vehicleId: remote.veiculo_id || remote.vehicleId,
+          veiculo_id: remote.veiculo_id || remote.vehicleId,
+          origin: remote.origem || remote.origin,
+          origem: remote.origem || remote.origin,
+          destination: remote.destino || remote.destination,
+          destino: remote.destino || remote.destination,
+          startDate: remote.inicio_em || remote.startDate,
+          inicio_em: remote.inicio_em || remote.startDate,
+          endDate: remote.fim_em || remote.endDate || null,
+          fim_em: remote.fim_em || remote.endDate || null,
+          startOdometer: Number(remote.km_inicio ?? remote.startOdometer ?? 0),
+          km_inicio: Number(remote.km_inicio ?? remote.startOdometer ?? 0),
+          endOdometer:
+            remote.km_fim !== undefined && remote.km_fim !== null
+              ? Number(remote.km_fim)
+              : remote.endOdometer !== undefined && remote.endOdometer !== null
+                ? Number(remote.endOdometer)
+                : null,
+          km_fim:
+            remote.km_fim !== undefined && remote.km_fim !== null
+              ? Number(remote.km_fim)
+              : remote.endOdometer !== undefined && remote.endOdometer !== null
+                ? Number(remote.endOdometer)
+                : null,
+          status: remote.status || 'em_andamento',
+          atualizado_em: remote.atualizado_em || remote.updatedAt,
+          updatedAt: remote.atualizado_em || remote.updatedAt,
+          excluido_em: remote.excluido_em || remote.deletedAt || null,
+          deletedAt: remote.excluido_em || remote.deletedAt || null,
+        });
+      }
+    } else {
+      await db.insert('viagens', {
+        id: remote.id,
+        vehicleId: remote.veiculo_id || remote.vehicleId,
+        veiculo_id: remote.veiculo_id || remote.vehicleId,
+        origin: remote.origem || remote.origin,
+        origem: remote.origem || remote.origin,
+        destination: remote.destino || remote.destination,
+        destino: remote.destino || remote.destination,
+        startDate: remote.inicio_em || remote.startDate || new Date().toISOString(),
+        inicio_em: remote.inicio_em || remote.startDate || new Date().toISOString(),
+        endDate: remote.fim_em || remote.endDate || null,
+        fim_em: remote.fim_em || remote.endDate || null,
+        startOdometer: Number(remote.km_inicio ?? remote.startOdometer ?? 0),
+        km_inicio: Number(remote.km_inicio ?? remote.startOdometer ?? 0),
+        endOdometer:
+          remote.km_fim !== undefined && remote.km_fim !== null
+            ? Number(remote.km_fim)
+            : remote.endOdometer !== undefined && remote.endOdometer !== null
+              ? Number(remote.endOdometer)
+              : null,
+        km_fim:
+          remote.km_fim !== undefined && remote.km_fim !== null
+            ? Number(remote.km_fim)
+            : remote.endOdometer !== undefined && remote.endOdometer !== null
+              ? Number(remote.endOdometer)
+              : null,
+        status: remote.status || 'em_andamento',
+        criado_em: remote.criado_em || remote.createdAt || new Date().toISOString(),
+        createdAt: remote.criado_em || remote.createdAt || new Date().toISOString(),
+        atualizado_em: remote.atualizado_em || remote.updatedAt || new Date().toISOString(),
+        updatedAt: remote.atualizado_em || remote.updatedAt || new Date().toISOString(),
+        excluido_em: remote.excluido_em || remote.deletedAt || null,
+        deletedAt: remote.excluido_em || remote.deletedAt || null,
+      });
+    }
+  },
+});
+
+// 12. Entidade Metas de Eficiência (US08 / US02.7)
+SyncEntityRegistry.register({
+  name: 'metas_eficiencia',
+  endpoint: '/api/v1/sync/metas_eficiencia',
+  localTable: 'metas_eficiencia',
+  applyRemote: async (remote: any) => {
+    const existing = await db.findById<any>('metas_eficiencia', remote.id);
+    const vehicleId = remote.veiculo_id || remote.vehicleId;
+    const targetKml = Number(remote.meta_kml ?? remote.targetKml ?? 0);
+    const active = remote.ativa === 1 || remote.ativa === true || remote.active === true;
+    const now = new Date().toISOString();
+
+    if (existing) {
+      await db.update('metas_eficiencia', remote.id, {
+        veiculo_id: vehicleId,
+        vehicleId,
+        meta_kml: targetKml,
+        targetKml,
+        ativa: active ? 1 : 0,
+        active,
+        atualizado_em: remote.atualizado_em || remote.updatedAt || now,
+        updatedAt: remote.atualizado_em || remote.updatedAt || now,
+      } as any);
+    } else {
+      await db.insert('metas_eficiencia', {
+        id: remote.id,
+        veiculo_id: vehicleId,
+        vehicleId,
+        meta_kml: targetKml,
+        targetKml,
+        ativa: active ? 1 : 0,
+        active,
+        criado_em: remote.criado_em || remote.createdAt || now,
+        createdAt: remote.criado_em || remote.createdAt || now,
+        atualizado_em: remote.atualizado_em || remote.updatedAt || now,
+        updatedAt: remote.atualizado_em || remote.updatedAt || now,
+      });
+    }
+  },
+});
+
+// 13. Entidade Consultas FIPE (US18 / US02.7)
+SyncEntityRegistry.register({
+  name: 'consultas_fipe',
+  endpoint: '/api/v1/sync/consultas_fipe',
+  localTable: 'consultas_fipe',
+  applyRemote: async (remote: any) => {
+    const existing = await db.findById<any>('consultas_fipe', remote.id);
+    const vehicleId = remote.veiculo_id || remote.vehicleId;
+    const valueCentavos = Number(remote.valor_centavos ?? remote.valueCentavos ?? 0);
+    const now = new Date().toISOString();
+
+    const recordData = {
+      veiculo_id: vehicleId,
+      vehicleId,
+      codigo_fipe: remote.codigo_fipe || remote.fipeCode,
+      fipeCode: remote.codigo_fipe || remote.fipeCode,
+      marca: remote.marca || remote.brand,
+      brand: remote.marca || remote.brand,
+      modelo: remote.modelo || remote.model,
+      model: remote.modelo || remote.model,
+      ano_modelo: Number(remote.ano_modelo ?? remote.modelYear ?? 0),
+      modelYear: Number(remote.ano_modelo ?? remote.modelYear ?? 0),
+      combustivel: remote.combustivel || remote.fuel,
+      fuel: remote.combustivel || remote.fuel,
+      mes_referencia: remote.mes_referencia || remote.referenceMonth,
+      referenceMonth: remote.mes_referencia || remote.referenceMonth,
+      valor_centavos: valueCentavos,
+      valueCentavos,
+      consultado_em: remote.consultado_em || remote.consultedAt || now,
+      consultedAt: remote.consultado_em || remote.consultedAt || now,
+      atualizado_em: remote.atualizado_em || remote.updatedAt || now,
+      updatedAt: remote.atualizado_em || remote.updatedAt || now,
+      excluido_em: remote.excluido_em || remote.deletedAt || null,
+      deletedAt: remote.excluido_em || remote.deletedAt || null,
+    };
+
+    if (existing) {
+      await db.update('consultas_fipe', remote.id, recordData as any);
+    } else {
+      await db.insert('consultas_fipe', {
+        id: remote.id,
+        ...recordData,
+        criado_em: remote.criado_em || remote.createdAt || now,
+        createdAt: remote.criado_em || remote.createdAt || now,
+      });
+    }
+  },
+});
+
+// 14. Entidade Agendamentos de Manutenção (US30 / US02.7)
+SyncEntityRegistry.register({
+  name: 'agendamentos_manutencao',
+  endpoint: '/api/v1/sync/agendamentos_manutencao',
+  localTable: 'agendamentos_manutencao',
+  applyRemote: async (remote: any) => {
+    const existing = await db.findById<any>('agendamentos_manutencao', remote.id);
+    const vehicleId = remote.veiculo_id || remote.vehicleId;
+    const now = new Date().toISOString();
+
+    const recordData = {
+      veiculo_id: vehicleId,
+      vehicleId,
+      data: remote.data || remote.date,
+      date: remote.data || remote.date,
+      hora_lembrete: remote.hora_lembrete || remote.reminderTime || '09:00',
+      reminderTime: remote.hora_lembrete || remote.reminderTime || '09:00',
+      tipo_servico: remote.tipo_servico || remote.serviceType,
+      serviceType: remote.tipo_servico || remote.serviceType,
+      descricao: remote.descricao || remote.description,
+      description: remote.descricao || remote.description,
+      status: remote.status || 'agendado',
+      manutencao_id: remote.manutencao_id || remote.maintenanceId || null,
+      maintenanceId: remote.manutencao_id || remote.maintenanceId || null,
+      atualizado_em: remote.atualizado_em || remote.updatedAt || now,
+      updatedAt: remote.atualizado_em || remote.updatedAt || now,
+      excluido_em: remote.excluido_em || remote.deletedAt || null,
+      deletedAt: remote.excluido_em || remote.deletedAt || null,
+    };
+
+    if (existing) {
+      await db.update('agendamentos_manutencao', remote.id, recordData as any);
+    } else {
+      await db.insert('agendamentos_manutencao', {
+        id: remote.id,
+        ...recordData,
+        criado_em: remote.criado_em || remote.createdAt || now,
+        createdAt: remote.criado_em || remote.createdAt || now,
+      });
+    }
+  },
+});
+
+// 15. Entidade Etiquetas (US27.1 / US02.7)
+SyncEntityRegistry.register({
+  name: 'etiquetas',
+  endpoint: '/api/v1/sync/etiquetas',
+  localTable: 'etiquetas',
+  applyRemote: async (remote: any) => {
+    const existing = await db.findById<any>('etiquetas', remote.id);
+    const now = new Date().toISOString();
+
+    const recordData = {
+      nome: remote.nome || remote.name,
+      name: remote.nome || remote.name,
+      usuario_id: remote.usuario_id || remote.userId || 'local_user',
+      userId: remote.usuario_id || remote.userId || 'local_user',
+      atualizado_em: remote.atualizado_em || remote.updatedAt || now,
+      updatedAt: remote.atualizado_em || remote.updatedAt || now,
+      excluido_em: remote.excluido_em || remote.deletedAt || null,
+      deletedAt: remote.excluido_em || remote.deletedAt || null,
+    };
+
+    if (existing) {
+      await db.update('etiquetas', remote.id, recordData as any);
+    } else {
+      await db.insert('etiquetas', {
+        id: remote.id,
+        ...recordData,
+        criado_em: remote.criado_em || remote.createdAt || now,
+        createdAt: remote.criado_em || remote.createdAt || now,
+      });
+    }
+  },
+});
+
+// 16. Entidade Registros Etiquetas (US27.1 / US02.7)
+SyncEntityRegistry.register({
+  name: 'registros_etiquetas',
+  endpoint: '/api/v1/sync/registros_etiquetas',
+  localTable: 'registros_etiquetas',
+  applyRemote: async (remote: any) => {
+    const existing = await db.findById<any>('registros_etiquetas', remote.id);
+    const now = new Date().toISOString();
+
+    const recordData = {
+      etiqueta_id: remote.etiqueta_id || remote.tagId,
+      tagId: remote.etiqueta_id || remote.tagId,
+      tipo_registro: remote.tipo_registro || remote.recordType,
+      recordType: remote.tipo_registro || remote.recordType,
+      registro_id: remote.registro_id || remote.recordId,
+      recordId: remote.registro_id || remote.recordId,
+      usuario_id: remote.usuario_id || remote.userId || 'local_user',
+      userId: remote.usuario_id || remote.userId || 'local_user',
+      atualizado_em: remote.atualizado_em || remote.updatedAt || now,
+      updatedAt: remote.atualizado_em || remote.updatedAt || now,
+      excluido_em: remote.excluido_em || remote.deletedAt || null,
+      deletedAt: remote.excluido_em || remote.deletedAt || null,
+    };
+
+    if (existing) {
+      await db.update('registros_etiquetas', remote.id, recordData as any);
+    } else {
+      await db.insert('registros_etiquetas', {
+        id: remote.id,
+        ...recordData,
+        criado_em: remote.criado_em || remote.createdAt || now,
+        createdAt: remote.criado_em || remote.createdAt || now,
+      });
+    }
+  },
+});

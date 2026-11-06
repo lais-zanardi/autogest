@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { createSyncResourceRouter } from './syncResourceRouter';
+import { createAuditSyncRouter } from './auditSyncRouter';
 
 const router = Router();
 
@@ -26,7 +27,7 @@ const veiculosSyncRouter = createSyncResourceRouter({
   },
 });
 
-// 2. Abastecimentos (US05 / US02.1)
+// 2. Abastecimentos (US05 / US02.1 / US27.1 / US07.1)
 const abastecimentosSyncRouter = createSyncResourceRouter({
   tableName: 'abastecimentos',
   ownershipType: 'via_vehicle',
@@ -44,6 +45,9 @@ const abastecimentosSyncRouter = createSyncResourceRouter({
     'tanque_cheio',
     'posto',
     'imagem_comprovante_url',
+    'tipo_percurso',
+    'nota',
+    'viagem_id',
   ],
   validatePayload: body => {
     const vId = body.veiculo_id || body.vehicleId;
@@ -66,11 +70,19 @@ const hodometroSyncRouter = createSyncResourceRouter({
   },
 });
 
-// 4. Despesas (US22 / US02.1)
+// 4. Despesas (US22 / US02.1 / US07.1)
 const despesasSyncRouter = createSyncResourceRouter({
   tableName: 'despesas',
   ownershipType: 'via_vehicle',
-  allowedFields: ['veiculo_id', 'categoria', 'valor', 'data_hora', 'descricao'],
+  allowedFields: [
+    'veiculo_id',
+    'categoria',
+    'valor',
+    'data_hora',
+    'descricao',
+    'viagem_id',
+    'subtipo_viagem',
+  ],
   validatePayload: body => {
     const valor = body.valor !== undefined ? body.valor : body.amount;
     if (valor === undefined || valor === null || Number(valor) <= 0) {
@@ -80,7 +92,7 @@ const despesasSyncRouter = createSyncResourceRouter({
   },
 });
 
-// 5. Manutenções (US09.1)
+// 5. Manutenções (US09.1 / US27.1)
 const manutencoesSyncRouter = createSyncResourceRouter({
   tableName: 'manutencoes',
   ownershipType: 'via_vehicle',
@@ -96,6 +108,7 @@ const manutencoesSyncRouter = createSyncResourceRouter({
     'profissional',
     'tempo_execucao_min',
     'valor',
+    'nota',
   ],
   validatePayload: body => {
     if (!body.veiculo_id && !body.vehicleId) {
@@ -255,5 +268,196 @@ router.use('/tire_records', registrosPneuSyncRouter);
 
 router.use('/registros_fluido', registrosFluidoSyncRouter);
 router.use('/fluid_records', registrosFluidoSyncRouter);
+
+// 11. Auditoria Somente Inserção (US21.7)
+const auditoriaSyncRouter = createAuditSyncRouter();
+router.use('/auditoria', auditoriaSyncRouter);
+router.use('/audit_logs', auditoriaSyncRouter);
+
+// 12. Orçamentos Mensais por Veículo (US15.1)
+export const orcamentosSyncRouter = createSyncResourceRouter({
+  tableName: 'orcamentos',
+  ownershipType: 'via_vehicle',
+  allowedFields: [
+    'veiculo_id',
+    'teto_mensal',
+    'percentual_aviso',
+    'aviso_enviado_mes',
+    'critico_enviado_mes',
+  ],
+  validatePayload: body => {
+    const vId = body.veiculo_id || body.vehicleId;
+    if (!vId) return { isValid: false, error: 'veiculo_id é obrigatório.' };
+
+    const teto =
+      body.teto_mensal !== undefined
+        ? body.teto_mensal
+        : body.monthlyLimitCents !== undefined
+          ? body.monthlyLimitCents
+          : body.tetoMensalCentavos;
+    if (teto === undefined || teto === null || isNaN(Number(teto)) || Number(teto) <= 0) {
+      return { isValid: false, error: 'teto_mensal deve ser um valor em centavos maior que zero.' };
+    }
+
+    const perc =
+      body.percentual_aviso !== undefined ? body.percentual_aviso : body.warningPercentage;
+    if (
+      perc !== undefined &&
+      perc !== null &&
+      (isNaN(Number(perc)) || Number(perc) <= 0 || Number(perc) > 100)
+    ) {
+      return { isValid: false, error: 'percentual_aviso deve estar entre 1 e 100.' };
+    }
+
+    return { isValid: true };
+  },
+});
+
+// 13. Etiquetas (US27.1)
+export const etiquetasSyncRouter = createSyncResourceRouter({
+  tableName: 'etiquetas',
+  ownershipType: 'direct',
+  allowedFields: ['nome'],
+  validatePayload: body => {
+    const nome = body.nome || body.name;
+    if (!nome || !String(nome).trim()) {
+      return { isValid: false, error: 'nome da etiqueta é obrigatório.' };
+    }
+    return { isValid: true };
+  },
+});
+
+// 14. Registros Etiquetas (US27.1)
+export const registrosEtiquetasSyncRouter = createSyncResourceRouter({
+  tableName: 'registros_etiquetas',
+  ownershipType: 'direct',
+  allowedFields: ['etiqueta_id', 'tipo_registro', 'registro_id'],
+  validatePayload: body => {
+    const etId = body.etiqueta_id || body.tagId;
+    if (!etId) return { isValid: false, error: 'etiqueta_id é obrigatório.' };
+    const tipo = body.tipo_registro || body.recordType;
+    if (!tipo || !['abastecimento', 'despesa', 'manutencao'].includes(tipo)) {
+      return { isValid: false, error: 'tipo_registro inválido.' };
+    }
+    const regId = body.registro_id || body.recordId;
+    if (!regId) return { isValid: false, error: 'registro_id é obrigatório.' };
+    return { isValid: true };
+  },
+});
+
+// 15. Viagens (US07.1)
+export const viagensSyncRouter = createSyncResourceRouter({
+  tableName: 'viagens',
+  ownershipType: 'via_vehicle',
+  allowedFields: [
+    'veiculo_id',
+    'origem',
+    'destino',
+    'inicio_em',
+    'fim_em',
+    'km_inicio',
+    'km_fim',
+    'status',
+  ],
+  validatePayload: body => {
+    const vId = body.veiculo_id || body.vehicleId;
+    if (!vId) return { isValid: false, error: 'veiculo_id é obrigatório.' };
+    const origem = body.origem || body.origin;
+    if (!origem || !String(origem).trim()) return { isValid: false, error: 'origem é obrigatória.' };
+    const destino = body.destino || body.destination;
+    if (!destino || !String(destino).trim()) return { isValid: false, error: 'destino é obrigatório.' };
+    return { isValid: true };
+  },
+});
+
+// 16. Metas de Eficiência (US08.1)
+export const metasEficienciaSyncRouter = createSyncResourceRouter({
+  tableName: 'metas_eficiencia',
+  ownershipType: 'via_vehicle',
+  allowedFields: ['veiculo_id', 'consumo_alvo_kml', 'ativa'],
+  validatePayload: body => {
+    const vId = body.veiculo_id || body.vehicleId;
+    if (!vId) return { isValid: false, error: 'veiculo_id é obrigatório.' };
+    const alvo =
+      body.consumo_alvo_kml !== undefined ? body.consumo_alvo_kml : body.targetKml;
+    if (alvo === undefined || alvo === null || isNaN(Number(alvo)) || Number(alvo) <= 0) {
+      return { isValid: false, error: 'consumo_alvo_kml deve ser um número maior que zero.' };
+    }
+    return { isValid: true };
+  },
+});
+
+// 17. Consultas FIPE (US18.4)
+export const consultasFipeSyncRouter = createSyncResourceRouter({
+  tableName: 'consultas_fipe',
+  ownershipType: 'via_vehicle',
+  allowedFields: [
+    'veiculo_id',
+    'codigo_fipe',
+    'marca',
+    'modelo',
+    'ano_modelo',
+    'combustivel',
+    'mes_referencia',
+    'valor_centavos',
+    'consultado_em',
+  ],
+  validatePayload: body => {
+    const vId = body.veiculo_id || body.vehicleId;
+    if (!vId) return { isValid: false, error: 'veiculo_id é obrigatório.' };
+    const mes = body.mes_referencia || body.referenceMonth;
+    if (!mes) return { isValid: false, error: 'mes_referencia é obrigatório.' };
+    const valor = body.valor_centavos !== undefined ? body.valor_centavos : body.valueCentavos;
+    if (valor === undefined || valor === null || Number(valor) <= 0) {
+      return { isValid: false, error: 'valor_centavos deve ser maior que zero.' };
+    }
+    return { isValid: true };
+  },
+});
+
+// 18. Agendamentos de Manutenção (US30.1)
+export const agendamentosManutencaoSyncRouter = createSyncResourceRouter({
+  tableName: 'agendamentos_manutencao',
+  ownershipType: 'via_vehicle',
+  allowedFields: [
+    'veiculo_id',
+    'data',
+    'hora_lembrete',
+    'tipo_servico',
+    'descricao',
+    'status',
+    'manutencao_id',
+  ],
+  validatePayload: body => {
+    const vId = body.veiculo_id || body.vehicleId;
+    if (!vId) return { isValid: false, error: 'veiculo_id é obrigatório.' };
+    const data = body.data || body.date;
+    if (!data) return { isValid: false, error: 'data é obrigatória.' };
+    const desc = body.descricao || body.description;
+    if (!desc || !String(desc).trim()) return { isValid: false, error: 'descricao é obrigatória.' };
+    return { isValid: true };
+  },
+});
+
+router.use('/orcamentos', orcamentosSyncRouter);
+router.use('/budgets', orcamentosSyncRouter);
+
+router.use('/etiquetas', etiquetasSyncRouter);
+router.use('/tags', etiquetasSyncRouter);
+
+router.use('/registros_etiquetas', registrosEtiquetasSyncRouter);
+router.use('/record_tags', registrosEtiquetasSyncRouter);
+
+router.use('/viagens', viagensSyncRouter);
+router.use('/trips', viagensSyncRouter);
+
+router.use('/metas_eficiencia', metasEficienciaSyncRouter);
+router.use('/efficiency_goals', metasEficienciaSyncRouter);
+
+router.use('/consultas_fipe', consultasFipeSyncRouter);
+router.use('/fipe_consultations', consultasFipeSyncRouter);
+
+router.use('/agendamentos_manutencao', agendamentosManutencaoSyncRouter);
+router.use('/maintenance_schedules', agendamentosManutencaoSyncRouter);
 
 export default router;

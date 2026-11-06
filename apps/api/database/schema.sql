@@ -263,3 +263,37 @@ CREATE INDEX IF NOT EXISTS idx_registros_fluido_veiculo_id ON registros_fluido(v
 CREATE INDEX IF NOT EXISTS idx_registros_fluido_veiculo_data ON registros_fluido(veiculo_id, data);
 CREATE INDEX IF NOT EXISTS idx_registros_fluido_excluido_em ON registros_fluido(excluido_em);
 
+-- Tabela de Auditoria (US21.5) — Somente inserção (sem atualizado_em nem excluido_em)
+CREATE TABLE IF NOT EXISTS auditoria (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    entidade VARCHAR(50) NOT NULL,
+    entidade_id VARCHAR(100) NOT NULL,
+    acao VARCHAR(40) NOT NULL CHECK (acao IN ('criacao', 'edicao', 'exclusao', 'geracao_backup', 'restauracao_backup')),
+    alteracoes JSONB NOT NULL,
+    data_hora TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    criado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_auditoria_usuario_data ON auditoria(usuario_id, data_hora DESC);
+CREATE INDEX IF NOT EXISTS idx_auditoria_entidade ON auditoria(usuario_id, entidade, data_hora DESC);
+
+-- Tabela de Orçamentos Mensais por Veículo (US15.1)
+CREATE TABLE IF NOT EXISTS orcamentos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    veiculo_id UUID NOT NULL REFERENCES veiculos(id) ON DELETE CASCADE,
+    usuario_id UUID NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    teto_mensal BIGINT NOT NULL CHECK (teto_mensal > 0),
+    percentual_aviso INTEGER NOT NULL DEFAULT 80 CHECK (percentual_aviso > 0 AND percentual_aviso <= 100),
+    aviso_enviado_mes VARCHAR(7) NULL,
+    critico_enviado_mes VARCHAR(7) NULL,
+    criado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    excluido_em TIMESTAMPTZ NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_orcamentos_veiculo_id ON orcamentos(veiculo_id);
+CREATE INDEX IF NOT EXISTS idx_orcamentos_excluido_em ON orcamentos(excluido_em);
+
+
+

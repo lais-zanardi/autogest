@@ -29,7 +29,11 @@ export type SyncOperationType =
   | 'DELETE_TIRE_RECORD'
   | 'CREATE_FLUID_RECORD'
   | 'UPDATE_FLUID_RECORD'
-  | 'DELETE_FLUID_RECORD';
+  | 'DELETE_FLUID_RECORD'
+  | 'CREATE_AUDIT_LOG'
+  | 'CREATE_BUDGET'
+  | 'UPDATE_BUDGET'
+  | 'DELETE_BUDGET';
 
 export type SyncStatus = 'PENDING' | 'SYNCING' | 'FAILED' | 'COMPLETED';
 
