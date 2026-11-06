@@ -1,0 +1,134 @@
+{
+  "capturedAt": "2026-11-05T21:07:40.407Z",
+  "providerName": "Parallelum FIPE HTTP REST API v1",
+  "providerBaseUrl": "https://parallelum.com.br/fipe/api/v1/carros",
+  "rateLimitHeaders": {
+    "x-ratelimit-limit": "500",
+    "x-ratelimit-remaining": "491",
+    "x-ratelimit-reset": "86381",
+    "x-throttle-limit": "50",
+    "x-throttle-remaining": "46"
+  },
+  "marcas": [
+    {
+      "codigo": "21",
+      "nome": "Fiat"
+    },
+    {
+      "codigo": "22",
+      "nome": "Ford"
+    },
+    {
+      "codigo": "23",
+      "nome": "GM - Chevrolet"
+    },
+    {
+      "codigo": "25",
+      "nome": "Honda"
+    },
+    {
+      "codigo": "26",
+      "nome": "Hyundai"
+    },
+    {
+      "codigo": "56",
+      "nome": "Toyota"
+    },
+    {
+      "codigo": "59",
+      "nome": "VW - VolksWagen"
+    }
+  ],
+  "modelosPorMarca": {
+    "59": {
+      "modelos": [
+        {
+          "codigo": 5585,
+          "nome": "AMAROK CD2.0 16V/S CD2.0 16V TDI 4x2 Die"
+        },
+        {
+          "codigo": 5586,
+          "nome": "AMAROK CD2.0 16V/S CD2.0 16V TDI 4x4 Die"
+        },
+        {
+          "codigo": 5748,
+          "nome": "AMAROK CS2.0 16V/S2.0 16V TDI 4x2 Diesel"
+        },
+        {
+          "codigo": 8323,
+          "nome": "Gol 1.0 Flex 12V 5p"
+        }
+      ],
+      "anos": [
+        {
+          "codigo": "2019-5",
+          "nome": "2019 Flex"
+        },
+        {
+          "codigo": "2020-5",
+          "nome": "2020 Flex"
+        },
+        {
+          "codigo": "2021-5",
+          "nome": "2021 Flex"
+        },
+        {
+          "codigo": "2022-5",
+          "nome": "2022 Flex"
+        },
+        {
+          "codigo": "2023-5",
+          "nome": "2023 Flex"
+        }
+      ]
+    }
+  },
+  "anosPorModelo": {
+    "59:8323": [
+      {
+        "codigo": "2019-5",
+        "nome": "2019 Flex"
+      },
+      {
+        "codigo": "2020-5",
+        "nome": "2020 Flex"
+      },
+      {
+        "codigo": "2021-5",
+        "nome": "2021 Flex"
+      },
+      {
+        "codigo": "2022-5",
+        "nome": "2022 Flex"
+      },
+      {
+        "codigo": "2023-5",
+        "nome": "2023 Flex"
+      }
+    ]
+  },
+  "valoresPorAno": {
+    "59:8323:2019-5": {
+      "TipoVeiculo": 1,
+      "Valor": "R$ 43.703,00",
+      "Marca": "VW - VolksWagen",
+      "Modelo": "Gol 1.0 Flex 12V 5p",
+      "AnoModelo": 2019,
+      "Combustivel": "Flex",
+      "CodigoFipe": "005490-9",
+      "MesReferencia": "novembro de 2026",
+      "SiglaCombustivel": "F"
+    },
+    "59:8323:2020-5": {
+      "TipoVeiculo": 1,
+      "Valor": "R$ 44.796,00",
+      "Marca": "VW - VolksWagen",
+      "Modelo": "Gol 1.0 Flex 12V 5p",
+      "AnoModelo": 2020,
+      "Combustivel": "Flex",
+      "CodigoFipe": "005490-9",
+      "MesReferencia": "novembro de 2026",
+      "SiglaCombustivel": "F"
+    }
+  }
+}
