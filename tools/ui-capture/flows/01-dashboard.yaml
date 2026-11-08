@@ -1,0 +1,10 @@
+# Maestro Flow: Captura Geral de Telas do AutoGest
+# Este arquivo serve como especificação declarativa compatível com Maestro
+appId: com.autogest
+---
+- launchApp
+- takeScreenshot: docs/ui-review/screens/01-dashboard--preenchida-a.png
+- scroll
+- takeScreenshot: docs/ui-review/screens/01-dashboard--preenchida-b.png
+- scroll
+- takeScreenshot: docs/ui-review/screens/01-dashboard--preenchida-c.png
