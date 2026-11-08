@@ -82,7 +82,13 @@ scratch/
 AGENTS.md
 
 # Development documentation & backlog (local development only)
-docs/
+docs/*
+!docs/product_backlog.md
+!docs/banco_de_dados.md
+!docs/entregas/
+!docs/entregas/entrega-1.md
+!docs/entregas/entrega-2.md
+!docs/entregas/entrega-3.md
 backlog/
 scripts/
 CONTRIBUTING.md
