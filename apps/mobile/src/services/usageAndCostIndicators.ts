@@ -157,7 +157,7 @@ export function calcularCustoPorKm(params: CalcularCustoPorKmParams): CostPerKmI
     ),
   );
 
-  // US24.3: Evita divisão por zero quando não há km rodado no período
+  // US24.3 & UX-01: Quando não há km rodado no período, retorna null (indisponível) sem fallback para zero
   if (kmRodados <= 0) {
     return {
       custoTotal,
@@ -167,11 +167,11 @@ export function calcularCustoPorKm(params: CalcularCustoPorKmParams): CostPerKmI
       custoManutencaoCorretiva,
       custoOutrasDespesas,
       custoFixoProporcional,
-      custoKmTotal: 0,
-      custoKmCombustivel: 0,
-      custoKmManutencaoTotal: 0,
-      custoKmManutencaoPreventiva: 0,
-      custoKmManutencaoCorretiva: 0,
+      custoKmTotal: null,
+      custoKmCombustivel: null,
+      custoKmManutencaoTotal: null,
+      custoKmManutencaoPreventiva: null,
+      custoKmManutencaoCorretiva: null,
     };
   }
 

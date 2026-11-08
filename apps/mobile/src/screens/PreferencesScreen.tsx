@@ -19,6 +19,8 @@ import {
 } from '../services/preferencesService';
 import { NotificacaoService } from '../services/notificationService';
 import { Icon } from '../components/Icon';
+import { EnvConfig } from '../config/env';
+import { SyncService } from '../services/sync';
 
 interface PreferencesScreenProps {
   onClose: () => void;
@@ -38,6 +40,11 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({ onClose })
   const [dataPausaTexto, setDataPausaTexto] = useState('');
   const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
 
+  // Conectividade e sincronização
+  const [isMockMode, setIsMockMode] = useState<boolean>(EnvConfig.isMockMode());
+  const [apiUrl, setApiUrl] = useState<string>(EnvConfig.getApiUrl());
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+
   useEffect(() => {
     carregarPreferencias();
   }, []);
@@ -48,10 +55,49 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({ onClose })
       const prefs = await PreferencesService.obterPreferencias();
       setUnidade(prefs.unidade_consumo_principal || 'km/l');
       setPausadasAte(prefs.notificacoes_pausadas_ate);
+      setIsMockMode(EnvConfig.isMockMode());
+      setApiUrl(EnvConfig.getApiUrl());
     } catch {
       Alert.alert('Erro', 'Não foi possível carregar as preferências.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleMockMode = async () => {
+    const newMock = !isMockMode;
+    await EnvConfig.setMockMode(newMock);
+    setIsMockMode(newMock);
+    setMensagemSucesso(`Modo Mock alterado para: ${newMock ? 'Ativado (Local/Offline)' : 'Desativado (API Real)'}`);
+    setTimeout(() => setMensagemSucesso(null), 3000);
+  };
+
+  const handleSaveApiUrl = async () => {
+    await EnvConfig.setApiUrl(apiUrl);
+    setMensagemSucesso('URL da API salva com sucesso.');
+    setTimeout(() => setMensagemSucesso(null), 3000);
+  };
+
+  const handleResetApiUrl = async () => {
+    await EnvConfig.resetApiUrl();
+    setApiUrl(EnvConfig.getApiUrl());
+    setMensagemSucesso('URL da API restaurada para o padrão.');
+    setTimeout(() => setMensagemSucesso(null), 3000);
+  };
+
+  const handleManualSync = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await SyncService.sync();
+      if (res.success) {
+        Alert.alert('Sincronização', 'Sincronização realizada com sucesso!');
+      } else {
+        Alert.alert('Sincronização', res.error || 'Falha na sincronização.');
+      }
+    } catch (err: any) {
+      Alert.alert('Sincronização', err?.message || 'Erro inesperado.');
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -436,6 +482,120 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({ onClose })
                 <ActivityIndicator size="small" color="#000" />
               ) : (
                 <Text style={styles.pauseActionText}>⏸ Confirmar Pausa de Notificações</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* Seção 3: Conectividade, Modo Mock & Sincronização */}
+          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[typography.h3, { color: colors.textPrimary, marginBottom: spacing.xs }]}>
+              Conectividade & Sincronização
+            </Text>
+            <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: spacing.md }]}>
+              Controle se o aplicativo utiliza dados locais simulados (Modo Mock) ou sincroniza com a API remota.
+            </Text>
+
+            {/* Alternância Modo Mock vs API Real */}
+            <TouchableOpacity
+              style={[
+                styles.unitOption,
+                isMockMode
+                  ? { backgroundColor: colors.surface, borderColor: colors.lime }
+                  : { backgroundColor: colors.surface, borderColor: colors.border },
+                { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
+              ]}
+              onPress={handleToggleMockMode}
+              activeOpacity={0.8}
+            >
+              <View style={{ flex: 1, marginRight: spacing.sm }}>
+                <Text style={[styles.unitOptionTitle, { color: isMockMode ? colors.lime : colors.textPrimary }]}>
+                  {isMockMode ? 'Modo Mock (Ativo)' : 'API Remota (Ativo)'}
+                </Text>
+                <Text style={[styles.unitOptionDesc, { color: colors.textSecondary }]}>
+                  {isMockMode
+                    ? 'Operação 100% offline via SQLite local. Sem timeouts de rede.'
+                    : 'Sincronização em nuvem com o backend REST.'}
+                </Text>
+              </View>
+              <View
+                style={{
+                  paddingVertical: 6,
+                  paddingHorizontal: 10,
+                  borderRadius: 6,
+                  backgroundColor: isMockMode ? colors.lime : colors.border,
+                }}
+              >
+                <Text style={{ fontSize: 11, fontWeight: '700', color: isMockMode ? '#000' : colors.textMuted }}>
+                  {isMockMode ? 'MOCK ATIVO' : 'MOCK DESLIGADO'}
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Configuração de IP/URL da API */}
+            <View style={styles.inputGroup}>
+              <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: 6 }]}>
+                Endereço da API REST (URL Base):
+              </Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                    color: colors.textPrimary,
+                    marginBottom: 8,
+                  },
+                ]}
+                value={apiUrl}
+                onChangeText={setApiUrl}
+                placeholder="http://10.0.2.2:3000/api/v1"
+                placeholderTextColor={colors.textMuted}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <Text style={[typography.caption, { color: colors.textMuted, fontSize: 11, marginBottom: spacing.sm }]}>
+                Dica para celular físico: use o IP da sua rede Wi-Fi (ex: http://192.168.1.50:3000/api/v1) ou execute via USB: adb reverse tcp:3000 tcp:3000.
+              </Text>
+
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <TouchableOpacity
+                  style={[styles.pauseActionButton, { flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }]}
+                  onPress={handleResetApiUrl}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[typography.caption, { color: colors.textSecondary, fontWeight: '700' }]}>
+                    Restaurar Padrão
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.pauseActionButton, { flex: 1, backgroundColor: colors.lime }]}
+                  onPress={handleSaveApiUrl}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[typography.caption, { color: '#000', fontWeight: '700' }]}>
+                    Salvar URL
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Botão de Sincronização Manual */}
+            <TouchableOpacity
+              style={[
+                styles.pauseActionButton,
+                { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.lime, marginTop: 4 },
+              ]}
+              onPress={handleManualSync}
+              disabled={isSyncing}
+              activeOpacity={0.8}
+            >
+              {isSyncing ? (
+                <ActivityIndicator size="small" color={colors.lime} />
+              ) : (
+                <Text style={[typography.caption, { color: colors.lime, fontWeight: '700' }]}>
+                  🔄 Sincronizar Agora
+                </Text>
               )}
             </TouchableOpacity>
           </View>

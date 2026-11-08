@@ -118,7 +118,7 @@ export const TripSummaryModal: React.FC<TripSummaryModalProps> = ({
               <View style={[styles.gridCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Text style={[typography.caption, { color: colors.textSecondary }]}>CUSTO POR KM</Text>
                 <Text style={[typography.h3, { color: colors.textPrimary, marginTop: 4 }]}>
-                  {summary.custoPorKm !== null ? `R$ ${summary.custoPorKm.toFixed(2).replace('.', ',')}` : '--'}
+                  {summary.custoPorKm !== null ? `${formatCurrency(summary.custoPorKm)}/km` : '--'}
                 </Text>
                 <Text style={[typography.caption, { color: colors.textMuted }]}>
                   R$/km rodado

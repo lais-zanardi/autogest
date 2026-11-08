@@ -1,4 +1,4 @@
-import { describe, it, beforeEach } from 'node:test';
+import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { SyncService } from '../services/sync/SyncService';
 import { SyncEntityRegistry } from '../services/sync/SyncEntityRegistry';
@@ -8,9 +8,11 @@ import { VehicleRepository } from '../repositories/VehicleRepository';
 import { db } from '../database/DatabaseConnection';
 import { api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';
+import { EnvConfig } from '../config/env';
 
 describe('US02 — Sincronização em Nuvem (Mobile SyncService)', () => {
   beforeEach(async () => {
+    await EnvConfig.setMockMode(false);
     await db.saveTableData('local_vehicles', []);
     await db.saveTableData('local_refuels', []);
     await db.saveTableData('local_leituras_hodometro', []);
@@ -18,6 +20,10 @@ describe('US02 — Sincronização em Nuvem (Mobile SyncService)', () => {
     await db.saveTableData('fila_sync', []);
     await db.saveTableData('sync_queue', []);
     useAppStore.getState().logout();
+  });
+
+  afterEach(async () => {
+    await EnvConfig.resetToEnvDefault();
   });
 
   it('US02 BDD: Dado registro offline pendente, quando a conexão retornar, então sincroniza em background com o servidor central', async () => {
@@ -229,6 +235,69 @@ describe('US02 — Sincronização em Nuvem (Mobile SyncService)', () => {
       } finally {
         api.get = originalGet;
         api.put = originalPut;
+      }
+    });
+
+    it('em Modo Mock (VITE_USE_MOCK=true), SyncService esvazia outbox e conclui sincronização localmente sem chamadas de rede', async () => {
+      await EnvConfig.setMockMode(true);
+
+      // Enfileira item local na outbox
+      await SyncQueueRepository.enqueue('CREATE_VEHICLE', '/api/v1/vehicles', { id: 'v_mock_01' });
+      const pendingBefore = await SyncQueueRepository.countPending();
+      assert.equal(pendingBefore, 1);
+
+      let httpCalled = false;
+      const origPut = api.put;
+      const origGet = api.get;
+      (api as any).put = async () => {
+        httpCalled = true;
+        return { status: 200, data: {} };
+      };
+      (api as any).get = async () => {
+        httpCalled = true;
+        return { status: 200, data: {} };
+      };
+
+      try {
+        const result = await SyncService.sync();
+        assert.equal(result.success, true);
+        assert.equal(result.pushedCount, 1);
+        assert.equal(result.pulledCount, 0);
+        assert.equal(httpCalled, false, 'Não deve efetuar chamadas HTTP de rede no Modo Mock');
+
+        const pendingAfter = await SyncQueueRepository.countPending();
+        assert.equal(pendingAfter, 0, 'Outbox deve ser limpa em modo mock');
+      } finally {
+        api.put = origPut;
+        api.get = origGet;
+      }
+    });
+
+    it('Circuit Breaker: quando a primeira entidade no pull falha com timeout, aborta imediatamente o loop sem tentar as demais entidades', async () => {
+      let getCallsCount = 0;
+      const origGet = api.get;
+      const origPut = api.put;
+
+      (api as any).put = async () => ({ status: 200, data: {} });
+      (api as any).get = async () => {
+        getCallsCount++;
+        const err: any = new Error('timeout of 10000ms exceeded');
+        err.code = 'ECONNABORTED';
+        throw err;
+      };
+
+      try {
+        const result = await SyncService.pull();
+        assert.equal(result.success, false);
+        assert.equal(
+          getCallsCount,
+          1,
+          'Deve abortar imediatamente na 1ª falha por timeout em vez de tentar as 7 entidades',
+        );
+        assert.ok(result.error?.includes('timeout') || result.error?.includes('indisponível'));
+      } finally {
+        api.get = origGet;
+        api.put = origPut;
       }
     });
   });

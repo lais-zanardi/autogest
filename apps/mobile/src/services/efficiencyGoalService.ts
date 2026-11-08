@@ -48,6 +48,64 @@ export function statusDaMeta(
 }
 
 /**
+ * UX-03: Calcula a diferença percentual inteira entre rendimento atual e a meta.
+ * Ex: 12,2 contra 13,0 resulta em 6% (Math.round(Math.abs(12.2 - 13.0) / 13.0 * 100)).
+ */
+export function calcularDiferencaPercentualMeta(
+  consumoAtual: number | null | undefined,
+  meta: number | null | undefined
+): number {
+  if (
+    consumoAtual == null ||
+    meta == null ||
+    consumoAtual <= 0 ||
+    meta <= 0 ||
+    isNaN(consumoAtual) ||
+    isNaN(meta)
+  ) {
+    return 0;
+  }
+  const diff = Math.abs(consumoAtual - meta);
+  return Math.round((diff / meta) * 100);
+}
+
+/**
+ * UX-03: Gera o microcopy de acompanhamento da meta de eficiência
+ * - Abaixo da meta: "Rendimento X% abaixo da meta de Y km/l"
+ * - Acima da meta: "Rendimento X% acima da meta"
+ * - Igual: "Meta atingida"
+ */
+export function formatarMicrocopyMeta(
+  consumoAtual: number | null | undefined,
+  meta: number | null | undefined
+): string {
+  if (
+    consumoAtual == null ||
+    meta == null ||
+    consumoAtual <= 0 ||
+    meta <= 0 ||
+    isNaN(consumoAtual) ||
+    isNaN(meta)
+  ) {
+    return 'Dados insuficientes';
+  }
+
+  const diffPercentual = calcularDiferencaPercentualMeta(consumoAtual, meta);
+
+  if (consumoAtual === meta || diffPercentual === 0) {
+    return 'Meta atingida';
+  }
+
+  if (consumoAtual > meta) {
+    return `Rendimento ${diffPercentual}% acima da meta`;
+  }
+
+  const metaFormatada = `${meta.toFixed(1).replace('.', ',')} km/l`;
+  return `Rendimento ${diffPercentual}% abaixo da meta de ${metaFormatada}`;
+}
+
+
+/**
  * Validação de valor da meta de consumo (km/l)
  * Deve ser um número estritamente positivo
  */

@@ -85,7 +85,18 @@ let suppressIndividualDispatches = false;
  * e reconciliação idempotente na tabela local `notificacoes_agendadas`.
  */
 export class NotificationService {
+  private static isGloballySilenced = false;
+
+  static setSilenced(silenced: boolean): void {
+    this.isGloballySilenced = silenced;
+  }
+
+  static isSilenced(): boolean {
+    return this.isGloballySilenced;
+  }
+
   static resetMock(): void {
+    this.isGloballySilenced = false;
     mockPermissionGranted = true;
     deliveredNotifications.length = 0;
     scheduledNotifications.clear();
@@ -118,6 +129,10 @@ export class NotificationService {
     params: DispararNotificacaoParams,
     dataReferencia: Date = new Date(),
   ): Promise<NotificationSendResult> {
+    if (this.isGloballySilenced) {
+      return { sent: false, reason: 'suppressed_for_summary' };
+    }
+
     const hasPerm = await this.checkPermission();
     if (!hasPerm) {
       return { sent: false, reason: 'permission_denied' };

@@ -105,7 +105,7 @@ describe('US24 — Indicadores de Uso e Custo', () => {
   });
 
   describe('US24.3 & US24.4: Casos de Borda — Sem Km Rodado (Divisão por Zero) e Sem Dados', () => {
-    it('US24.3: Deve evitar divisão por zero quando kmRodados = 0, mantendo custos absolutos e retornando 0 para todos os custos/km', () => {
+    it('US24.3 & UX-01: Deve evitar divisão por zero quando kmRodados = 0, mantendo custos absolutos e retornando null (indisponível) para todos os custos/km', () => {
       const resultado = calcularIndicadoresUsoECustoPuro({
         inicio: '2026-10-01',
         fim: '2026-10-31',
@@ -134,16 +134,15 @@ describe('US24 — Indicadores de Uso e Custo', () => {
       assert.strictEqual(resultado.custo.custoCombustivel, 250);
       assert.strictEqual(resultado.custo.custoManutencaoPreventiva, 300);
 
-      // Porém nenhum custo/km pode ser NaN ou Infinity (divisão por zero prevenida)
-      assert.strictEqual(resultado.custo.custoKmTotal, 0);
-      assert.strictEqual(resultado.custo.custoKmCombustivel, 0);
-      assert.strictEqual(resultado.custo.custoKmManutencaoTotal, 0);
-      assert.strictEqual(resultado.custo.custoKmManutencaoPreventiva, 0);
-      assert.strictEqual(resultado.custo.custoKmManutencaoCorretiva, 0);
-      assert.ok(Number.isFinite(resultado.custo.custoKmTotal));
+      // UX-01: Quando não há km no período, o custo/km deve ser indisponível (null), sem fallback para zero
+      assert.strictEqual(resultado.custo.custoKmTotal, null);
+      assert.strictEqual(resultado.custo.custoKmCombustivel, null);
+      assert.strictEqual(resultado.custo.custoKmManutencaoTotal, null);
+      assert.strictEqual(resultado.custo.custoKmManutencaoPreventiva, null);
+      assert.strictEqual(resultado.custo.custoKmManutencaoCorretiva, null);
     });
 
-    it('US24.3: Deve sinalizar semDados = true e semKmRodado = true quando o período não possuir nenhum registro', () => {
+    it('US24.3 & UX-01: Deve sinalizar semDados = true e semKmRodado = true quando o período não possuir nenhum registro, com custo/km null', () => {
       const resultado = calcularIndicadoresUsoECustoPuro({
         inicio: '2026-10-01',
         fim: '2026-10-31',
@@ -158,7 +157,7 @@ describe('US24 — Indicadores de Uso e Custo', () => {
       assert.strictEqual(resultado.uso.kmRodados, 0);
       assert.strictEqual(resultado.uso.kmPorDia, 0);
       assert.strictEqual(resultado.custo.custoTotal, 0);
-      assert.strictEqual(resultado.custo.custoKmTotal, 0);
+      assert.strictEqual(resultado.custo.custoKmTotal, null);
     });
 
     it('US24.3: Deve tratar leituras no mesmo timestamp ou com km regressivo sem gerar valores negativos ou NaN', () => {

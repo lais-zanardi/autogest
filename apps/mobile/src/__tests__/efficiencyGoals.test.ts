@@ -7,6 +7,8 @@ import {
   recomendar,
   validarCatalogoDicas,
   validarMetaConsumo,
+  calcularDiferencaPercentualMeta,
+  formatarMicrocopyMeta,
 } from '../services/efficiencyGoalService';
 import { EfficiencyGoalRepository } from '../repositories/EfficiencyGoalRepository';
 import {
@@ -211,6 +213,43 @@ describe('US08 — Metas de Eficiência e Recomendações', () => {
       const todas = await EfficiencyGoalRepository.listAll();
       // Não deve duplicar meta ativa para o mesmo veículo
       assert.strictEqual(todas.filter(m => m.vehicleId === 'veh-1' && m.active).length, 1);
+    });
+  });
+
+  describe('UX-03 — Microcopy e cálculo da meta (Funções Puras)', () => {
+    test('12,2 contra 13,0 resulta em exatamente 6% com arredondamento inteiro', () => {
+      const diff = calcularDiferencaPercentualMeta(12.2, 13.0);
+      assert.strictEqual(diff, 6);
+    });
+
+    test('formatarMicrocopyMeta: abaixo, acima, igual e dados insuficientes', () => {
+      // Abaixo da meta
+      assert.strictEqual(
+        formatarMicrocopyMeta(12.2, 13.0),
+        'Rendimento 6% abaixo da meta de 13,0 km/l'
+      );
+
+      // Acima da meta
+      assert.strictEqual(
+        formatarMicrocopyMeta(14.0, 12.0),
+        'Rendimento 17% acima da meta'
+      );
+
+      // Igual à meta
+      assert.strictEqual(
+        formatarMicrocopyMeta(13.0, 13.0),
+        'Meta atingida'
+      );
+
+      // Dados nulos ou zerados
+      assert.strictEqual(
+        formatarMicrocopyMeta(null, 13.0),
+        'Dados insuficientes'
+      );
+      assert.strictEqual(
+        formatarMicrocopyMeta(12.2, null),
+        'Dados insuficientes'
+      );
     });
   });
 });

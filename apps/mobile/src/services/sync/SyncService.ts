@@ -3,6 +3,7 @@ import { api } from '../api';
 import { SyncQueueRepository } from '../../repositories/SyncQueueRepository';
 import { SyncEntityRegistry } from './SyncEntityRegistry';
 import { useAppStore } from '../../store/useAppStore';
+import { EnvConfig } from '../../config/env';
 
 const LAST_SYNC_KEY = '@autogest:last_sync_timestamp';
 let memoryLastSync: string | null = null;
@@ -44,6 +45,15 @@ export class SyncService {
    * Envia as operações pendentes da outbox (fila_sync) em estrita ordem FIFO (US02.5)
    */
   static async push(): Promise<{ success: boolean; pushedCount: number; error?: string }> {
+    // Em modo mock / dados simulados, drena a fila pendente sem efetuar chamadas HTTP
+    if (EnvConfig.isMockMode()) {
+      const pendingItems = await SyncQueueRepository.getPendingItems();
+      for (const item of pendingItems) {
+        await SyncQueueRepository.removeItem(item.id);
+      }
+      return { success: true, pushedCount: pendingItems.length };
+    }
+
     const pendingItems = await SyncQueueRepository.getPendingItems();
     let pushedCount = 0;
 
@@ -95,6 +105,12 @@ export class SyncService {
    * Busca as mudanças no servidor desde a última sincronização (Pull)
    */
   static async pull(): Promise<{ success: boolean; pulledCount: number; error?: string }> {
+    // Em modo mock, a sincronização remota é dispensada
+    if (EnvConfig.isMockMode()) {
+      await setStoredLastSync(new Date().toISOString());
+      return { success: true, pulledCount: 0 };
+    }
+
     let pulledCount = 0;
     try {
       const lastSyncTimestamp = await getStoredLastSync();
@@ -112,9 +128,24 @@ export class SyncService {
               pulledCount++;
             }
           }
-        } catch (e) {
-          // Continua para as demais entidades caso uma falhe temporariamente
+        } catch (e: any) {
           console.warn(`[SyncService] Erro ao sincronizar entidade ${entity.name}:`, e);
+
+          // Circuit Breaker: se o servidor estiver indisponível ou ocorrer timeout,
+          // interrompe imediatamente o loop para evitar travar as 7 entidades seguidas
+          const isTimeoutOrNetworkError =
+            e?.code === 'ECONNABORTED' ||
+            e?.code === 'ERR_NETWORK' ||
+            e?.message?.includes('timeout') ||
+            e?.message?.includes('Network Error');
+
+          if (isTimeoutOrNetworkError) {
+            return {
+              success: false,
+              pulledCount,
+              error: 'Servidor indisponível ou timeout de conexão excedido.',
+            };
+          }
         }
       }
 
@@ -152,6 +183,26 @@ export class SyncService {
     try {
       // 1. Push
       const pushRes = await this.push();
+
+      // Se o push falhou devido a falta de conexão ou timeout, aborta o pull para evitar timeouts adicionais
+      if (
+        !pushRes.success &&
+        (pushRes.error?.includes('timeout') ||
+          pushRes.error?.includes('Network Error') ||
+          pushRes.error?.includes('conexão'))
+      ) {
+        const remainingPending = await SyncQueueRepository.countPending().catch(() => 0);
+        if ((store as any).setSyncState) {
+          (store as any).setSyncState('error', undefined, remainingPending);
+        }
+        return {
+          success: false,
+          pushedCount: pushRes.pushedCount,
+          pulledCount: 0,
+          error: pushRes.error,
+        };
+      }
+
       // 2. Pull
       const pullRes = await this.pull();
 

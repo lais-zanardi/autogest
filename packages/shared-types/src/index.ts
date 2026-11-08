@@ -249,14 +249,14 @@ export interface DashboardStats {
   totalDistance: number;
   averageKml: number;
   totalRefuels: number;
-  costPerKm: number;
+  costPerKm: number | null;
   fuelDistribution: Record<FuelType, number>;
 }
 
 export interface DashboardIndicators {
   vehicleId: string;
   monthTotalSpent: number;
-  averageCostPerKm: number;
+  averageCostPerKm: number | null;
   averageConsumptionKml: number;
   totalMileageKm: number;
   projectedAutonomyKm: number;
@@ -489,11 +489,11 @@ export interface CostPerKmIndicators {
   custoManutencaoCorretiva: number;
   custoOutrasDespesas: number;
   custoFixoProporcional: number;
-  custoKmTotal: number;
-  custoKmCombustivel: number;
-  custoKmManutencaoTotal: number;
-  custoKmManutencaoPreventiva: number;
-  custoKmManutencaoCorretiva: number;
+  custoKmTotal: number | null;
+  custoKmCombustivel: number | null;
+  custoKmManutencaoTotal: number | null;
+  custoKmManutencaoPreventiva: number | null;
+  custoKmManutencaoCorretiva: number | null;
 }
 
 export interface UsageAndCostIndicators {

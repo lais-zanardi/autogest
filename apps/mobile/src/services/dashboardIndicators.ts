@@ -40,7 +40,7 @@ export interface CalcularIndicadoresDashboardPuroParams {
   initialOdometer?: number | null;
   gastoTotalMesVariavel: number;
   custoFixoMensal?: number;
-  custoMedioPorKm: number;
+  custoMedioPorKm: number | null;
   abastecimentos: Array<{
     odometer: number;
     calculatedKml?: number | null;
@@ -172,7 +172,11 @@ export function calcularIndicadoresDashboardPuro(
   const custoFixo = Math.max(0, Number(params.custoFixoMensal) || 0);
   const monthTotalSpent = Number((gastoVariavel + custoFixo).toFixed(2));
 
-  const averageCostPerKm = Math.max(0, Number((Number(params.custoMedioPorKm) || 0).toFixed(2)));
+  // UX-01: Não faz fallback para zero; preserva null quando não houver km no período
+  const averageCostPerKm =
+    params.custoMedioPorKm !== null && params.custoMedioPorKm !== undefined
+      ? Math.max(0, Number((Number(params.custoMedioPorKm) || 0).toFixed(2)))
+      : null;
   const averageConsumptionKml = calcularConsumoMedioSelector(params.abastecimentos || []);
 
   const totalMileageKm = calcularQuilometragemTotalSelector({
