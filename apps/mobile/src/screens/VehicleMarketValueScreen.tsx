@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,12 +8,13 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  TextInput,
 } from 'react-native';
 import { useAppStore } from '../store/useAppStore';
 import { colors, spacing, radius, typography } from '../theme';
 import { MobileFipeService } from '../services/mobileFipeService';
 import { calcularDepreciacao } from '../services/fipeDepreciation';
-import { formatCurrency } from '../utils/formatters';
+import { formatCurrency, formatMonth } from '../utils/formatters';
 import { Icon } from '../components/Icon';
 import {
   FipeBrand,
@@ -46,6 +47,30 @@ export const VehicleMarketValueScreen: React.FC<VehicleMarketValueScreenProps> =
   const [selectedMarca, setSelectedMarca] = useState<string>('');
   const [selectedModelo, setSelectedModelo] = useState<string>('');
   const [selectedAno, setSelectedAno] = useState<string>('');
+
+  // Busca textual para marcas e modelos
+  const [searchMarca, setSearchMarca] = useState<string>('');
+  const [searchModelo, setSearchModelo] = useState<string>('');
+
+  const filteredMarcas = useMemo(() => {
+    if (!searchMarca.trim()) return marcas;
+    const q = searchMarca.trim().toLowerCase();
+    return marcas.filter(m => m.nome.toLowerCase().includes(q));
+  }, [marcas, searchMarca]);
+
+  const filteredModelos = useMemo(() => {
+    if (!searchModelo.trim()) return modelos;
+    const q = searchModelo.trim().toLowerCase();
+    return modelos.filter(m => m.nome.toLowerCase().includes(q));
+  }, [modelos, searchModelo]);
+
+  const selectedMarcaObj = useMemo(() => {
+    return marcas.find(m => m.codigo === selectedMarca);
+  }, [marcas, selectedMarca]);
+
+  const selectedModeloObj = useMemo(() => {
+    return modelos.find(m => m.codigo === selectedModelo);
+  }, [modelos, selectedModelo]);
 
   useEffect(() => {
     loadVehicleData();
@@ -194,7 +219,7 @@ export const VehicleMarketValueScreen: React.FC<VehicleMarketValueScreenProps> =
             <View style={styles.metaRow}>
               <Text style={styles.metaText}>
                 Mês de Referência:{' '}
-                <Text style={styles.metaHighlight}>{ultimaConsulta.referenceMonth}</Text>
+                <Text style={styles.metaHighlight}>{formatMonth(ultimaConsulta.referenceMonth)}</Text>
               </Text>
               <Text style={styles.metaText}>
                 Código FIPE:{' '}
@@ -282,65 +307,206 @@ export const VehicleMarketValueScreen: React.FC<VehicleMarketValueScreenProps> =
             <ActivityIndicator size="small" color={colors.lime} style={{ marginVertical: 8 }} />
           )}
 
-          {/* 1. Marcas */}
-          <Text style={styles.fieldLabel}>1. Marca</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll}>
-            {marcas.slice(0, 30).map(m => (
-              <TouchableOpacity
-                key={m.codigo}
-                style={[styles.chip, selectedMarca === m.codigo && styles.chipSelected]}
-                onPress={() => handleSelectMarca(m.codigo)}
-              >
-                <Text style={[styles.chipText, selectedMarca === m.codigo && styles.chipTextSelected]}>
-                  {m.nome}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          {/* 1. Seleção de Marca */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <Text style={styles.fieldLabel}>1. Marca</Text>
+            {marcas.length > 0 && (
+              <Text style={{ fontSize: 11, color: colors.lime }}>
+                {filteredMarcas.length} {filteredMarcas.length === 1 ? 'marca' : 'marcas'}
+              </Text>
+            )}
+          </View>
 
-          {/* 2. Modelos */}
-          {modelos.length > 0 && (
+          {selectedMarcaObj ? (
+            <View style={styles.selectedItemCard}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.selectedItemLabel}>MARCA SELECIONADA</Text>
+                <Text style={styles.selectedItemName}>{selectedMarcaObj.nome}</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.changeButton}
+                onPress={() => {
+                  setSelectedMarca('');
+                  setSelectedModelo('');
+                  setSelectedAno('');
+                  setModelos([]);
+                  setAnos([]);
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.changeButtonText}>Trocar</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
             <>
-              <Text style={[styles.fieldLabel, { marginTop: spacing.sm }]}>2. Modelo</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll}>
-                {modelos.slice(0, 30).map(mod => (
+              <View style={styles.searchInputRow}>
+                <Icon name="Search" size={14} color={colors.textSecondary} />
+                <TextInput
+                  style={styles.searchInput}
+                  value={searchMarca}
+                  onChangeText={setSearchMarca}
+                  placeholder="Buscar marca (ex: Toyota, Honda, Fiat, BMW...)"
+                  placeholderTextColor={colors.textMuted}
+                  autoCapitalize="none"
+                />
+                {searchMarca.length > 0 && (
+                  <TouchableOpacity onPress={() => setSearchMarca('')}>
+                    <Icon name="X" size={14} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {filteredMarcas.length === 0 && !loadingCascade ? (
+                <View style={{ paddingVertical: 12, alignItems: 'flex-start' }}>
+                  <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 8 }}>
+                    {searchMarca ? `Nenhuma marca encontrada para "${searchMarca}".` : 'Nenhuma marca disponível no momento.'}
+                  </Text>
                   <TouchableOpacity
-                    key={mod.codigo}
-                    style={[styles.chip, selectedModelo === mod.codigo && styles.chipSelected]}
-                    onPress={() => handleSelectModelo(mod.codigo)}
+                    style={styles.retryButton}
+                    onPress={() => {
+                      setSearchMarca('');
+                      loadMarcas();
+                    }}
+                    activeOpacity={0.8}
                   >
-                    <Text
-                      style={[
-                        styles.chipText,
-                        selectedModelo === mod.codigo && styles.chipTextSelected,
-                      ]}
-                    >
-                      {mod.nome}
+                    <Text style={{ color: colors.lime, fontSize: 12, fontWeight: '700' }}>
+                      🔄 Limpar busca / Recarregar
                     </Text>
                   </TouchableOpacity>
-                ))}
-              </ScrollView>
+                </View>
+              ) : (
+                <ScrollView
+                  nestedScrollEnabled
+                  style={styles.selectionScrollContainer}
+                  showsVerticalScrollIndicator={true}
+                >
+                  <View style={styles.chipsWrap}>
+                    {filteredMarcas.map(m => (
+                      <TouchableOpacity
+                        key={m.codigo}
+                        style={[styles.chip, selectedMarca === m.codigo && styles.chipSelected]}
+                        onPress={() => handleSelectMarca(m.codigo)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={[styles.chipText, selectedMarca === m.codigo && styles.chipTextSelected]}>
+                          {m.nome}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </ScrollView>
+              )}
             </>
           )}
 
-          {/* 3. Anos */}
-          {anos.length > 0 && (
-            <>
-              <Text style={[styles.fieldLabel, { marginTop: spacing.sm }]}>3. Ano / Combustível</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll}>
-                {anos.map(a => (
+          {/* 2. Seleção de Modelo */}
+          {selectedMarca !== '' && (
+            <View style={{ marginTop: spacing.md }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <Text style={styles.fieldLabel}>2. Modelo</Text>
+                {modelos.length > 0 && (
+                  <Text style={{ fontSize: 11, color: colors.lime }}>
+                    {filteredModelos.length} {filteredModelos.length === 1 ? 'modelo' : 'modelos'}
+                  </Text>
+                )}
+              </View>
+
+              {selectedModeloObj ? (
+                <View style={styles.selectedItemCard}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.selectedItemLabel}>MODELO SELECIONADO</Text>
+                    <Text style={styles.selectedItemName}>{selectedModeloObj.nome}</Text>
+                  </View>
                   <TouchableOpacity
-                    key={a.codigo}
-                    style={[styles.chip, selectedAno === a.codigo && styles.chipSelected]}
-                    onPress={() => setSelectedAno(a.codigo)}
+                    style={styles.changeButton}
+                    onPress={() => {
+                      setSelectedModelo('');
+                      setSelectedAno('');
+                      setAnos([]);
+                    }}
+                    activeOpacity={0.8}
                   >
-                    <Text style={[styles.chipText, selectedAno === a.codigo && styles.chipTextSelected]}>
-                      {a.nome}
-                    </Text>
+                    <Text style={styles.changeButtonText}>Trocar</Text>
                   </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </>
+                </View>
+              ) : (
+                <>
+                  <View style={styles.searchInputRow}>
+                    <Icon name="Search" size={14} color={colors.textSecondary} />
+                    <TextInput
+                      style={styles.searchInput}
+                      value={searchModelo}
+                      onChangeText={setSearchModelo}
+                      placeholder={`Buscar modelo de ${selectedMarcaObj?.nome || 'marca'}...`}
+                      placeholderTextColor={colors.textMuted}
+                      autoCapitalize="none"
+                    />
+                    {searchModelo.length > 0 && (
+                      <TouchableOpacity onPress={() => setSearchModelo('')}>
+                        <Icon name="X" size={14} color={colors.textSecondary} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
+                  {modelos.length === 0 && loadingCascade ? (
+                    <ActivityIndicator size="small" color={colors.lime} style={{ marginVertical: 12 }} />
+                  ) : filteredModelos.length === 0 ? (
+                    <Text style={{ color: colors.textSecondary, fontSize: 13, marginVertical: 8 }}>
+                      Nenhum modelo encontrado para "{searchModelo}".
+                    </Text>
+                  ) : (
+                    <ScrollView
+                      nestedScrollEnabled
+                      style={styles.modelsListContainer}
+                      showsVerticalScrollIndicator={true}
+                    >
+                      {filteredModelos.map(mod => (
+                        <TouchableOpacity
+                          key={mod.codigo}
+                          style={[styles.modelListItem, selectedModelo === mod.codigo && styles.modelListItemSelected]}
+                          onPress={() => handleSelectModelo(mod.codigo)}
+                          activeOpacity={0.7}
+                        >
+                          <Text
+                            style={[
+                              styles.modelListItemText,
+                              selectedModelo === mod.codigo && styles.modelListItemTextSelected,
+                            ]}
+                          >
+                            {mod.nome}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  )}
+                </>
+              )}
+            </View>
+          )}
+
+          {/* 3. Seleção de Ano */}
+          {selectedModelo !== '' && (
+            <View style={{ marginTop: spacing.md }}>
+              <Text style={styles.fieldLabel}>3. Ano / Combustível</Text>
+              {anos.length === 0 && loadingCascade ? (
+                <ActivityIndicator size="small" color={colors.lime} style={{ marginVertical: 12 }} />
+              ) : (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll}>
+                  {anos.map(a => (
+                    <TouchableOpacity
+                      key={a.codigo}
+                      style={[styles.chip, selectedAno === a.codigo && styles.chipSelected]}
+                      onPress={() => setSelectedAno(a.codigo)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.chipText, selectedAno === a.codigo && styles.chipTextSelected]}>
+                        {a.nome}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
+            </View>
           )}
 
           {/* Botão Consultar Valor Agora */}
@@ -371,7 +537,7 @@ export const VehicleMarketValueScreen: React.FC<VehicleMarketValueScreenProps> =
             {consultas.map((c, i) => (
               <View key={c.id || i} style={styles.historyRow}>
                 <View>
-                  <Text style={styles.historyMonth}>{c.referenceMonth}</Text>
+                  <Text style={styles.historyMonth}>{formatMonth(c.referenceMonth)}</Text>
                   <Text style={styles.historyModel} numberOfLines={1}>
                     {c.model} ({c.modelYear})
                   </Text>
@@ -615,5 +781,104 @@ const styles = StyleSheet.create({
     ...typography.body,
     fontWeight: '700',
     color: colors.lime,
+  },
+  selectedItemCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.surfaceRaised,
+    borderRadius: radius.sm,
+    padding: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.xs,
+  },
+  selectedItemLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    marginBottom: 2,
+    letterSpacing: 0.5,
+  },
+  selectedItemName: {
+    ...typography.body,
+    fontWeight: '700',
+    color: colors.lime,
+  },
+  changeButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  changeButtonText: {
+    ...typography.caption,
+    color: colors.textPrimary,
+    fontWeight: '600',
+    fontSize: 11,
+  },
+  searchInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: 10,
+    height: 42,
+    marginBottom: spacing.xs,
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    color: colors.textPrimary,
+    fontSize: 13,
+    paddingVertical: 0,
+  },
+  selectionScrollContainer: {
+    maxHeight: 180,
+    marginBottom: spacing.xs,
+  },
+  chipsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    paddingVertical: 4,
+  },
+  modelsListContainer: {
+    maxHeight: 220,
+    backgroundColor: colors.surface,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.xs,
+  },
+  modelListItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  modelListItemSelected: {
+    backgroundColor: colors.limeDim,
+  },
+  modelListItemText: {
+    ...typography.caption,
+    color: colors.textPrimary,
+    fontSize: 13,
+  },
+  modelListItemTextSelected: {
+    color: colors.lime,
+    fontWeight: '700',
+  },
+  retryButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
 });
