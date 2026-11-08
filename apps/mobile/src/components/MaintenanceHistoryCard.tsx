@@ -11,9 +11,10 @@ import {
 import { Maintenance, MaintenanceType, Vehicle, Tag } from '@autogest/shared-types';
 import { MaintenanceService } from '../services/maintenanceService';
 import { TagService } from '../services/tagService';
-import { formatCurrency } from '../utils/formatters';
+import { formatCurrency, formatKm } from '../utils/formatters';
 import { colors, spacing, radius, typography } from '../theme';
 import { Icon } from './Icon';
+import { ListRow } from './ui/ListRow';
 
 interface MaintenanceHistoryCardProps {
   vehicle: Vehicle | null;
@@ -190,35 +191,15 @@ export const MaintenanceHistoryCard: React.FC<MaintenanceHistoryCardProps> = ({
       ) : (
         maintenances.map(maint => (
           <View key={maint.id} style={styles.card}>
-            <View style={styles.cardTop}>
-              <View style={styles.serviceRow}>
-                <Text style={styles.serviceTitle}>{getServiceLabel(maint.serviceType)}</Text>
-                <View
-                  style={[
-                    styles.typeBadge,
-                    maint.type === 'preventiva' ? styles.typeBadgePrev : styles.typeBadgeCorr,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.typeBadgeText,
-                      maint.type === 'preventiva'
-                        ? styles.typeBadgeTextPrev
-                        : styles.typeBadgeTextCorr,
-                    ]}
-                  >
-                    {maint.type.toUpperCase()}
-                  </Text>
-                </View>
-              </View>
-
-              <Text style={styles.dateText}>{formatDate(maint.date)}</Text>
-            </View>
-
-            <View style={styles.metricsRow}>
-              <Text style={styles.kmValue}>{maint.odometer.toLocaleString('pt-BR')} km</Text>
-              <Text style={styles.priceValue}>{formatCurrency(maint.totalValue)}</Text>
-            </View>
+            <ListRow
+              icon="Wrench"
+              title={getServiceLabel(maint.serviceType)}
+              subtitle={`${formatDate(maint.date)} • ${formatKm(maint.odometer)}`}
+              value={formatCurrency(maint.totalValue)}
+              showChevron={false}
+              isFirst
+              style={{ paddingHorizontal: 0, paddingVertical: 4 }}
+            />
 
             <Text style={styles.descriptionText}>{maint.description}</Text>
 

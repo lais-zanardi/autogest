@@ -3,14 +3,14 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { colors, spacing, radius, typography } from '../theme';
 import { theme as tokens } from '../theme/tokens';
 import { Icon } from './Icon';
-import { EfficiencyGoal, GoalStatusResult, EcoTip } from '@autogest/shared-types';
+import { EfficiencyGoal, GoalStatusResult, EcoTip as _EcoTip } from '@autogest/shared-types';
 import { formatarConsumo } from '../utils/formatters';
 
 interface EfficiencyGoalCardProps {
   goal: EfficiencyGoal | null;
   status: GoalStatusResult;
   averageKml: number | null;
-  topTip?: EcoTip;
+  topTip?: _EcoTip;
   onPressManage: () => void;
 }
 
@@ -18,12 +18,11 @@ export const EfficiencyGoalCard: React.FC<EfficiencyGoalCardProps> = ({
   goal,
   status,
   averageKml,
-  topTip,
+  topTip: _topTip,
   onPressManage,
 }) => {
   const isGoalReached = status.situacao === 'atingida';
   const isGoalBelow = status.situacao === 'abaixo';
-  const hasNoData = status.situacao === 'sem_dados';
 
   const badgeColor = isGoalReached
     ? colors.lime
@@ -56,28 +55,20 @@ export const EfficiencyGoalCard: React.FC<EfficiencyGoalCardProps> = ({
             </Text>
           </View>
         </View>
-        <TouchableOpacity
-          style={styles.manageButton}
-          onPress={onPressManage}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Acessar metas e dicas"
-        >
-          <Text style={styles.manageButtonText}>Metas & Dicas ›</Text>
-        </TouchableOpacity>
       </View>
 
       {goal ? (
         <View style={styles.goalDetails}>
-          <View style={styles.metricRow}>
-            <View>
-              <Text style={styles.metricLabel}>Consumo Médio</Text>
+          {/* UX-02: Linhas separadas para Atual e Meta com km/l e L/100 km */}
+          <View style={styles.metricList}>
+            <View style={styles.metricItemRow}>
+              <Text style={styles.metricLabel}>Atual:</Text>
               <Text style={styles.metricValue}>
                 {averageKml != null ? formatarConsumo(averageKml) : '—'}
               </Text>
             </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.metricLabel}>Sua Meta</Text>
+            <View style={styles.metricItemRow}>
+              <Text style={styles.metricLabel}>Meta:</Text>
               <Text style={[styles.metricValue, { color: colors.lime }]}>
                 {formatarConsumo(goal.targetKml)}
               </Text>
@@ -97,10 +88,17 @@ export const EfficiencyGoalCard: React.FC<EfficiencyGoalCardProps> = ({
             />
           </View>
 
+          {/* Rodapé com link para Metas & Dicas */}
           <View style={styles.progressFooter}>
-            <Text style={styles.progressPercentText}>
-              {hasNoData ? 'Dados insuficientes' : `${status.percentual}% da meta`}
-            </Text>
+            <TouchableOpacity
+              style={styles.manageButton}
+              onPress={onPressManage}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Acessar metas e dicas"
+            >
+              <Text style={styles.manageButtonText}>Metas & Dicas ›</Text>
+            </TouchableOpacity>
           </View>
         </View>
       ) : (
@@ -115,21 +113,6 @@ export const EfficiencyGoalCard: React.FC<EfficiencyGoalCardProps> = ({
           >
             <Text style={styles.setGoalButtonText}>Definir Meta de Consumo</Text>
           </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Dica em Destaque */}
-      {topTip && (
-        <View style={styles.tipBox}>
-          <View style={styles.tipHeader}>
-            <Icon name="Lightbulb" size={16} color={tokens.colors.accent} style={{ marginRight: 6 }} />
-            <Text style={styles.tipTitle} numberOfLines={1}>
-              {topTip.titulo}
-            </Text>
-          </View>
-          <Text style={styles.tipDesc} numberOfLines={2}>
-            {topTip.descricao}
-          </Text>
         </View>
       )}
     </View>
@@ -185,19 +168,27 @@ const styles = StyleSheet.create({
   goalDetails: {
     marginTop: spacing.xs,
   },
-  metricRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  metricList: {
     marginBottom: spacing.xs,
+    gap: 6,
+  },
+  metricItemRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 8,
+    flexWrap: 'wrap',
   },
   metricLabel: {
     ...typography.caption,
     color: colors.textSecondary,
-    marginBottom: 2,
+    fontSize: 12,
+    fontWeight: '600',
   },
   metricValue: {
-    ...typography.h3,
+    ...typography.bodyBold,
     color: colors.textPrimary,
+    fontSize: 14,
+    flexShrink: 1,
   },
   progressBarTrack: {
     height: 8,
@@ -212,13 +203,18 @@ const styles = StyleSheet.create({
   },
   progressFooter: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 4,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 6,
+    flexWrap: 'wrap',
+    gap: 4,
   },
-  progressPercentText: {
+  microcopyText: {
     ...typography.caption,
     color: colors.textSecondary,
-    fontSize: 11,
+    fontSize: 12,
+    flex: 1,
+    flexShrink: 1,
   },
   emptyContainer: {
     paddingVertical: spacing.xs,

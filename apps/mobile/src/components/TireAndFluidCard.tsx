@@ -101,8 +101,8 @@ export const TireAndFluidCard: React.FC<TireAndFluidCardProps> = ({
     <View style={styles.container}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.eyebrow}>US11 • CONTROLE POR VEÍCULO</Text>
-          <Text style={styles.title}>Pneus & Fluidos</Text>
+          <Text style={styles.eyebrow}>CONTROLE POR VEÍCULO</Text>
+          <Text style={styles.title}>Pneus e Fluidos</Text>
           <Text style={styles.subtitle}>
             {tireRecords.length + fluidRecords.length}{' '}
             {tireRecords.length + fluidRecords.length === 1 ? 'registro' : 'registros'}
@@ -154,34 +154,26 @@ export const TireAndFluidCard: React.FC<TireAndFluidCardProps> = ({
         </View>
       )}
 
-      {/* Abas de Filtro (US11.4) */}
-      <View style={styles.filterRow}>
+      {/* Abas de Filtro - Seletor Segmentado */}
+      <View style={styles.segmentedControl}>
         {(
           [
-            { key: 'todos', label: 'Todos', icon: null },
-            { key: 'pneus', label: 'Pneus', icon: 'CircleDot' },
-            { key: 'fluidos', label: 'Fluidos', icon: 'Droplets' },
-          ] as Array<{ key: HistoryFilter; label: string; icon: any }>
+            { key: 'todos', label: 'Todos' },
+            { key: 'pneus', label: 'Pneus' },
+            { key: 'fluidos', label: 'Fluidos' },
+          ] as Array<{ key: HistoryFilter; label: string }>
         ).map(tab => (
           <TouchableOpacity
             key={tab.key}
-            style={[styles.filterChip, filter === tab.key && styles.filterChipActive]}
+            style={[styles.segmentBtn, filter === tab.key && styles.segmentBtnActive]}
             onPress={() => setFilter(tab.key)}
+            activeOpacity={0.8}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-              {tab.icon && (
-                <Icon
-                  name={tab.icon}
-                  size={13}
-                  color={filter === tab.key ? colors.black : colors.textSecondary}
-                />
-              )}
-              <Text
-                style={[styles.filterChipText, filter === tab.key && styles.filterChipTextActive]}
-              >
-                {tab.label}
-              </Text>
-            </View>
+            <Text
+              style={[styles.segmentText, filter === tab.key && styles.segmentTextActive]}
+            >
+              {tab.label}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -426,30 +418,35 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 2,
   },
-  filterRow: {
+  segmentedControl: {
     flexDirection: 'row',
-    gap: spacing.xs,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: 3,
     marginBottom: spacing.md,
-  },
-  filterChip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.full,
-    backgroundColor: colors.surfaceRaised,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  filterChipActive: {
-    backgroundColor: 'rgba(200, 241, 53, 0.15)',
-    borderColor: colors.lime,
+  segmentBtn: {
+    flex: 1,
+    paddingVertical: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.sm,
   },
-  filterChipText: {
-    fontSize: 12,
+  segmentBtnActive: {
+    backgroundColor: colors.surfaceRaised,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  segmentText: {
+    ...typography.caption,
     color: colors.textSecondary,
+    fontSize: 11,
     fontWeight: '500',
   },
-  filterChipTextActive: {
-    color: colors.lime,
+  segmentTextActive: {
+    color: colors.textPrimary,
     fontWeight: '700',
   },
   loadingArea: {

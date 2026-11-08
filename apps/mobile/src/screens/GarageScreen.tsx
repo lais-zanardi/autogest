@@ -181,7 +181,7 @@ export const GarageScreen: React.FC = () => {
                       }}
                       activeOpacity={0.7}
                     >
-                      <Icon name="Gauge" size={12} color={colors.textPrimary} />
+                      <Icon name="Gauge" size={12} color={colors.textSecondary} />
                       <Text style={styles.actionBtnText}>Km</Text>
                     </TouchableOpacity>
 
@@ -190,17 +190,17 @@ export const GarageScreen: React.FC = () => {
                       onPress={() => handleOpenEdit(item)}
                       activeOpacity={0.7}
                     >
-                      <Icon name="Edit2" size={12} color={colors.textPrimary} />
+                      <Icon name="Edit2" size={12} color={colors.textSecondary} />
                       <Text style={styles.actionBtnText}>Editar</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                      style={[styles.actionBtn, styles.deleteBtn, { flexDirection: 'row', alignItems: 'center', gap: 4 }]}
+                      style={[styles.deleteTextBtn, { flexDirection: 'row', alignItems: 'center', gap: 4 }]}
                       onPress={() => handleOpenDelete(item)}
                       activeOpacity={0.7}
                     >
                       <Icon name="Trash2" size={12} color={colors.error} />
-                      <Text style={[styles.actionBtnText, styles.deleteBtnText]}>Excluir</Text>
+                      <Text style={styles.deleteBtnText}>Excluir</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -332,12 +332,12 @@ const styles = StyleSheet.create({
   activeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.limeDim,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: 'rgba(198, 255, 77, 0.3)',
+    borderColor: colors.border,
   },
   activeDot: {
     width: 6,
@@ -348,22 +348,23 @@ const styles = StyleSheet.create({
   },
   activeBadgeText: {
     ...typography.captionBold,
-    color: colors.lime,
+    color: colors.textPrimary,
     fontSize: 10,
     letterSpacing: 0.5,
   },
   selectBtn: {
-    backgroundColor: colors.surface,
+    backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: colors.border,
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderRadius: radius.full,
   },
   selectBtnText: {
     ...typography.captionBold,
     color: colors.textSecondary,
-    fontSize: 11,
+    fontSize: 10,
+    letterSpacing: 0.5,
   },
   cardBody: {
     marginVertical: spacing.xs,
@@ -374,8 +375,7 @@ const styles = StyleSheet.create({
   },
   vehicleNick: {
     ...typography.caption,
-    color: colors.lime,
-    fontStyle: 'italic',
+    color: colors.textSecondary,
     marginTop: 2,
   },
   metadataGrid: {
@@ -424,10 +424,13 @@ const styles = StyleSheet.create({
     ...typography.captionBold,
     color: colors.textSecondary,
   },
-  deleteBtn: {
-    borderColor: 'rgba(224, 90, 90, 0.3)',
+  deleteTextBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: radius.sm,
   },
   deleteBtnText: {
+    ...typography.captionBold,
     color: colors.error,
   },
   emptyContainer: {

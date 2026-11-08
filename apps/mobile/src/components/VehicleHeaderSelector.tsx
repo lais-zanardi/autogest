@@ -6,13 +6,16 @@ import { colors, spacing, radius, typography } from '../theme';
 import { Icon } from './Icon';
 
 import { SyncStatusBadge } from './SyncStatusBadge';
+import { Card } from './ui/Card';
+import { ListRow } from './ui/ListRow';
 
-interface VehicleHeaderSelectorProps {
+export interface VehicleHeaderSelectorProps {
   onAddNewPress?: () => void;
+  compact?: boolean;
 }
 
-export const VehicleHeaderSelector: React.FC<VehicleHeaderSelectorProps> = ({ onAddNewPress }) => {
-  const { vehicles, selectedVehicle } = useAppStore();
+export const VehicleHeaderSelector: React.FC<VehicleHeaderSelectorProps> = ({ onAddNewPress, compact = false }) => {
+  const { vehicles, selectedVehicle, pendingSyncCount, syncStatus } = useAppStore();
   const [modalVisible, setModalVisible] = useState(false);
 
   const handleSelect = (id: string) => {
@@ -20,36 +23,53 @@ export const VehicleHeaderSelector: React.FC<VehicleHeaderSelectorProps> = ({ on
     setModalVisible(false);
   };
 
-  return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.selectorBar}
-        onPress={() => setModalVisible(true)}
-        activeOpacity={0.8}
-      >
-        <View style={styles.infoLeft}>
-          <Text style={styles.eyebrow}>VEÍCULO SELECIONADO</Text>
-          {selectedVehicle ? (
-            <View style={styles.activeRow}>
-              <View style={styles.plateTag}>
-                <Text style={styles.plateText}>{selectedVehicle.plate}</Text>
-              </View>
-              <Text style={styles.vehicleTitle} numberOfLines={1}>
-                {selectedVehicle.model}
-              </Text>
-            </View>
-          ) : (
-            <Text style={styles.noVehicleText}>Nenhum veículo selecionado</Text>
-          )}
-        </View>
+  const hasSyncIssueOrPending = pendingSyncCount > 0 || syncStatus === 'error';
 
-        <View style={styles.headerRight}>
-          <SyncStatusBadge variant="badge" />
-          <View style={styles.chevronButton}>
-            <Text style={styles.chevronText}>▾</Text>
+  return (
+    <View style={compact ? styles.containerCompact : styles.container}>
+      {compact ? (
+        <TouchableOpacity
+          style={styles.compactSelector}
+          onPress={() => setModalVisible(true)}
+          activeOpacity={0.8}
+          accessibilityLabel={`Veículo selecionado: ${selectedVehicle?.model || 'nenhum'}. Toque para alternar.`}
+        >
+          <View style={styles.compactIconWrap}>
+            <Icon name="Car" size={16} color={colors.textPrimary} />
           </View>
-        </View>
-      </TouchableOpacity>
+          <View style={styles.compactTextWrap}>
+            <Text style={styles.compactModel} numberOfLines={1}>
+              {selectedVehicle ? selectedVehicle.model : 'Selecionar'}
+            </Text>
+            <Text style={styles.compactPlate} numberOfLines={1}>
+              {selectedVehicle ? selectedVehicle.plate : 'Nenhum'}
+            </Text>
+          </View>
+          {hasSyncIssueOrPending && (
+            <View style={{ marginRight: 4 }}>
+              <SyncStatusBadge variant="badge" />
+            </View>
+          )}
+          <Icon name="ChevronDown" size={14} color={colors.textSecondary} />
+        </TouchableOpacity>
+      ) : (
+        <Card style={{ padding: 0, overflow: 'hidden' }}>
+          <ListRow
+            icon="Car"
+            title={selectedVehicle ? selectedVehicle.model : 'Nenhum veículo selecionado'}
+            subtitle={
+              selectedVehicle
+                ? `${selectedVehicle.plate} • ${selectedVehicle.year || ''}`.trim()
+                : 'Toque para selecionar'
+            }
+            value={hasSyncIssueOrPending ? <SyncStatusBadge variant="badge" /> : undefined}
+            onPress={() => setModalVisible(true)}
+            isFirst
+            showChevron
+            accessibilityLabel={`Veículo selecionado: ${selectedVehicle?.model || 'nenhum'}. Toque para alternar.`}
+          />
+        </Card>
+      )}
 
       {/* Modal de seleção de veículo */}
       <Modal visible={modalVisible} transparent animationType="fade">
@@ -124,6 +144,42 @@ export const VehicleHeaderSelector: React.FC<VehicleHeaderSelectorProps> = ({ on
 const styles = StyleSheet.create({
   container: {
     marginBottom: spacing.md,
+  },
+  containerCompact: {
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  compactSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 44,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: 10,
+    gap: 8,
+  },
+  compactIconWrap: {
+    width: 26,
+    height: 26,
+    borderRadius: 6,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  compactTextWrap: {
+    flex: 1,
+  },
+  compactModel: {
+    ...typography.captionBold,
+    color: colors.textPrimary,
+    fontSize: 12,
+  },
+  compactPlate: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    fontSize: 10,
   },
   selectorBar: {
     backgroundColor: colors.surfaceRaised,

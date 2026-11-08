@@ -241,7 +241,7 @@ export const ReportsScreen: React.FC = () => {
               accessibilityRole="button"
               accessibilityLabel="Exportar Relatório em PDF ou CSV"
             >
-              <Icon name="Upload" size={13} color={colors.black} />
+              <Icon name="Upload" size={13} color={colors.textSecondary} />
               <Text style={styles.exportReportBtnText}>Exportar</Text>
             </TouchableOpacity>
           </View>
@@ -307,7 +307,7 @@ export const ReportsScreen: React.FC = () => {
               onOpenFullScreen={() => navigation.navigate('ExpenseCategoryChartModal')}
             />
 
-            {/* Card de Resumo Agregado do Mês (US22.3 e US22.4) */}
+            {/* Resumo Agregado do Mês: Seções Curtas (Custo por Km e Despesas, máx 3 métricas) */}
             <View style={styles.summaryCard}>
               <View style={styles.summaryTopRow}>
                 <View>
@@ -322,7 +322,7 @@ export const ReportsScreen: React.FC = () => {
                 </View>
               </View>
 
-              {/* Categorização por tipo */}
+              {/* Categorias Principais (máx 3 métricas em destaque, rótulos limpos em cinza) */}
               <View style={styles.categoryPillsRow}>
                 <View style={styles.pillItem}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
@@ -344,38 +344,17 @@ export const ReportsScreen: React.FC = () => {
                 </View>
                 <View style={styles.pillItem}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <Icon name="Sparkles" size={11} color={colors.textSecondary} />
-                    <Text style={styles.pillLabel}>Lavagem</Text>
-                  </View>
-                  <Text style={styles.pillValue}>
-                    {formatCurrency(breakdown?.porCategoria['Lavagem'] || 0)}
-                  </Text>
-                </View>
-                <View style={styles.pillItem}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <Icon name="Shield" size={11} color={colors.textSecondary} />
-                    <Text style={styles.pillLabel}>Seguro</Text>
-                  </View>
-                  <Text style={styles.pillValue}>
-                    {formatCurrency(breakdown?.porCategoria['Seguro'] || 0)}
-                  </Text>
-                </View>
-                <View style={styles.pillItem}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <Icon name="Landmark" size={11} color={colors.textSecondary} />
-                    <Text style={styles.pillLabel}>Imposto</Text>
-                  </View>
-                  <Text style={styles.pillValue}>
-                    {formatCurrency(breakdown?.porCategoria['Imposto'] || 0)}
-                  </Text>
-                </View>
-                <View style={styles.pillItem}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                     <Icon name="Tag" size={11} color={colors.textSecondary} />
-                    <Text style={styles.pillLabel}>Outros / Pedágio</Text>
+                    <Text style={styles.pillLabel}>Outras Despesas</Text>
                   </View>
                   <Text style={styles.pillValue}>
-                    {formatCurrency(breakdown?.porCategoria['Outros'] || 0)}
+                    {formatCurrency(
+                      (breakdown?.totalDespesas || 0) -
+                      ((breakdown?.porCategoria['Combustível'] || 0) + (breakdown?.porCategoria['Manutenção'] || 0)) > 0
+                        ? (breakdown?.totalDespesas || 0) -
+                          ((breakdown?.porCategoria['Combustível'] || 0) + (breakdown?.porCategoria['Manutenção'] || 0))
+                        : 0
+                    )}
                   </Text>
                 </View>
               </View>
@@ -629,7 +608,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   content: {
-    padding: spacing.md,
+    paddingHorizontal: 16,
+    paddingTop: spacing.md,
     paddingBottom: 80,
   },
   header: {
@@ -758,15 +738,20 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   addExpenseBtn: {
-    backgroundColor: colors.lime,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    backgroundColor: colors.surfaceRaised,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
     borderRadius: radius.md,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   addExpenseBtnText: {
     ...typography.captionBold,
-    color: colors.black,
-    fontWeight: '700',
+    color: colors.textPrimary,
+    fontSize: 12,
   },
   loadingBox: {
     padding: spacing.xl,
@@ -889,17 +874,18 @@ const styles = StyleSheet.create({
   exportReportBtn: {
     backgroundColor: colors.surfaceRaised,
     borderWidth: 1,
-    borderColor: colors.lime,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: 12,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
+    marginLeft: spacing.sm,
   },
   exportReportBtnText: {
-    ...typography.caption,
-    color: colors.lime,
-    fontWeight: '700',
+    ...typography.captionBold,
+    color: colors.textPrimary,
+    fontSize: 12,
   },
   emptyContainer: {
     backgroundColor: colors.card,

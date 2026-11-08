@@ -85,6 +85,12 @@ export const MaintenanceAlertsCard: React.FC<MaintenanceAlertsCardProps> = ({
             const badgeBorder = isVencido ? 'rgba(224, 90, 90, 0.3)' : 'rgba(245, 200, 66, 0.3)';
             const badgeText = isVencido ? colors.error : colors.amber;
 
+            const deadlineText = item.remainingKm !== null && item.remainingKm !== undefined
+              ? (isVencido ? `Excedido em ${Math.abs(item.remainingKm)} km` : `Faltam ${item.remainingKm} km`)
+              : item.remainingDays !== null && item.remainingDays !== undefined
+                ? (isVencido ? `Atraso de ${Math.abs(item.remainingDays)} dias` : `Prazo de ${item.remainingDays} dias`)
+                : item.message;
+
             return (
               <View
                 key={item.id}
@@ -94,53 +100,35 @@ export const MaintenanceAlertsCard: React.FC<MaintenanceAlertsCardProps> = ({
                 ]}
               >
                 <View style={styles.alertHeader}>
-                  <Text style={styles.serviceName}>{item.serviceName}</Text>
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      { backgroundColor: badgeBg, borderColor: badgeBorder },
-                    ]}
-                  >
-                    <Text style={[styles.statusBadgeText, { color: badgeText }]}>
-                      {isVencido ? 'VENCIDA' : 'PRÓXIMA'}
+                  <View style={{ flex: 1, marginRight: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                      <Text style={styles.serviceName}>{item.serviceName}</Text>
+                      <View
+                        style={[
+                          styles.statusBadge,
+                          { backgroundColor: badgeBg, borderColor: badgeBorder },
+                        ]}
+                      >
+                        <Text style={[styles.statusBadgeText, { color: badgeText }]}>
+                          {isVencido ? 'VENCIDA' : 'PRÓXIMA'}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.alertMessage} numberOfLines={1}>
+                      {deadlineText}
                     </Text>
                   </View>
+
+                  <TouchableOpacity
+                    style={styles.resolveIconBtn}
+                    onPress={() => onRegisterMaintenancePress(item)}
+                    activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Registrar revisão de ${item.serviceName}`}
+                  >
+                    <Icon name="Wrench" size={14} color={colors.textSecondary} />
+                  </TouchableOpacity>
                 </View>
-
-                <Text style={styles.alertMessage}>{item.message}</Text>
-
-                <View style={styles.alertMetaRow}>
-                  {item.remainingKm !== null && item.remainingKm !== undefined && (
-                    <Text style={styles.metaText}>
-                      {isVencido
-                        ? `Excedido: ${Math.abs(item.remainingKm)} km`
-                        : `Faltam: ${item.remainingKm} km`}
-                    </Text>
-                  )}
-
-                  {item.remainingDays !== null && item.remainingDays !== undefined && (
-                    <Text style={styles.metaText}>
-                      {isVencido
-                        ? `Atraso: ${Math.abs(item.remainingDays)} dias`
-                        : `Prazo: ${item.remainingDays} dias`}
-                    </Text>
-                  )}
-
-                  {item.estimatedDateByKm && !isVencido && (
-                    <Text style={styles.metaSubtle}>
-                      Est.: {item.estimatedDateByKm.split('-').reverse().join('/')}
-                    </Text>
-                  )}
-                </View>
-
-                <TouchableOpacity
-                  style={[styles.resolveBtn, { flexDirection: 'row', alignItems: 'center', gap: 6 }]}
-                  onPress={() => onRegisterMaintenancePress(item)}
-                  activeOpacity={0.7}
-                >
-                  <Icon name="Wrench" size={14} color={tokens.colors.background} />
-                  <Text style={styles.resolveBtnText}>Registrar Revisão</Text>
-                </TouchableOpacity>
               </View>
             );
           })}
@@ -282,6 +270,16 @@ const styles = StyleSheet.create({
   metaSubtle: {
     fontSize: 12,
     color: colors.textMuted,
+  },
+  resolveIconBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   resolveBtn: {
     alignSelf: 'flex-start',

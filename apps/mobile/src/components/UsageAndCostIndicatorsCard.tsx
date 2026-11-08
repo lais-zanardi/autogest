@@ -77,8 +77,8 @@ export const UsageAndCostIndicatorsCard: React.FC<UsageAndCostIndicatorsCardProp
     return null;
   }
 
-  const formatCostPerKmDisplay = (value: number, semKmRodado: boolean): string => {
-    if (semKmRodado) {
+  const formatCostPerKmDisplay = (value: number | null | undefined, semKmRodado: boolean): string => {
+    if (semKmRodado || value === null || value === undefined) {
       return '-- /km';
     }
     return `${formatCurrency(value)}/km`;
@@ -86,7 +86,7 @@ export const UsageAndCostIndicatorsCard: React.FC<UsageAndCostIndicatorsCardProp
 
   return (
     <View style={styles.container}>
-      {/* Cabeçalho e Seletor de Período (US24.2 - mês atual por padrão) */}
+      {/* Cabeçalho e Seletor de Período (mês atual por padrão) */}
       <View style={styles.headerRow}>
         <View style={styles.titleBlock}>
           <Text style={styles.eyebrow}>USO E EFICIÊNCIA FINANCEIRA</Text>
@@ -94,7 +94,8 @@ export const UsageAndCostIndicatorsCard: React.FC<UsageAndCostIndicatorsCardProp
         </View>
       </View>
 
-      <View style={styles.filterRow}>
+      {/* Seletor simplificado em formato de tabs/segmento único */}
+      <View style={styles.segmentedControl}>
         {PERIOD_OPTIONS.map(option => {
           const isSelected = selectedPreset === option.key;
           const displayLabel =
@@ -103,14 +104,14 @@ export const UsageAndCostIndicatorsCard: React.FC<UsageAndCostIndicatorsCardProp
           return (
             <TouchableOpacity
               key={option.key}
-              style={[styles.filterChip, isSelected && styles.filterChipActive]}
+              style={[styles.segmentBtn, isSelected && styles.segmentBtnActive]}
               onPress={() => setSelectedPreset(option.key)}
-              activeOpacity={0.75}
+              activeOpacity={0.8}
               accessibilityRole="button"
               accessibilityState={{ selected: isSelected }}
               accessibilityLabel={`Filtrar por ${displayLabel}`}
             >
-              <Text style={[styles.filterChipText, isSelected && styles.filterChipTextActive]}>
+              <Text style={[styles.segmentText, isSelected && styles.segmentTextActive]}>
                 {displayLabel}
               </Text>
             </TouchableOpacity>
@@ -301,32 +302,35 @@ const styles = StyleSheet.create({
     ...typography.h3,
     color: colors.textPrimary,
   },
-  filterRow: {
+  segmentedControl: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: 3,
     marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  filterChip: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
+  segmentBtn: {
+    flex: 1,
+    paddingVertical: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: radius.sm,
+  },
+  segmentBtnActive: {
     backgroundColor: colors.surfaceRaised,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
   },
-  filterChipActive: {
-    backgroundColor: colors.lime,
-    borderColor: colors.lime,
-  },
-  filterChipText: {
+  segmentText: {
     ...typography.caption,
     color: colors.textSecondary,
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '500',
   },
-  filterChipTextActive: {
-    color: colors.black,
+  segmentTextActive: {
+    color: colors.textPrimary,
     fontWeight: '700',
   },
   loadingBox: {

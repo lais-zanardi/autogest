@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { BudgetStatusSummary, Vehicle } from '@autogest/shared-types';
 import { BudgetService } from '../services/budgetService';
-import { formatCurrency } from '../utils/formatters';
+import { formatCurrency, formatMonth } from '../utils/formatters';
 import { colors, spacing, radius, typography } from '../theme';
 import { Icon } from './Icon';
 import { theme as tokens } from '../theme/tokens';
@@ -77,38 +77,10 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({
         </TouchableOpacity>
       ) : (
         <>
-          {/* Banner de Mudança de Nível (US15.4) */}
-          {status.nivel !== 'normal' && (
-            <View
-              style={[
-                styles.alertBanner,
-                status.nivel === 'critico' ? styles.alertBannerCritical : styles.alertBannerWarning,
-              ]}
-              accessibilityLabel={`banner-orcamento-${status.nivel}`}
-            >
-              <Icon
-                name={status.nivel === 'critico' ? 'AlertCircle' : 'AlertTriangle'}
-                size={16}
-                color={status.nivel === 'critico' ? colors.error : colors.amber}
-                style={{ marginRight: 6 }}
-              />
-              <Text
-                style={[
-                  styles.alertBannerText,
-                  { color: status.nivel === 'critico' ? colors.error : colors.amber },
-                ]}
-              >
-                {status.nivel === 'critico'
-                  ? `Limite orçamentário ultrapassado (${status.percentual}% atingido)`
-                  : `Atenção ao orçamento: ${status.percentual}% atingido`}
-              </Text>
-            </View>
-          )}
-
           {/* Valores Gasto x Teto e Percentual */}
           <View style={styles.metricsRow}>
             <View>
-              <Text style={styles.metricLabel}>Gasto no mês ({status.mesReferencia})</Text>
+              <Text style={styles.metricLabel}>Gasto ({formatMonth(status.mesReferencia)})</Text>
               <Text style={styles.metricValue}>{formatCurrency(status.gastoMesReais)}</Text>
             </View>
             <View style={styles.rightCol}>
@@ -134,9 +106,27 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({
             <Text style={[styles.percentBadge, { color: getLevelColor() }]}>
               {status.percentual}% atingido
             </Text>
-            <Text style={styles.thresholdNote}>
-              Aviso configurado em {status.budget.percentual_aviso}%
-            </Text>
+            {status.nivel !== 'normal' && (
+              <View
+                style={[
+                  styles.smallStatusChip,
+                  {
+                    borderColor: status.nivel === 'critico' ? 'rgba(224,90,90,0.4)' : 'rgba(245,200,66,0.4)',
+                    backgroundColor: status.nivel === 'critico' ? 'rgba(224,90,90,0.1)' : 'rgba(245,200,66,0.1)',
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    fontSize: 10,
+                    fontWeight: '700',
+                    color: status.nivel === 'critico' ? colors.error : colors.amber,
+                  }}
+                >
+                  {status.nivel === 'critico' ? 'LIMITE EXCEDIDO' : 'AVISO'}
+                </Text>
+              </View>
+            )}
           </View>
         </>
       )}
@@ -267,6 +257,12 @@ const styles = StyleSheet.create({
   percentBadge: {
     ...typography.captionBold,
     fontSize: 12,
+  },
+  smallStatusChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+    borderWidth: 1,
   },
   thresholdNote: {
     ...typography.caption,

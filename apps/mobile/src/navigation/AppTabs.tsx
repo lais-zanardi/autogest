@@ -12,6 +12,8 @@ import { TutorialService } from '../services/tutorialService';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme, spacing, radius } from '../theme';
 import { Icon } from '../components/Icon';
+import { DemoSection } from '../components/DemoSection';
+import { Card, ListRow, SectionLabel, Button } from '../components/ui';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
@@ -45,9 +47,7 @@ const SettingsScreen: React.FC = () => {
         </View>
 
         {/* Card do Usuário */}
-        <View
-          style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-        >
+        <Card style={styles.profileCard}>
           <View style={[styles.avatarCircle, { backgroundColor: colors.lime }]}>
             <Text style={[styles.avatarText, { color: colors.black }]}>
               {getInitials(user?.name)}
@@ -61,208 +61,132 @@ const SettingsScreen: React.FC = () => {
               {user?.email || 'usuario@autogest.app'}
             </Text>
           </View>
-        </View>
+        </Card>
 
         {/* Card de Sincronização em Nuvem (US02.6) */}
         <SyncStatusBadge variant="card" />
 
-        {/* Seção Dados e Segurança (US21.4 & US21.8 — menu de configurações extensível pela US39) */}
-        <Text
-          style={[
-            typography.sectionLabel,
-            { color: colors.textSecondary, marginTop: spacing.md, marginBottom: spacing.xs },
-          ]}
-        >
-          DADOS E SEGURANÇA
-        </Text>
-        <View
-          style={[
-            styles.actionSection,
-            { backgroundColor: colors.card, borderColor: colors.border },
-          ]}
-        >
-          <TouchableOpacity
-            style={[
-              styles.logoutButton,
-              { borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 10 },
-            ]}
+        {/* Grupo 1: DADOS */}
+        <SectionLabel label="DADOS" />
+        <Card style={styles.cardGroup}>
+          <ListRow
+            title="Criar Backup Local (.agbak)"
+            subtitle="Exportar banco criptografado localmente"
+            icon={<Icon name="Lock" size={18} color={colors.textSecondary} />}
             onPress={() => navigation.navigate('CreateBackupModal')}
-            activeOpacity={0.7}
-            accessibilityLabel="Dados e segurança › Criar backup"
-          >
-            <Icon name="Lock" size={16} color={colors.lime} />
-            <Text style={[styles.logoutText, { color: colors.lime }]}>
-              Criar Backup Local (.agbak)
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.logoutButton,
-              { borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 10 },
-            ]}
+            isFirst
+          />
+          <ListRow
+            title="Restaurar Backup (.agbak)"
+            subtitle="Restaurar a partir de arquivo local"
+            icon={<Icon name="Download" size={18} color={colors.textSecondary} />}
             onPress={() => navigation.navigate('RestoreBackupModal')}
-            activeOpacity={0.7}
-            accessibilityLabel="Dados e segurança › Restaurar backup"
-          >
-            <Icon name="Download" size={16} color={colors.textPrimary} />
-            <Text style={[styles.logoutText, { color: colors.textPrimary }]}>
-              Restaurar Backup (.agbak)
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.logoutButton, { flexDirection: 'row', alignItems: 'center', gap: 10 }]}
+          />
+          <ListRow
+            title="Histórico de Alterações"
+            subtitle="Auditoria e trilha de eventos"
+            icon={<Icon name="FileText" size={18} color={colors.textSecondary} />}
             onPress={() => navigation.navigate('AuditHistoryModal')}
-            activeOpacity={0.7}
-            accessibilityLabel="Dados e segurança › Histórico de alterações"
-          >
-            <Icon name="FileText" size={16} color={colors.textPrimary} />
-            <Text style={[styles.logoutText, { color: colors.textPrimary }]}>
-              Histórico de Alterações (Auditoria)
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Seção Preferências e Conta (US39.3) */}
-        <Text
-          style={[
-            typography.sectionLabel,
-            { color: colors.textSecondary, marginTop: spacing.xs, marginBottom: spacing.xs },
-          ]}
-        >
-          CONTA E PREFERÊNCIAS
-        </Text>
-        <View
-          style={[
-            styles.actionSection,
-            { backgroundColor: colors.card, borderColor: colors.border },
-          ]}
-        >
-          <TouchableOpacity
-            style={[
-              styles.logoutButton,
-              { borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 10 },
-            ]}
-            onPress={() => navigation.navigate('VehicleMarketValueModal')}
-            activeOpacity={0.7}
-            accessibilityLabel="Valor de Mercado e Tabela FIPE"
-          >
-            <Icon name="Tag" size={16} color={colors.lime} />
-            <Text style={[styles.logoutText, { color: colors.lime }]}>
-              Valor de Mercado (Tabela FIPE)
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.logoutButton,
-              { borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 10 },
-            ]}
+          />
+          <ListRow
+            title="Exportar Relatórios"
+            subtitle="Relatórios em PDF e planilhas CSV"
+            icon={<Icon name="Upload" size={18} color={colors.textSecondary} />}
             onPress={() => navigation.navigate('ReportExportModal')}
-            activeOpacity={0.7}
-            accessibilityLabel="Exportar Relatórios em PDF e CSV"
-          >
-            <Icon name="Upload" size={16} color={colors.lime} />
-            <Text style={[styles.logoutText, { color: colors.lime }]}>
-              Exportar Relatórios (PDF e CSV)
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.logoutButton,
-              { borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 10 },
-            ]}
-            onPress={() => navigation.navigate('EfficiencyGoalsModal')}
-            activeOpacity={0.7}
-            accessibilityLabel="Metas de Eficiência e Recomendações"
-          >
-            <Icon name="Target" size={16} color={colors.lime} />
-            <Text style={[styles.logoutText, { color: colors.lime }]}>
-              Metas de Eficiência e Dicas
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.logoutButton,
-              { borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 10 },
-            ]}
-            onPress={() => navigation.navigate('TripModal')}
-            activeOpacity={0.7}
-            accessibilityLabel="Modo Viagem com Origem e Destino"
-          >
-            <Icon name="Navigation" size={16} color={colors.lime} />
-            <Text style={[styles.logoutText, { color: colors.lime }]}>
-              Modo Viagem (Rotas e Custos)
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.logoutButton,
-              { borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 10 },
-            ]}
-            onPress={() => navigation.navigate('SearchModal')}
-            activeOpacity={0.7}
-            accessibilityLabel="Buscar e Filtros Avançados"
-          >
-            <Icon name="Search" size={16} color={colors.textPrimary} />
-            <Text style={[styles.logoutText, { color: colors.textPrimary }]}>
-              Buscar e Filtros Avançados
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.logoutButton,
-              { borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 10 },
-            ]}
-            onPress={() => navigation.navigate('ConsumptionModal')}
-            activeOpacity={0.7}
-            accessibilityLabel="Análise de Consumo e Média Móvel"
-          >
-            <Icon name="TrendingUp" size={16} color={colors.textPrimary} />
-            <Text style={[styles.logoutText, { color: colors.textPrimary }]}>
-              Análise de Consumo e Média Móvel
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.logoutButton,
-              { borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 10 },
-            ]}
+          />
+        </Card>
+
+        {/* Grupo 2: PREFERÊNCIAS */}
+        <SectionLabel label="PREFERÊNCIAS" />
+        <Card style={styles.cardGroup}>
+          <ListRow
+            title="Preferências Gerais"
+            subtitle="Unidade e notificações do sistema"
+            icon={<Icon name="Settings" size={18} color={colors.textSecondary} />}
             onPress={() => navigation.navigate('PreferencesModal')}
-            activeOpacity={0.7}
-            accessibilityLabel="Configurações › Preferências"
-          >
-            <Icon name="Settings" size={16} color={colors.textPrimary} />
-            <Text style={[styles.logoutText, { color: colors.textPrimary }]}>
-              Preferências (Unidade e Notificações)
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.logoutButton,
-              { borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 10 },
-            ]}
+            isFirst
+          />
+          <ListRow
+            title="Rever Tutorial"
+            subtitle="Apresentação guiada de funcionalidades"
+            icon={<Icon name="Target" size={18} color={colors.textSecondary} />}
             onPress={() => {
               TutorialService.startTour().catch(() => {});
             }}
-            activeOpacity={0.7}
-          >
-            <Icon name="Target" size={16} color={colors.textPrimary} />
-            <Text style={[styles.logoutText, { color: colors.textPrimary }]}>
-              Rever Tutorial de Primeiro Acesso
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.logoutButton, { flexDirection: 'row', alignItems: 'center', gap: 10 }]}
+          />
+          <ListRow
+            title="Análise de Consumo"
+            subtitle="Média móvel e histórico"
+            icon={<Icon name="TrendingUp" size={18} color={colors.textSecondary} />}
+            onPress={() => navigation.navigate('ConsumptionModal')}
+          />
+          <ListRow
+            title="Metas de Eficiência"
+            subtitle="Metas de consumo e dicas"
+            icon={<Icon name="Target" size={18} color={colors.textSecondary} />}
+            onPress={() => navigation.navigate('EfficiencyGoalsModal')}
+          />
+          <ListRow
+            title="Buscar e Filtros"
+            subtitle="Busca avançada de registros"
+            icon={<Icon name="Search" size={18} color={colors.textSecondary} />}
+            onPress={() => navigation.navigate('SearchModal')}
+          />
+          <ListRow
+            title="Modo Viagem"
+            subtitle="Rotas, pedágios e custos"
+            icon={<Icon name="Navigation" size={18} color={colors.textSecondary} />}
+            onPress={() => navigation.navigate('TripModal')}
+          />
+          <ListRow
+            title="Valor de Mercado"
+            subtitle="Consulta Tabela FIPE"
+            icon={<Icon name="Tag" size={18} color={colors.textSecondary} />}
+            onPress={() => navigation.navigate('VehicleMarketValueModal')}
+          />
+          <ListRow
+            title="Agendamentos de Manutenção"
+            subtitle="Lembretes preventivos"
+            icon={<Icon name="Calendar" size={18} color={colors.textSecondary} />}
+            onPress={() => navigation.navigate('MaintenanceScheduleModal')}
+          />
+        </Card>
+
+        {/* Seção de Demonstração (ETAPA 41 - restrita a builds de apresentação) */}
+        <DemoSection />
+
+        {/* Grupo 3: SOBRE */}
+        <SectionLabel label="SOBRE" />
+        <Card style={styles.cardGroup}>
+          <ListRow
+            title="Termos e Privacidade"
+            subtitle="Política de privacidade e uso local"
+            icon={<Icon name="FileText" size={18} color={colors.textSecondary} />}
+            isFirst
+          />
+          <ListRow
+            title="AutoGest Mobile"
+            subtitle="Versão 1.0.0 (Build 42)"
+            value="v1.0.0"
+            icon={<Icon name="Shield" size={18} color={colors.textSecondary} />}
+          />
+        </Card>
+
+        {/* Ação de Logout isolada como Button */}
+        <View style={styles.logoutWrapper}>
+          <Button
+            label="Encerrar Sessão"
+            variant="ghost"
             onPress={() => logout()}
-            activeOpacity={0.7}
-          >
-            <Icon name="LogOut" size={16} color={colors.error} />
-            <Text style={[styles.logoutText, { color: colors.error }]}>Encerrar Sessão</Text>
-          </TouchableOpacity>
+            icon={<Icon name="LogOut" size={18} color={colors.error} />}
+            labelStyle={{ color: colors.error }}
+          />
         </View>
 
+        {/* Versão do App centralizada em caption */}
         <View style={styles.footerNote}>
           <Text style={[typography.caption, { color: colors.textMuted, textAlign: 'center' }]}>
-            AutoGest v1.0.0 • Gestão Inteligente de Frotas e Veículos
+            AutoGest v1.0.0 • Gestão Inteligente de Veículos
           </Text>
         </View>
       </ScrollView>
@@ -378,11 +302,13 @@ const styles = StyleSheet.create({
   profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
     marginBottom: spacing.md,
     gap: spacing.md,
+  },
+  cardGroup: {
+    padding: 0,
+    marginBottom: spacing.md,
+    overflow: 'hidden',
   },
   avatarCircle: {
     width: 48,
@@ -398,22 +324,9 @@ const styles = StyleSheet.create({
   profileInfo: {
     flex: 1,
   },
-  actionSection: {
-    borderRadius: radius.md,
-    borderWidth: 1,
-    overflow: 'hidden',
-    marginTop: spacing.sm,
-    marginBottom: spacing.lg,
-  },
-  logoutButton: {
-    paddingVertical: 14,
-    paddingHorizontal: spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoutText: {
-    fontWeight: '600',
-    fontSize: 14,
+  logoutWrapper: {
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
   },
   footerNote: {
     marginTop: spacing.md,
