@@ -18,6 +18,7 @@ import {
   formatarFaixaPausaNotificacoes,
 } from '../services/preferencesService';
 import { NotificacaoService } from '../services/notificationService';
+import { Icon } from '../components/Icon';
 
 interface PreferencesScreenProps {
   onClose: () => void;
@@ -140,7 +141,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({ onClose })
           style={[styles.closeButton, { backgroundColor: colors.surface }]}
           accessibilityLabel="Fechar tela de preferências"
         >
-          <Text style={[styles.closeText, { color: colors.textPrimary }]}>✕</Text>
+          <Icon name="X" size={18} color={colors.textPrimary} />
         </TouchableOpacity>
       </View>
 
@@ -158,11 +159,12 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({ onClose })
             <View
               style={[
                 styles.feedbackBanner,
-                { backgroundColor: colors.surface, borderColor: colors.lime },
+                { backgroundColor: colors.surface, borderColor: colors.lime, flexDirection: 'row', alignItems: 'center', gap: 6 },
               ]}
             >
+              <Icon name="Check" size={15} color={colors.lime} />
               <Text style={[typography.body, { color: colors.lime, fontWeight: '600' }]}>
-                ✓ {mensagemSucesso}
+                {mensagemSucesso}
               </Text>
             </View>
           )}

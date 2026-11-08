@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { colors, spacing, radius, typography } from '../theme';
+import { theme as tokens } from '../theme/tokens';
+import { Icon } from './Icon';
 import { EfficiencyGoal, GoalStatusResult, EcoTip } from '@autogest/shared-types';
 import { formatarConsumo } from '../utils/formatters';
 
@@ -46,7 +48,8 @@ export const EfficiencyGoalCard: React.FC<EfficiencyGoalCardProps> = ({
     >
       <View style={styles.header}>
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>🎯 Meta de Eficiência</Text>
+          <Icon name="Target" size={18} color={tokens.colors.accent} style={{ marginRight: 6 }} />
+          <Text style={styles.title}>Meta de Eficiência</Text>
           <View style={[styles.badge, { borderColor: badgeColor }]}>
             <Text style={[styles.badgeText, { color: badgeColor }]}>
               {badgeText}
@@ -119,7 +122,7 @@ export const EfficiencyGoalCard: React.FC<EfficiencyGoalCardProps> = ({
       {topTip && (
         <View style={styles.tipBox}>
           <View style={styles.tipHeader}>
-            <Text style={styles.tipIcon}>💡</Text>
+            <Icon name="Lightbulb" size={16} color={tokens.colors.accent} style={{ marginRight: 6 }} />
             <Text style={styles.tipTitle} numberOfLines={1}>
               {topTip.titulo}
             </Text>

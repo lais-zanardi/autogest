@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { MaintenanceSchedule } from '@autogest/shared-types';
 import { colors, spacing, radius, typography } from '../theme';
+import { Icon } from './Icon';
 
 interface MaintenanceCalendarViewProps {
   schedules: MaintenanceSchedule[];
@@ -140,7 +141,7 @@ export const MaintenanceCalendarView: React.FC<MaintenanceCalendarViewProps> = (
       {overdueSchedules.length > 0 && (
         <View style={styles.overdueSection}>
           <View style={styles.overdueHeader}>
-            <Text style={styles.overdueIcon}>⚠️</Text>
+            <Icon name="AlertTriangle" size={16} color={colors.amber} />
             <Text style={styles.overdueTitle}>
               {overdueSchedules.length}{' '}
               {overdueSchedules.length === 1
@@ -270,17 +271,21 @@ export const MaintenanceCalendarView: React.FC<MaintenanceCalendarViewProps> = (
                 </View>
 
                 <Text style={styles.scheduleItemDesc}>{item.description}</Text>
-                <Text style={styles.scheduleItemTime}>
-                  ⏰ Lembrete: {item.reminderTime}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: spacing.sm }}>
+                  <Icon name="Clock" size={13} color={colors.textMuted} />
+                  <Text style={[styles.scheduleItemTime, { marginBottom: 0 }]}>
+                    Lembrete: {item.reminderTime}
+                  </Text>
+                </View>
 
                 <View style={styles.scheduleItemFooter}>
                   {item.status === 'agendado' && (
                     <TouchableOpacity
-                      style={styles.completeActionButton}
+                      style={[styles.completeActionButton, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }]}
                       onPress={() => onCompleteSchedule(item)}
                     >
-                      <Text style={styles.completeActionText}>✓ Concluir (US09)</Text>
+                      <Icon name="Check" size={14} color={colors.black} />
+                      <Text style={styles.completeActionText}>Concluir (US09)</Text>
                     </TouchableOpacity>
                   )}
                   <TouchableOpacity

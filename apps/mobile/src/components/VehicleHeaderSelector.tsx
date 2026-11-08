@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList } from 'react
 import { useAppStore } from '../store/useAppStore';
 import { VehicleService } from '../services/vehicleService';
 import { colors, spacing, radius, typography } from '../theme';
+import { Icon } from './Icon';
 
 import { SyncStatusBadge } from './SyncStatusBadge';
 
@@ -60,7 +61,7 @@ export const VehicleHeaderSelector: React.FC<VehicleHeaderSelectorProps> = ({ on
                 onPress={() => setModalVisible(false)}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Text style={styles.closeText}>✕</Text>
+                <Icon name="X" size={18} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -104,8 +105,8 @@ export const VehicleHeaderSelector: React.FC<VehicleHeaderSelectorProps> = ({ on
                         </View>
                       </View>
                       {isSelected && (
-                        <View style={styles.checkBadge}>
-                          <Text style={styles.checkText}>✓</Text>
+                        <View style={[styles.checkBadge, { alignItems: 'center', justifyContent: 'center' }]}>
+                          <Icon name="Check" size={14} color={colors.black} />
                         </View>
                       )}
                     </TouchableOpacity>

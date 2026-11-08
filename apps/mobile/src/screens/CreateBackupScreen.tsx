@@ -17,6 +17,7 @@ import {
   ResultadoCriacaoBackupLocal,
 } from '../backup';
 import { colors, spacing, radius, typography } from '../theme';
+import { Icon } from '../components/Icon';
 
 const ANDROID_FOLDERS = [
   {
@@ -129,14 +130,17 @@ export const CreateBackupScreen: React.FC<CreateBackupScreenProps> = ({ onClose 
               onPress={onClose}
               accessibilityLabel="Fechar tela de criar backup"
             >
-              <Text style={styles.closeBtnText}>✕</Text>
+              <Icon name="X" size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
 
         {/* Aviso crítico de segurança sobre a senha */}
         <View style={styles.warningCard} accessibilityLabel="aviso-sem-recuperacao-senha">
-          <Text style={styles.warningTitle}>⚠️ Atenção: Sem a senha não há recuperação</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: spacing.xs }}>
+            <Icon name="AlertTriangle" size={16} color={colors.amber} />
+            <Text style={[styles.warningTitle, { marginBottom: 0 }]}>Atenção: Sem a senha não há recuperação</Text>
+          </View>
           <Text style={styles.warningBody}>
             O arquivo .agbak é cifrado localmente com AES-256-GCM. A sua senha e a chave de
             criptografia nunca são salvas no aparelho nem enviadas ao servidor. Caso esqueça a
@@ -146,7 +150,10 @@ export const CreateBackupScreen: React.FC<CreateBackupScreenProps> = ({ onClose 
 
         {/* Aviso de anexos pendentes de upload (US21.3) */}
         <View style={styles.infoCard} accessibilityLabel="aviso-anexos-metadados">
-          <Text style={styles.infoTitle}>📎 Anexos e Comprovantes</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: spacing.xs }}>
+            <Icon name="Paperclip" size={16} color={colors.lime} />
+            <Text style={[styles.infoTitle, { marginBottom: 0 }]}>Anexos e Comprovantes</Text>
+          </View>
           <Text style={styles.infoBody}>
             Os anexos entram no backup apenas como metadados (URL na nuvem).
             {pendingAttachments > 0
@@ -186,14 +193,21 @@ export const CreateBackupScreen: React.FC<CreateBackupScreenProps> = ({ onClose 
                       setShowFolderPicker(false);
                     }}
                   >
-                    <Text
-                      style={[
-                        styles.folderOptionLabel,
-                        isSelected && styles.folderOptionLabelSelected,
-                      ]}
-                    >
-                      📁 {folder.label}
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Icon
+                        name="Folder"
+                        size={15}
+                        color={isSelected ? colors.black : colors.textSecondary}
+                      />
+                      <Text
+                        style={[
+                          styles.folderOptionLabel,
+                          isSelected && styles.folderOptionLabelSelected,
+                        ]}
+                      >
+                        {folder.label}
+                      </Text>
+                    </View>
                     <Text style={styles.folderOptionSub}>{folder.path}</Text>
                   </TouchableOpacity>
                 );
@@ -249,7 +263,10 @@ export const CreateBackupScreen: React.FC<CreateBackupScreenProps> = ({ onClose 
         {/* Resultado de sucesso */}
         {backupResult && (
           <View style={styles.successCard} accessibilityLabel="resumo-backup-gerado">
-            <Text style={styles.successTitle}>✅ Backup cifrado gerado com sucesso</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: spacing.xs }}>
+              <Icon name="CheckCircle2" size={16} color={colors.lime} />
+              <Text style={[styles.successTitle, { marginBottom: 0 }]}>Backup cifrado gerado com sucesso</Text>
+            </View>
             <Text style={styles.successDetail}>Arquivo: {backupResult.nomeArquivo}</Text>
             <Text style={styles.successDetail}>Local: {backupResult.caminhoCompleto}</Text>
             <Text style={styles.successDetail}>

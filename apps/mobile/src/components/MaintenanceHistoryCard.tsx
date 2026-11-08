@@ -13,6 +13,7 @@ import { MaintenanceService } from '../services/maintenanceService';
 import { TagService } from '../services/tagService';
 import { formatCurrency } from '../utils/formatters';
 import { colors, spacing, radius, typography } from '../theme';
+import { Icon } from './Icon';
 
 interface MaintenanceHistoryCardProps {
   vehicle: Vehicle | null;
@@ -79,25 +80,25 @@ export const MaintenanceHistoryCard: React.FC<MaintenanceHistoryCardProps> = ({
   const getServiceLabel = (type: string) => {
     switch (type) {
       case 'troca_oleo':
-        return '🛢️ Troca de Óleo';
+        return 'Troca de Óleo';
       case 'calibragem_pneus':
-        return '💨 Calibragem de Pneus';
+        return 'Calibragem de Pneus';
       case 'fluido_freio':
-        return '🛑 Fluido de Freio';
+        return 'Fluido de Freio';
       case 'agua_radiador':
-        return '💧 Água do Radiador';
+        return 'Água do Radiador';
       case 'filtros':
-        return '💨 Filtros';
+        return 'Filtros';
       case 'correia_dentada':
-        return '⚙️ Correia Dentada';
+        return 'Correia Dentada';
       case 'velas':
-        return '⚡ Velas';
+        return 'Velas';
       case 'pneus':
-        return '🛞 Pneus';
+        return 'Pneus';
       case 'freios':
-        return '🛑 Freios';
+        return 'Freios';
       default:
-        return '🔧 ' + (type || 'Serviço Geral');
+        return type || 'Serviço Geral';
     }
   };
 
@@ -133,24 +134,38 @@ export const MaintenanceHistoryCard: React.FC<MaintenanceHistoryCardProps> = ({
           style={[styles.filterChip, filter === 'preventiva' && styles.filterChipSelected]}
           onPress={() => setFilter('preventiva')}
         >
-          <Text
-            style={[
-              styles.filterChipText,
-              filter === 'preventiva' && styles.filterChipTextSelected,
-            ]}
-          >
-            🛡️ Preventivas
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+            <Icon
+              name="Shield"
+              size={13}
+              color={filter === 'preventiva' ? colors.black : colors.textSecondary}
+            />
+            <Text
+              style={[
+                styles.filterChipText,
+                filter === 'preventiva' && styles.filterChipTextSelected,
+              ]}
+            >
+              Preventivas
+            </Text>
+          </View>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.filterChip, filter === 'corretiva' && styles.filterChipSelected]}
           onPress={() => setFilter('corretiva')}
         >
-          <Text
-            style={[styles.filterChipText, filter === 'corretiva' && styles.filterChipTextSelected]}
-          >
-            ⚠️ Corretivas
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+            <Icon
+              name="AlertTriangle"
+              size={13}
+              color={filter === 'corretiva' ? colors.black : colors.textSecondary}
+            />
+            <Text
+              style={[styles.filterChipText, filter === 'corretiva' && styles.filterChipTextSelected]}
+            >
+              Corretivas
+            </Text>
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -161,7 +176,7 @@ export const MaintenanceHistoryCard: React.FC<MaintenanceHistoryCardProps> = ({
         </View>
       ) : maintenances.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>🛠️</Text>
+          <Icon name="Wrench" size={32} color={colors.textMuted} style={{ marginBottom: spacing.sm }} />
           <Text style={styles.emptyTitle}>Nenhuma manutenção encontrada</Text>
           <Text style={styles.emptySubtitle}>
             {filter === 'todas'
@@ -240,6 +255,9 @@ export const MaintenanceHistoryCard: React.FC<MaintenanceHistoryCardProps> = ({
                   <View
                     key={tag.id}
                     style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 4,
                       backgroundColor: colors.surface,
                       borderWidth: 1,
                       borderColor: colors.border,
@@ -248,10 +266,11 @@ export const MaintenanceHistoryCard: React.FC<MaintenanceHistoryCardProps> = ({
                       borderRadius: 12,
                     }}
                   >
+                    <Icon name="Tag" size={10} color={colors.textSecondary} />
                     <Text
                       style={{ ...typography.caption, fontSize: 11, color: colors.textSecondary }}
                     >
-                      🏷️ {tag.name || tag.nome}
+                      {tag.name || tag.nome}
                     </Text>
                   </View>
                 ))}
@@ -265,12 +284,18 @@ export const MaintenanceHistoryCard: React.FC<MaintenanceHistoryCardProps> = ({
                 onPress={() => setViewingAttachments(maint)}
                 activeOpacity={0.7}
               >
-                <Text style={styles.attachmentBadge}>
-                  📎 {maint.attachments.length}{' '}
-                  {maint.attachments.length === 1 ? 'comprovante' : 'comprovantes'} (toque para ver)
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                  <Icon name="Paperclip" size={13} color={colors.textSecondary} />
+                  <Text style={styles.attachmentBadge}>
+                    {maint.attachments.length}{' '}
+                    {maint.attachments.length === 1 ? 'comprovante' : 'comprovantes'} (toque para ver)
+                  </Text>
+                </View>
                 {maint.attachments.some(a => a.uploadStatus === 'enviado') && (
-                  <Text style={styles.attachmentSyncedBadge}>☁️ Na nuvem</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Icon name="Cloud" size={12} color={colors.lime} />
+                    <Text style={styles.attachmentSyncedBadge}>Na nuvem</Text>
+                  </View>
                 )}
               </TouchableOpacity>
             )}
@@ -278,18 +303,20 @@ export const MaintenanceHistoryCard: React.FC<MaintenanceHistoryCardProps> = ({
             {/* Ações: Editar e Excluir */}
             <View style={styles.cardActions}>
               <TouchableOpacity
-                style={styles.cardActionBtn}
+                style={[styles.cardActionBtn, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 }]}
                 onPress={() => onEditPress(maint)}
                 activeOpacity={0.7}
               >
-                <Text style={styles.cardActionBtnText}>✏️ Editar</Text>
+                <Icon name="Edit2" size={13} color={colors.textPrimary} />
+                <Text style={styles.cardActionBtnText}>Editar</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.cardActionBtnDelete}
+                style={[styles.cardActionBtnDelete, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 }]}
                 onPress={() => onDeletePress(maint)}
                 activeOpacity={0.7}
               >
-                <Text style={styles.cardActionBtnDeleteText}>🗑️ Excluir</Text>
+                <Icon name="Trash2" size={13} color={colors.error} />
+                <Text style={styles.cardActionBtnDeleteText}>Excluir</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -311,7 +338,7 @@ export const MaintenanceHistoryCard: React.FC<MaintenanceHistoryCardProps> = ({
                 onPress={() => setViewingAttachments(null)}
                 style={styles.modalCloseBtn}
               >
-                <Text style={styles.modalCloseBtnText}>✕</Text>
+                <Icon name="X" size={18} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -323,15 +350,21 @@ export const MaintenanceHistoryCard: React.FC<MaintenanceHistoryCardProps> = ({
             <ScrollView style={styles.modalList} showsVerticalScrollIndicator={false}>
               {viewingAttachments?.attachments?.map((att, idx) => (
                 <View key={att.id || idx} style={styles.modalAttachmentItem}>
-                  <Text style={styles.modalAttachmentIcon}>📄</Text>
+                  <Icon name="FileText" size={20} color={colors.textMuted} style={{ marginRight: spacing.sm }} />
                   <View style={styles.modalAttachmentInfo}>
                     <Text style={styles.modalAttachmentName} numberOfLines={1}>
                       {att.localPath.split('/').pop() || `Anexo ${idx + 1}`}
                     </Text>
-                    <Text style={styles.modalAttachmentMeta}>
-                      {Math.round(att.fileSize / 1024)} KB • Status:{' '}
-                      {att.uploadStatus === 'enviado' ? '☁️ Sincronizado' : '⏳ Pendente (local)'}
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                      <Icon
+                        name={att.uploadStatus === 'enviado' ? 'Cloud' : 'Clock'}
+                        size={11}
+                        color={att.uploadStatus === 'enviado' ? colors.lime : colors.textMuted}
+                      />
+                      <Text style={styles.modalAttachmentMeta}>
+                        {Math.round(att.fileSize / 1024)} KB • {att.uploadStatus === 'enviado' ? 'Sincronizado' : 'Pendente (local)'}
+                      </Text>
+                    </View>
                   </View>
                 </View>
               ))}

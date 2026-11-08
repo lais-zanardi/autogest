@@ -15,6 +15,7 @@ import { OdometerService } from '../services/odometerService';
 import { validarNovoKm } from '../services/fuelingCalculations';
 import { parseDecimalInput } from '../services/vehicleValidation';
 import { colors, spacing, radius, typography } from '../theme';
+import { Icon } from './Icon';
 
 interface UpdateOdometerModalProps {
   visible: boolean;
@@ -114,7 +115,7 @@ export const UpdateOdometerModal: React.FC<UpdateOdometerModalProps> = ({
               <Text style={styles.title}>Atualizar Quilometragem</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
-              <Text style={styles.closeBtnText}>✕</Text>
+              <Icon name="X" size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 

@@ -10,12 +10,13 @@ import {
   Alert,
 } from 'react-native';
 import { Trip, TripSummary } from '@autogest/shared-types';
-import { useTheme, typography } from '../theme';
+import { useTheme, typography, spacing } from '../theme';
 import { useAppStore } from '../store/useAppStore';
 import { TripService } from '../services/tripService';
 import { TripFormModal } from '../components/TripFormModal';
 import { TripSummaryModal } from '../components/TripSummaryModal';
 import { VehicleHeaderSelector } from '../components/VehicleHeaderSelector';
+import { Icon } from '../components/Icon';
 
 interface TripListScreenProps {
   onClose?: () => void;
@@ -122,9 +123,15 @@ export const TripListScreen: React.FC<TripListScreenProps> = ({
       >
         <View style={styles.cardHeader}>
           <View style={{ flex: 1 }}>
-            <Text style={[typography.h3, { color: colors.textPrimary }]}>
-              {item.origin} ➔ {item.destination}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={[typography.h3, { color: colors.textPrimary }]}>
+                {item.origin}
+              </Text>
+              <Icon name="ArrowRight" size={14} color={colors.textSecondary} />
+              <Text style={[typography.h3, { color: colors.textPrimary }]}>
+                {item.destination}
+              </Text>
+            </View>
             <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 2 }]}>
               Iniciada em {new Date(item.startDate).toLocaleDateString('pt-BR')} • {item.startOdometer} km
             </Text>
@@ -150,19 +157,21 @@ export const TripListScreen: React.FC<TripListScreenProps> = ({
         {/* Ações do Card */}
         <View style={[styles.cardActions, { borderTopColor: colors.border }]}>
           <TouchableOpacity
-            style={[styles.actionBtn, { borderColor: colors.border }]}
+            style={[styles.actionBtn, { borderColor: colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }]}
             onPress={() => handleVerResumo(item)}
           >
-            <Text style={[styles.actionBtnText, { color: colors.textPrimary }]}>📊 Resumo & Custos</Text>
+            <Icon name="BarChart2" size={14} color={colors.textPrimary} />
+            <Text style={[styles.actionBtnText, { color: colors.textPrimary }]}>Resumo & Custos</Text>
           </TouchableOpacity>
 
           {isAtiva && (
             <TouchableOpacity
-              style={[styles.actionBtn, { backgroundColor: colors.lime, borderColor: colors.lime }]}
+              style={[styles.actionBtn, { backgroundColor: colors.lime, borderColor: colors.lime, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }]}
               onPress={() => handleFinalizarViagemPrompt(item)}
             >
+              <Icon name="Flag" size={14} color={colors.black} />
               <Text style={[styles.actionBtnText, { color: colors.black, fontWeight: '700' }]}>
-                🏁 Finalizar Viagem
+                Finalizar Viagem
               </Text>
             </TouchableOpacity>
           )}
@@ -185,7 +194,7 @@ export const TripListScreen: React.FC<TripListScreenProps> = ({
             style={[styles.closeBtn, { backgroundColor: colors.surface }]}
             onPress={onClose}
           >
-            <Text style={[styles.closeBtnText, { color: colors.textPrimary }]}>✕</Text>
+            <Icon name="X" size={18} color={colors.textPrimary} />
           </TouchableOpacity>
         )}
       </View>
@@ -196,12 +205,21 @@ export const TripListScreen: React.FC<TripListScreenProps> = ({
       {viagemAtiva && (
         <View style={[styles.activeBanner, { backgroundColor: colors.surfaceRaised, borderColor: colors.lime }]}>
           <View style={{ flex: 1 }}>
-            <Text style={[typography.caption, { color: colors.lime, fontWeight: '700' }]}>
-              🛣️ VIAGEM EM ANDAMENTO
-            </Text>
-            <Text style={[typography.bodyBold, { color: colors.textPrimary }]}>
-              {viagemAtiva.origin} ➔ {viagemAtiva.destination}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+              <Icon name="Navigation" size={13} color={colors.lime} />
+              <Text style={[typography.caption, { color: colors.lime, fontWeight: '700' }]}>
+                VIAGEM EM ANDAMENTO
+              </Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
+              <Text style={[typography.bodyBold, { color: colors.textPrimary }]}>
+                {viagemAtiva.origin}
+              </Text>
+              <Icon name="ArrowRight" size={12} color={colors.textSecondary} />
+              <Text style={[typography.bodyBold, { color: colors.textPrimary }]}>
+                {viagemAtiva.destination}
+              </Text>
+            </View>
           </View>
           {onNavigateToExpense && (
             <TouchableOpacity
@@ -232,7 +250,7 @@ export const TripListScreen: React.FC<TripListScreenProps> = ({
         </View>
       ) : trips.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>🛣️</Text>
+          <Icon name="Navigation" size={32} color={colors.textMuted} style={{ marginBottom: spacing.sm }} />
           <Text style={[typography.h3, { color: colors.textPrimary, marginTop: 8 }]}>
             Nenhuma viagem registrada
           </Text>

@@ -13,6 +13,7 @@ import {
 import { Vehicle, Trip } from '@autogest/shared-types';
 import { TripService } from '../services/tripService';
 import { useTheme, typography } from '../theme';
+import { Icon } from './Icon';
 
 interface TripFormModalProps {
   visible: boolean;
@@ -94,7 +95,7 @@ export const TripFormModal: React.FC<TripFormModalProps> = ({
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Text style={[styles.closeBtn, { color: colors.textSecondary }]}>✕</Text>
+              <Icon name="X" size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
@@ -152,12 +153,17 @@ export const TripFormModal: React.FC<TripFormModalProps> = ({
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.startBtn, { backgroundColor: colors.lime }, isSubmitting && { opacity: 0.6 }]}
+              style={[
+                styles.startBtn,
+                { backgroundColor: colors.lime, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+                isSubmitting && { opacity: 0.6 },
+              ]}
               onPress={handleStartTrip}
               disabled={isSubmitting}
             >
+              {!isSubmitting && <Icon name="Navigation" size={16} color={colors.black} />}
               <Text style={styles.startBtnText}>
-                {isSubmitting ? 'Iniciando...' : '🛣️ Iniciar Viagem'}
+                {isSubmitting ? 'Iniciando...' : 'Iniciar Viagem'}
               </Text>
             </TouchableOpacity>
           </View>

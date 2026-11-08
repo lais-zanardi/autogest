@@ -17,6 +17,8 @@ import {
 import { parseExpenseAmount } from '../services/expenseValidation';
 import { formatCurrency } from '../utils/formatters';
 import { colors, spacing, radius, typography } from '../theme';
+import { theme as tokens } from '../theme/tokens';
+import { Icon } from './Icon';
 
 interface BudgetModalProps {
   visible: boolean;
@@ -151,7 +153,7 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
                 onPress={onClose}
                 accessibilityLabel="Fechar tela de orçamento"
               >
-                <Text style={styles.closeBtnText}>✕</Text>
+                <Icon name="X" size={18} color={tokens.colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -243,7 +245,8 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
                   disabled={isSaving}
                   accessibilityLabel="Remover teto mensal do veículo"
                 >
-                  <Text style={styles.removeBtnText}>🗑️ Remover Teto Mensal</Text>
+                  <Icon name="Trash2" size={16} color={tokens.colors.danger} style={{ marginRight: 6 }} />
+                  <Text style={styles.removeBtnText}>Remover Teto Mensal</Text>
                 </TouchableOpacity>
               )}
             </View>

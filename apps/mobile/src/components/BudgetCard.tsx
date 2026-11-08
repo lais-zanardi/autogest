@@ -4,6 +4,8 @@ import { BudgetStatusSummary, Vehicle } from '@autogest/shared-types';
 import { BudgetService } from '../services/budgetService';
 import { formatCurrency } from '../utils/formatters';
 import { colors, spacing, radius, typography } from '../theme';
+import { Icon } from './Icon';
+import { theme as tokens } from '../theme/tokens';
 
 interface BudgetCardProps {
   vehicle: Vehicle;
@@ -57,7 +59,8 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({
           activeOpacity={0.8}
           accessibilityLabel="Configurar teto mensal do veículo"
         >
-          <Text style={styles.configBtnText}>{status ? '✏️ Editar Teto' : '+ Definir Teto'}</Text>
+          {status && <Icon name="Pencil" size={13} color={colors.lime} style={{ marginRight: 4 }} />}
+          <Text style={styles.configBtnText}>{status ? 'Editar Teto' : '+ Definir Teto'}</Text>
         </TouchableOpacity>
       </View>
 
@@ -83,6 +86,12 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({
               ]}
               accessibilityLabel={`banner-orcamento-${status.nivel}`}
             >
+              <Icon
+                name={status.nivel === 'critico' ? 'AlertCircle' : 'AlertTriangle'}
+                size={16}
+                color={status.nivel === 'critico' ? colors.error : colors.amber}
+                style={{ marginRight: 6 }}
+              />
               <Text
                 style={[
                   styles.alertBannerText,
@@ -90,8 +99,8 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({
                 ]}
               >
                 {status.nivel === 'critico'
-                  ? `🚨 Limite orçamentário ultrapassado (${status.percentual}% atingido)`
-                  : `⚠️ Atenção ao orçamento: ${status.percentual}% atingido`}
+                  ? `Limite orçamentário ultrapassado (${status.percentual}% atingido)`
+                  : `Atenção ao orçamento: ${status.percentual}% atingido`}
               </Text>
             </View>
           )}

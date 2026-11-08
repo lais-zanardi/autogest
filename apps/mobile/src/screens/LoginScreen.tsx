@@ -18,6 +18,7 @@ import { BiometricService } from '../services/biometricService';
 import { EnvConfig } from '../config/env';
 import { useAppStore } from '../store/useAppStore';
 import { BiometricsPromptModal } from '../components/BiometricsPromptModal';
+import { Icon } from '../components/Icon';
 
 interface LoginScreenProps {
   onNavigateToRegister: () => void;
@@ -160,14 +161,19 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigateToRegister }
 
           {/* Badge de Chaveamento Mock vs API Real */}
           <TouchableOpacity
-            style={[styles.envBadge, isMockMode ? styles.envBadgeMock : styles.envBadgeReal]}
+            style={[styles.envBadge, isMockMode ? styles.envBadgeMock : styles.envBadgeReal, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }]}
             onPress={toggleMockMode}
             activeOpacity={0.8}
           >
+            <Icon
+              name={isMockMode ? 'Zap' : 'Globe'}
+              size={13}
+              color={isMockMode ? colors.black : colors.lime}
+            />
             <Text style={styles.envBadgeText}>
               {isMockMode
-                ? '⚡ VITE_USE_MOCK: ATIVO (Simulado)'
-                : '🌐 VITE_USE_MOCK: INATIVO (API Real)'}
+                ? 'VITE_USE_MOCK: ATIVO (Simulado)'
+                : 'VITE_USE_MOCK: INATIVO (API Real)'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -264,11 +270,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigateToRegister }
           {/* Desbloqueio com Biometria se disponível */}
           {canUseBiometrics && (
             <TouchableOpacity
-              style={styles.biometricButton}
+              style={[styles.biometricButton, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }]}
               onPress={handleBiometricLogin}
               activeOpacity={0.8}
             >
-              <Text style={styles.biometricButtonText}>👆 Entrar com Biometria</Text>
+              <Icon name="Fingerprint" size={16} color={colors.lime} />
+              <Text style={styles.biometricButtonText}>Entrar com Biometria</Text>
             </TouchableOpacity>
           )}
 

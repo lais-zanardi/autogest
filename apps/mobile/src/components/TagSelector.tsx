@@ -11,6 +11,8 @@ import {
 import { Tag } from '@autogest/shared-types';
 import { TagService } from '../services/tagService';
 import { useTheme, typography } from '../theme';
+import { Icon } from './Icon';
+import { theme as tokens } from '../theme/tokens';
 
 interface TagSelectorProps {
   selectedTagIds: string[];
@@ -119,7 +121,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
                 style={styles.chipRemoveBtn}
                 accessibilityLabel={`Remover etiqueta ${tag.name || tag.nome}`}
               >
-                <Text style={[styles.chipRemoveText, { color: colors.textSecondary }]}>✕</Text>
+                <Icon name="X" size={12} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
           ))}

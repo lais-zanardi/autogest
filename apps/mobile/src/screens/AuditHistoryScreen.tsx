@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView } fr
 import { AuditEntityName, AuditLogRecord } from '@autogest/shared-types';
 import { AuditPeriodPreset, AuditService } from '../services/auditService';
 import { colors, spacing, radius, typography } from '../theme';
+import { Icon } from '../components/Icon';
 
 const ENTITY_FILTERS: Array<{ id: AuditEntityName | 'todas'; label: string }> = [
   { id: 'todas', label: 'Todas' },
@@ -110,7 +111,7 @@ export const AuditHistoryScreen: React.FC<AuditHistoryScreenProps> = ({ onClose 
               onPress={onClose}
               accessibilityLabel="Fechar histórico de alterações"
             >
-              <Text style={styles.closeBtnText}>✕</Text>
+              <Icon name="X" size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>

@@ -22,6 +22,8 @@ import { ExpenseService } from '../services/expenseService';
 import { TripService } from '../services/tripService';
 import { validateExpenseForm } from '../services/expenseValidation';
 import { colors, spacing, radius, typography } from '../theme';
+import { theme as tokens } from '../theme/tokens';
+import { Icon } from './Icon';
 import { TagSelector } from './TagSelector';
 import { TagService } from '../services/tagService';
 
@@ -180,7 +182,7 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
               <Text style={styles.title}>{isEditing ? 'Editar Despesa' : 'Nova Despesa'}</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
-              <Text style={styles.closeBtnText}>✕</Text>
+              <Icon name="X" size={18} color={tokens.colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
@@ -195,13 +197,22 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
             {activeTrip && (
               <View style={{ backgroundColor: colors.surfaceRaised, padding: 12, borderRadius: 8, marginBottom: 16 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <View style={{ flex: 1, paddingRight: 8 }}>
-                    <Text style={{ ...typography.bodyBold, color: colors.lime }}>
-                      🛣️ Viagem em andamento
-                    </Text>
-                    <Text style={{ ...typography.caption, color: colors.textSecondary }}>
-                      {activeTrip.origin} ➔ {activeTrip.destination}
-                    </Text>
+                  <View style={{ flex: 1, paddingRight: 8, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Icon name="Route" size={16} color={tokens.colors.accent} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ ...typography.bodyBold, color: colors.lime }}>
+                        Viagem em andamento
+                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        <Text style={{ ...typography.caption, color: colors.textSecondary }}>
+                          {activeTrip.origin}
+                        </Text>
+                        <Icon name="ArrowRight" size={12} color={colors.textSecondary} />
+                        <Text style={{ ...typography.caption, color: colors.textSecondary }}>
+                          {activeTrip.destination}
+                        </Text>
+                      </View>
+                    </View>
                   </View>
                   <TouchableOpacity
                     onPress={() => setLinkToTrip(!linkToTrip)}
@@ -224,24 +235,26 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                       {(
                         [
-                          { key: 'pedagio', label: '🛣️ Pedágio' },
-                          { key: 'alimentacao', label: '🍔 Alimentação' },
-                          { key: 'hospedagem', label: '🏨 Hospedagem' },
-                          { key: 'estacionamento', label: '🅿️ Estacionamento' },
-                          { key: 'outros', label: 'Outros' },
-                        ] as Array<{ key: TripSubtype; label: string }>
+                          { key: 'pedagio', label: 'Pedágio', icon: 'Route' as const },
+                          { key: 'alimentacao', label: 'Alimentação', icon: 'Utensils' as const },
+                          { key: 'hospedagem', label: 'Hospedagem', icon: 'Hotel' as const },
+                          { key: 'estacionamento', label: 'Estacionamento', icon: 'CircleParking' as const },
+                          { key: 'outros', label: 'Outros', icon: null },
+                        ] as Array<{ key: TripSubtype; label: string; icon: any }>
                       ).map(sub => {
                         const isSelected = subtipoViagem === sub.key;
+                        const iconColor = isSelected ? colors.lime : colors.textMuted;
                         return (
                           <TouchableOpacity
                             key={sub.key}
                             style={[
                               styles.categoryChip,
                               isSelected && styles.categoryChipSelected,
-                              { paddingHorizontal: 10, paddingVertical: 4 },
+                              { paddingHorizontal: 10, paddingVertical: 4, flexDirection: 'row', alignItems: 'center', gap: 4 },
                             ]}
                             onPress={() => setSubtipoViagem(sub.key)}
                           >
+                            {sub.icon && <Icon name={sub.icon} size={12} color={iconColor} />}
                             <Text
                               style={[
                                 styles.categoryChipText,
@@ -286,10 +299,13 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
                 })}
               </View>
               {errors.category && <Text style={styles.errorText}>{errors.category}</Text>}
-              <Text style={styles.hintText}>
-                💡 Pedágio entra em Outros. Gastos com Combustível e Manutenção entram
-                automaticamente por seus módulos.
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                <Icon name="Lightbulb" size={14} color={tokens.colors.accent} />
+                <Text style={[styles.hintText, { marginTop: 0, flex: 1 }]}>
+                  Pedágio entra em Outros. Gastos com Combustível e Manutenção entram
+                  automaticamente por seus módulos.
+                </Text>
+              </View>
             </View>
 
             {/* Valor (R$) */}

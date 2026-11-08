@@ -10,6 +10,7 @@ import {
 import { Trip, TripSummary } from '@autogest/shared-types';
 import { useTheme, typography } from '../theme';
 import { formatCurrency, formatKml } from '../utils/formatters';
+import { Icon } from './Icon';
 
 interface TripSummaryModalProps {
   visible: boolean;
@@ -34,12 +35,18 @@ export const TripSummaryModal: React.FC<TripSummaryModalProps> = ({
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
             <View>
               <Text style={[typography.h3, { color: colors.textPrimary }]}>Resumo da Viagem</Text>
-              <Text style={[typography.caption, { color: colors.lime }]}>
-                {trip.origin} ➔ {trip.destination}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Text style={[typography.caption, { color: colors.lime }]}>
+                  {trip.origin}
+                </Text>
+                <Icon name="ArrowRight" size={12} color={colors.lime} />
+                <Text style={[typography.caption, { color: colors.lime }]}>
+                  {trip.destination}
+                </Text>
+              </View>
             </View>
             <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Text style={[styles.closeBtn, { color: colors.textSecondary }]}>✕</Text>
+              <Icon name="X" size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
@@ -77,9 +84,15 @@ export const TripSummaryModal: React.FC<TripSummaryModalProps> = ({
                 <Text style={[typography.h3, { color: colors.textPrimary, marginTop: 4 }]}>
                   {summary.distanciaKm !== null ? `${summary.distanciaKm.toLocaleString('pt-BR')} km` : '--'}
                 </Text>
-                <Text style={[typography.caption, { color: colors.textMuted }]}>
-                  {trip.startOdometer} km ➔ {trip.endOdometer || '?'} km
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Text style={[typography.caption, { color: colors.textMuted }]}>
+                    {trip.startOdometer} km
+                  </Text>
+                  <Icon name="ArrowRight" size={10} color={colors.textMuted} />
+                  <Text style={[typography.caption, { color: colors.textMuted }]}>
+                    {trip.endOdometer || '?'} km
+                  </Text>
+                </View>
               </View>
 
               <View style={[styles.gridCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -119,42 +132,60 @@ export const TripSummaryModal: React.FC<TripSummaryModalProps> = ({
             </Text>
             <View style={[styles.breakdownCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.breakdownRow}>
-                <Text style={[typography.body, { color: colors.textPrimary }]}>⛽ Combustível ({summary.totalAbastecimentos}x)</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Icon name="Fuel" size={14} color={colors.textSecondary} />
+                  <Text style={[typography.body, { color: colors.textPrimary }]}>Combustível ({summary.totalAbastecimentos}x)</Text>
+                </View>
                 <Text style={[typography.bodyBold, { color: colors.textPrimary }]}>
                   {formatCurrency(summary.custoCombustivel)}
                 </Text>
               </View>
 
               <View style={[styles.breakdownRow, { borderTopColor: colors.border, borderTopWidth: 1 }]}>
-                <Text style={[typography.body, { color: colors.textPrimary }]}>🛣️ Pedágios</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Icon name="Navigation" size={14} color={colors.textSecondary} />
+                  <Text style={[typography.body, { color: colors.textPrimary }]}>Pedágios</Text>
+                </View>
                 <Text style={[typography.bodyBold, { color: colors.textPrimary }]}>
                   {formatCurrency(summary.custoPorSubtipo.pedagio)}
                 </Text>
               </View>
 
               <View style={[styles.breakdownRow, { borderTopColor: colors.border, borderTopWidth: 1 }]}>
-                <Text style={[typography.body, { color: colors.textPrimary }]}>🍔 Alimentação</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Icon name="Utensils" size={14} color={colors.textSecondary} />
+                  <Text style={[typography.body, { color: colors.textPrimary }]}>Alimentação</Text>
+                </View>
                 <Text style={[typography.bodyBold, { color: colors.textPrimary }]}>
                   {formatCurrency(summary.custoPorSubtipo.alimentacao)}
                 </Text>
               </View>
 
               <View style={[styles.breakdownRow, { borderTopColor: colors.border, borderTopWidth: 1 }]}>
-                <Text style={[typography.body, { color: colors.textPrimary }]}>🏨 Hospedagem</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Icon name="Bed" size={14} color={colors.textSecondary} />
+                  <Text style={[typography.body, { color: colors.textPrimary }]}>Hospedagem</Text>
+                </View>
                 <Text style={[typography.bodyBold, { color: colors.textPrimary }]}>
                   {formatCurrency(summary.custoPorSubtipo.hospedagem)}
                 </Text>
               </View>
 
               <View style={[styles.breakdownRow, { borderTopColor: colors.border, borderTopWidth: 1 }]}>
-                <Text style={[typography.body, { color: colors.textPrimary }]}>🅿️ Estacionamento</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Icon name="CircleDot" size={14} color={colors.textSecondary} />
+                  <Text style={[typography.body, { color: colors.textPrimary }]}>Estacionamento</Text>
+                </View>
                 <Text style={[typography.bodyBold, { color: colors.textPrimary }]}>
                   {formatCurrency(summary.custoPorSubtipo.estacionamento)}
                 </Text>
               </View>
 
               <View style={[styles.breakdownRow, { borderTopColor: colors.border, borderTopWidth: 1 }]}>
-                <Text style={[typography.body, { color: colors.textPrimary }]}>📦 Outros</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Icon name="Package" size={14} color={colors.textSecondary} />
+                  <Text style={[typography.body, { color: colors.textPrimary }]}>Outros</Text>
+                </View>
                 <Text style={[typography.bodyBold, { color: colors.textPrimary }]}>
                   {formatCurrency(summary.custoPorSubtipo.outros)}
                 </Text>

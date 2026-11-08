@@ -4,6 +4,7 @@ import { colors, spacing, radius, typography } from '../theme';
 import { BiometricService } from '../services/biometricService';
 import { useAppStore } from '../store/useAppStore';
 import { AuthService } from '../services/authService';
+import { Icon } from '../components/Icon';
 
 interface BiometricLockScreenProps {
   onFallbackToPassword: () => void;
@@ -58,7 +59,7 @@ export const BiometricLockScreen: React.FC<BiometricLockScreenProps> = ({
 
         <View style={styles.card}>
           <View style={styles.iconCircle}>
-            <Text style={styles.icon}>🔒</Text>
+            <Icon name="Lock" size={32} color={colors.lime} />
           </View>
 
           <Text style={styles.userName}>Olá, {user?.name || 'Motorista'}</Text>
@@ -73,7 +74,7 @@ export const BiometricLockScreen: React.FC<BiometricLockScreenProps> = ({
           )}
 
           <TouchableOpacity
-            style={styles.retryButton}
+            style={[styles.retryButton, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }]}
             onPress={promptBiometric}
             disabled={isVerifying}
             activeOpacity={0.8}
@@ -81,7 +82,10 @@ export const BiometricLockScreen: React.FC<BiometricLockScreenProps> = ({
             {isVerifying ? (
               <ActivityIndicator color={colors.black} />
             ) : (
-              <Text style={styles.retryButtonText}>👆 Tocar no Sensor</Text>
+              <>
+                <Icon name="Fingerprint" size={18} color={colors.black} />
+                <Text style={styles.retryButtonText}>Tocar no Sensor</Text>
+              </>
             )}
           </TouchableOpacity>
 

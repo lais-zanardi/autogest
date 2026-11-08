@@ -20,6 +20,7 @@ import {
   ResultadoInspecaoBackup,
 } from '../backup';
 import { colors, spacing, radius } from '../theme';
+import { Icon } from '../components/Icon';
 
 interface RestoreBackupScreenProps {
   onClose?: () => void;
@@ -198,14 +199,17 @@ export const RestoreBackupScreen: React.FC<RestoreBackupScreenProps> = ({ onClos
               onPress={onClose}
               accessibilityLabel="Fechar tela de restaurar backup"
             >
-              <Text style={styles.closeBtnText}>✕</Text>
+              <Icon name="X" size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
 
         {/* Card informativo de mesclagem segura */}
         <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>🔄 Restauração por Mesclagem Segura</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: spacing.xs }}>
+            <Icon name="RefreshCw" size={16} color={colors.lime} />
+            <Text style={[styles.infoTitle, { marginBottom: 0 }]}>Restauração por Mesclagem Segura</Text>
+          </View>
           <Text style={styles.infoBody}>
             O arquivo é decifrado e validado em memória antes de qualquer gravação. Ao confirmar, os
             registros ausentes serão inseridos e, nos existentes, prevalecerá a versão mais recente
@@ -258,11 +262,18 @@ export const RestoreBackupScreen: React.FC<RestoreBackupScreenProps> = ({ onClos
                         setRestoreResult(null);
                       }}
                     >
-                      <Text
-                        style={[styles.savedFileName, isSelected && styles.savedFileNameSelected]}
-                      >
-                        📦 {file.nomeArquivo} ({file.tamanhoBytes} B)
-                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Icon
+                          name="Package"
+                          size={15}
+                          color={isSelected ? colors.black : colors.textSecondary}
+                        />
+                        <Text
+                          style={[styles.savedFileName, isSelected && styles.savedFileNameSelected]}
+                        >
+                          {file.nomeArquivo} ({file.tamanhoBytes} B)
+                        </Text>
+                      </View>
                       <Text style={styles.savedFilePath}>{file.caminhoCompleto}</Text>
                     </TouchableOpacity>
                   );
@@ -327,7 +338,10 @@ export const RestoreBackupScreen: React.FC<RestoreBackupScreenProps> = ({ onClos
             {isInspecting ? (
               <ActivityIndicator size="small" color={colors.black} />
             ) : (
-              <Text style={styles.primaryBtnText}>🔍 Validar e Ler Resumo do Backup</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <Icon name="Search" size={16} color={colors.black} />
+                <Text style={styles.primaryBtnText}>Validar e Ler Resumo do Backup</Text>
+              </View>
             )}
           </TouchableOpacity>
         )}
@@ -335,7 +349,10 @@ export const RestoreBackupScreen: React.FC<RestoreBackupScreenProps> = ({ onClos
         {/* Card de Confirmação com Resumo (US38.4) */}
         {inspectionResult && (
           <View style={styles.confirmCard} accessibilityLabel="resumo-confirmacao-restauracao">
-            <Text style={styles.confirmTitle}>📋 Confirmação de Restauração</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: spacing.xs }}>
+              <Icon name="FileText" size={16} color={colors.lime} />
+              <Text style={[styles.confirmTitle, { marginBottom: 0 }]}>Confirmação de Restauração</Text>
+            </View>
             <Text style={styles.confirmSubtitle}>
               Backup validado em memória com sucesso. Confira o resumo abaixo antes de aplicar:
             </Text>
@@ -384,7 +401,10 @@ export const RestoreBackupScreen: React.FC<RestoreBackupScreenProps> = ({ onClos
                 {isApplying ? (
                   <ActivityIndicator size="small" color={colors.black} />
                 ) : (
-                  <Text style={styles.confirmApplyBtnText}>✅ Confirmar e Restaurar</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                    <Icon name="CheckCircle2" size={16} color={colors.black} />
+                    <Text style={styles.confirmApplyBtnText}>Confirmar e Restaurar</Text>
+                  </View>
                 )}
               </TouchableOpacity>
             </View>
@@ -394,7 +414,10 @@ export const RestoreBackupScreen: React.FC<RestoreBackupScreenProps> = ({ onClos
         {/* Card de Sucesso após aplicar a restauração (US38.5 & US38.7) */}
         {restoreResult && (
           <View style={styles.successCard} accessibilityLabel="resultado-restauracao-concluida">
-            <Text style={styles.successTitle}>✅ Backup restaurado com sucesso</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: spacing.xs }}>
+              <Icon name="CheckCircle2" size={16} color={colors.lime} />
+              <Text style={[styles.successTitle, { marginBottom: 0 }]}>Backup restaurado com sucesso</Text>
+            </View>
             <Text style={styles.successMeta}>
               Registros novos inseridos: {restoreResult.inseridos}
             </Text>

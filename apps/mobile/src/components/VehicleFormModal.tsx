@@ -13,6 +13,7 @@ import { Vehicle, FuelType } from '@autogest/shared-types';
 import { VehicleService } from '../services/vehicleService';
 import { validateVehicleForm } from '../services/vehicleValidation';
 import { colors, spacing, radius, typography } from '../theme';
+import { Icon } from './Icon';
 
 interface VehicleFormModalProps {
   visible: boolean;
@@ -146,7 +147,7 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
           <View style={styles.header}>
             <Text style={styles.title}>{isEditing ? 'Editar Veículo' : 'Novo Veículo'}</Text>
             <TouchableOpacity onPress={onClose} disabled={isSubmitting}>
-              <Text style={styles.closeBtn}>✕</Text>
+              <Icon name="X" size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 

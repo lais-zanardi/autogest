@@ -10,6 +10,7 @@ import {
 import { useAppStore } from '../store/useAppStore';
 import { SyncService } from '../services/sync';
 import { colors, radius, spacing, typography } from '../theme';
+import { Icon } from './Icon';
 
 interface SyncStatusBadgeProps {
   variant?: 'badge' | 'card';
@@ -95,7 +96,7 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ variant = 'bad
     <View style={[styles.cardContainer, style]}>
       <View style={styles.cardHeader}>
         <View style={styles.cardHeaderLeft}>
-          <Text style={styles.cardIcon}>☁️</Text>
+          <Icon name="Cloud" size={24} color={colors.lime} style={{ marginRight: spacing.sm }} />
           <View>
             <Text style={[typography.h3, { color: colors.textPrimary }]}>
               Sincronização em Nuvem
@@ -143,7 +144,10 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ variant = 'bad
             <Text style={styles.syncButtonText}>Sincronizando...</Text>
           </View>
         ) : (
-          <Text style={styles.syncButtonText}>🔄 Sincronizar Agora</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <Icon name="RefreshCw" size={15} color={colors.black} />
+            <Text style={styles.syncButtonText}>Sincronizar Agora</Text>
+          </View>
         )}
       </TouchableOpacity>
     </View>

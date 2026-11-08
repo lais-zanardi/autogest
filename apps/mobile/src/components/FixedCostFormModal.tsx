@@ -14,6 +14,7 @@ import {
 import { Vehicle, FixedCost } from '@autogest/shared-types';
 import { FixedCostService, validateFixedCostForm } from '../services/fixedCostService';
 import { colors, spacing, radius, typography } from '../theme';
+import { Icon } from './Icon';
 
 interface FixedCostFormModalProps {
   visible: boolean;
@@ -127,7 +128,7 @@ export const FixedCostFormModal: React.FC<FixedCostFormModalProps> = ({
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
-              <Text style={styles.closeBtnText}>✕</Text>
+              <Icon name="X" size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
@@ -168,10 +169,13 @@ export const FixedCostFormModal: React.FC<FixedCostFormModalProps> = ({
                 editable={!isSubmitting}
               />
               {errors.monthlyAmount && <Text style={styles.errorText}>{errors.monthlyAmount}</Text>}
-              <Text style={styles.hintText}>
-                💡 Custos fixos mensais integram automaticamente o cálculo de Custo/Km (valor cheio
-                no mês ou proporcional aos dias em outros períodos).
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: spacing.xs }}>
+                <Icon name="Lightbulb" size={14} color={colors.textMuted} style={{ marginTop: 2 }} />
+                <Text style={[styles.hintText, { marginTop: 0, flex: 1 }]}>
+                  Custos fixos mensais integram automaticamente o cálculo de Custo/Km (valor cheio
+                  no mês ou proporcional aos dias em outros períodos).
+                </Text>
+              </View>
             </View>
 
             {submitError && <Text style={styles.globalErrorText}>{submitError}</Text>}

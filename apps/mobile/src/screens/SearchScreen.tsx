@@ -16,7 +16,7 @@ import {
   SearchFilters,
   Tag,
 } from '@autogest/shared-types';
-import { useTheme, typography } from '../theme';
+import { useTheme, typography, spacing } from '../theme';
 import { useAppStore } from '../store/useAppStore';
 import { SearchRepository } from '../repositories/SearchRepository';
 import { TagService } from '../services/tagService';
@@ -24,6 +24,7 @@ import { obterIdCurto } from '../services/searchFilterService';
 import { AdvancedFilterModal } from '../components/AdvancedFilterModal';
 import { VehicleHeaderSelector } from '../components/VehicleHeaderSelector';
 import { formatCurrency } from '../utils/formatters';
+import { Icon } from '../components/Icon';
 
 interface SearchScreenProps {
   onClose?: () => void;
@@ -185,7 +186,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onSelectRec
       const tagObj = availableTags.find(t => t.id === filters.tagId);
       chips.push({
         key: 'tag',
-        label: `🏷️ ${tagObj?.name || tagObj?.nome || 'Etiqueta'}`,
+        label: `${tagObj?.name || tagObj?.nome || 'Etiqueta'}`,
         onRemove: () => setFilters(prev => ({ ...prev, tagId: null })),
       });
     }
@@ -197,12 +198,12 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onSelectRec
     const shortId = obterIdCurto(item.id);
     const itemTags = tagsMap[item.id] || [];
 
-    const icon =
+    const iconName =
       item.recordType === 'abastecimento'
-        ? '⛽'
+        ? 'Fuel'
         : item.recordType === 'manutencao'
-          ? '🔧'
-          : '💸';
+          ? 'Wrench'
+          : 'Receipt';
 
     return (
       <TouchableOpacity
@@ -212,7 +213,9 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onSelectRec
       >
         <View style={styles.cardHeader}>
           <View style={styles.cardHeaderLeft}>
-            <Text style={styles.cardIcon}>{icon}</Text>
+            <View style={[styles.cardIcon, { alignItems: 'center', justifyContent: 'center' }]}>
+              <Icon name={iconName as any} size={18} color={colors.lime} />
+            </View>
             <View>
               <Text style={[typography.bodyBold, { color: colors.textPrimary }]}>
                 {item.title}
@@ -267,15 +270,26 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onSelectRec
             <View
               style={[
                 styles.itemChip,
-                { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
+                { backgroundColor: colors.surfaceRaised, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 4 },
               ]}
             >
+              <Icon
+                name={
+                  item.routeType === 'urbano'
+                    ? 'Building'
+                    : item.routeType === 'rodoviario'
+                      ? 'Navigation'
+                      : 'Shuffle'
+                }
+                size={11}
+                color={colors.lime}
+              />
               <Text style={[styles.itemChipText, { color: colors.lime }]}>
                 {item.routeType === 'urbano'
-                  ? '🏙️ Urbano'
+                  ? 'Urbano'
                   : item.routeType === 'rodoviario'
-                    ? '🛣️ Rodoviário'
-                    : '🔀 Misto'}
+                    ? 'Rodoviário'
+                    : 'Misto'}
               </Text>
             </View>
           )}
@@ -285,11 +299,12 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onSelectRec
               key={tag.id}
               style={[
                 styles.itemChip,
-                { backgroundColor: colors.surface, borderColor: colors.border },
+                { backgroundColor: colors.surface, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 4 },
               ]}
             >
+              <Icon name="Tag" size={10} color={colors.textSecondary} />
               <Text style={[styles.itemChipText, { color: colors.textSecondary }]}>
-                🏷️ {tag.name || tag.nome}
+                {tag.name || tag.nome}
               </Text>
             </View>
           ))}
@@ -313,7 +328,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onSelectRec
             style={[styles.closeBtn, { backgroundColor: colors.surface }]}
             onPress={onClose}
           >
-            <Text style={[styles.closeBtnText, { color: colors.textPrimary }]}>✕</Text>
+            <Icon name="X" size={18} color={colors.textPrimary} />
           </TouchableOpacity>
         )}
       </View>
@@ -324,7 +339,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onSelectRec
       {/* Barra de Busca e Botão de Filtros */}
       <View style={styles.searchBarRow}>
         <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Icon name="Search" size={16} color={colors.textSecondary} style={{ marginLeft: 8, marginRight: 4 }} />
           <TextInput
             style={[styles.searchInput, { color: colors.textPrimary }]}
             placeholder="Buscar por descrição, oficina, notas ou ID..."
@@ -336,7 +351,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onSelectRec
           />
           {texto.length > 0 && (
             <TouchableOpacity onPress={() => setTexto('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Text style={[styles.clearIcon, { color: colors.textSecondary }]}>✕</Text>
+              <Icon name="X" size={16} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
@@ -347,19 +362,30 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onSelectRec
             {
               backgroundColor: activeFiltersChips.length > 0 ? colors.lime : colors.surface,
               borderColor: colors.border,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 4,
             },
           ]}
           onPress={() => setModalFiltersVisible(true)}
           accessibilityLabel="Abrir filtros avançados"
         >
-          <Text
-            style={[
-              styles.filterTriggerText,
-              { color: activeFiltersChips.length > 0 ? colors.black : colors.textPrimary },
-            ]}
-          >
-            ⚙️ {activeFiltersChips.length > 0 ? `(${activeFiltersChips.length})` : ''}
-          </Text>
+          <Icon
+            name="SlidersHorizontal"
+            size={14}
+            color={activeFiltersChips.length > 0 ? colors.black : colors.textPrimary}
+          />
+          {activeFiltersChips.length > 0 && (
+            <Text
+              style={[
+                styles.filterTriggerText,
+                { color: colors.black },
+              ]}
+            >
+              ({activeFiltersChips.length})
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -372,14 +398,14 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onSelectRec
                 key={chip.key}
                 style={[
                   styles.activeChip,
-                  { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
+                  { backgroundColor: colors.surfaceRaised, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 6 },
                 ]}
               >
                 <Text style={[styles.activeChipText, { color: colors.textPrimary }]}>
                   {chip.label}
                 </Text>
                 <TouchableOpacity onPress={chip.onRemove} style={styles.removeChipBtn}>
-                  <Text style={[styles.removeChipText, { color: colors.textSecondary }]}>✕</Text>
+                  <Icon name="X" size={12} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
             ))}
@@ -406,7 +432,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onSelectRec
       ) : results.length === 0 ? (
         /* US33.3: Estado sem resultados */
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>🔍</Text>
+          <Icon name="Search" size={36} color={colors.textMuted} style={{ marginBottom: spacing.sm }} />
           <Text style={[typography.h3, { color: colors.textPrimary, marginTop: 8 }]}>
             Nenhum registro encontrado
           </Text>
@@ -587,7 +613,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardIcon: {
-    fontSize: 20,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cardHeaderRight: {
     alignItems: 'flex-end',

@@ -19,6 +19,7 @@ import {
 } from '@autogest/shared-types';
 import { MaintenanceScheduleService } from '../services/maintenanceScheduleService';
 import { colors, spacing, radius, typography } from '../theme';
+import { Icon, IconName } from './Icon';
 
 interface MaintenanceScheduleFormModalProps {
   visible: boolean;
@@ -29,17 +30,17 @@ interface MaintenanceScheduleFormModalProps {
   onSuccess?: (schedule: MaintenanceSchedule) => void;
 }
 
-const SERVICE_TYPE_OPTIONS: Array<{ key: MaintenanceServiceType; label: string; icon: string }> = [
-  { key: 'troca_oleo', label: 'Óleo', icon: '🛢️' },
-  { key: 'calibragem_pneus', label: 'Calibragem', icon: '💨' },
-  { key: 'fluido_freio', label: 'Fluido Freio', icon: '🛑' },
-  { key: 'agua_radiador', label: 'Radiador', icon: '💧' },
-  { key: 'filtros', label: 'Filtros', icon: '💨' },
-  { key: 'correia_dentada', label: 'Correia', icon: '⚙️' },
-  { key: 'velas', label: 'Velas', icon: '⚡' },
-  { key: 'pneus', label: 'Pneus', icon: '🛞' },
-  { key: 'freios', label: 'Freios', icon: '🛑' },
-  { key: 'outros', label: 'Outros', icon: '🔧' },
+const SERVICE_TYPE_OPTIONS: Array<{ key: MaintenanceServiceType; label: string; icon: IconName }> = [
+  { key: 'troca_oleo', label: 'Óleo', icon: 'Droplets' },
+  { key: 'calibragem_pneus', label: 'Calibragem', icon: 'Wind' },
+  { key: 'fluido_freio', label: 'Fluido Freio', icon: 'Disc' },
+  { key: 'agua_radiador', label: 'Radiador', icon: 'Droplet' },
+  { key: 'filtros', label: 'Filtros', icon: 'Wind' },
+  { key: 'correia_dentada', label: 'Correia', icon: 'Settings' },
+  { key: 'velas', label: 'Velas', icon: 'Zap' },
+  { key: 'pneus', label: 'Pneus', icon: 'CircleDot' },
+  { key: 'freios', label: 'Freios', icon: 'Disc' },
+  { key: 'outros', label: 'Outros', icon: 'Wrench' },
 ];
 
 export const MaintenanceScheduleFormModal: React.FC<MaintenanceScheduleFormModalProps> = ({
@@ -202,7 +203,7 @@ export const MaintenanceScheduleFormModal: React.FC<MaintenanceScheduleFormModal
               {isEditing ? 'Editar Agendamento' : 'Agendar Manutenção'}
             </Text>
             <TouchableOpacity onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-              <Text style={styles.closeButton}>✕</Text>
+              <Icon name="X" size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
@@ -218,7 +219,12 @@ export const MaintenanceScheduleFormModal: React.FC<MaintenanceScheduleFormModal
                     style={[styles.serviceTypeChip, isSelected && styles.serviceTypeChipSelected]}
                     onPress={() => setServiceType(opt.key)}
                   >
-                    <Text style={styles.serviceTypeIcon}>{opt.icon}</Text>
+                    <Icon
+                      name={opt.icon}
+                      size={15}
+                      color={isSelected ? colors.black : colors.textSecondary}
+                      style={{ marginRight: 6 }}
+                    />
                     <Text
                       style={[
                         styles.serviceTypeLabel,

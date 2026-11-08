@@ -14,6 +14,7 @@ import { colors, spacing, radius, typography } from '../theme';
 import { MobileFipeService } from '../services/mobileFipeService';
 import { calcularDepreciacao } from '../services/fipeDepreciation';
 import { formatCurrency } from '../utils/formatters';
+import { Icon } from '../components/Icon';
 import {
   FipeBrand,
   FipeModel,
@@ -168,7 +169,7 @@ export const VehicleMarketValueScreen: React.FC<VehicleMarketValueScreenProps> =
           accessibilityRole="button"
           accessibilityLabel="Voltar"
         >
-          <Text style={styles.closeButtonText}>✕</Text>
+          <Icon name="X" size={18} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Valor de Mercado (FIPE)</Text>
         <View style={{ width: 40 }} />
@@ -212,7 +213,10 @@ export const VehicleMarketValueScreen: React.FC<VehicleMarketValueScreenProps> =
         {/* Resumo de Depreciação (US18.7) */}
         {depreciacao && (
           <View style={styles.depreciationCard}>
-            <Text style={styles.sectionTitle}>📉 Acompanhamento de Depreciação</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+              <Icon name="TrendingDown" size={16} color={colors.lime} />
+              <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Acompanhamento de Depreciação</Text>
+            </View>
             <View style={styles.depreciationGrid}>
               <View style={styles.depreciationItem}>
                 <Text style={styles.depLabel}>Valor Inicial</Text>
@@ -266,7 +270,10 @@ export const VehicleMarketValueScreen: React.FC<VehicleMarketValueScreenProps> =
 
         {/* Seleção em Cascata (Marca -> Modelo -> Ano) */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>🔍 Vincular Modelo FIPE em Cascata</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+            <Icon name="Search" size={16} color={colors.lime} />
+            <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Vincular Modelo FIPE em Cascata</Text>
+          </View>
           <Text style={styles.sectionSub}>
             Selecione a marca, o modelo e o ano correspondente na Tabela FIPE oficial.
           </Text>
@@ -357,7 +364,10 @@ export const VehicleMarketValueScreen: React.FC<VehicleMarketValueScreenProps> =
         {/* Histórico de Consultas Salvas (US18.6) */}
         {consultas.length > 0 && (
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>📋 Histórico Mensal de Cotações</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+              <Icon name="FileText" size={16} color={colors.lime} />
+              <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Histórico Mensal de Cotações</Text>
+            </View>
             {consultas.map((c, i) => (
               <View key={c.id || i} style={styles.historyRow}>
                 <View>

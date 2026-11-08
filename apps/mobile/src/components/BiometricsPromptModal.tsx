@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import { colors, spacing, radius, typography } from '../theme';
+import { Icon } from './Icon';
+import { theme as tokens } from '../theme/tokens';
 
 interface BiometricsPromptModalProps {
   visible: boolean;
@@ -18,7 +20,7 @@ export const BiometricsPromptModal: React.FC<BiometricsPromptModalProps> = ({
       <View style={styles.overlay}>
         <View style={styles.card}>
           <View style={styles.iconCircle}>
-            <Text style={styles.iconText}>👆</Text>
+            <Icon name="Fingerprint" size={32} color={tokens.colors.accent} />
           </View>
 
           <Text style={styles.title}>Ativar Desbloqueio por Biometria?</Text>

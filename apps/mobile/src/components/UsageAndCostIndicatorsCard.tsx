@@ -7,6 +7,7 @@ import {
 } from '../services/usageAndCostIndicators';
 import { formatCurrency, formatDecimal } from '../utils/formatters';
 import { colors, spacing, radius, typography } from '../theme';
+import { Icon } from './Icon';
 
 interface UsageAndCostIndicatorsCardProps {
   vehicle: Vehicle | null;
@@ -198,7 +199,10 @@ export const UsageAndCostIndicatorsCard: React.FC<UsageAndCostIndicatorsCardProp
               </View>
 
               <View style={styles.costBox}>
-                <Text style={styles.costBoxLabel}>⛽ Custo/Km Combustível</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                  <Icon name="Fuel" size={13} color={colors.textSecondary} />
+                  <Text style={styles.costBoxLabel}>Custo/Km Combustível</Text>
+                </View>
                 <Text style={styles.costBoxSecondaryValue}>
                   {formatCostPerKmDisplay(
                     indicators.custo.custoKmCombustivel,
@@ -215,9 +219,12 @@ export const UsageAndCostIndicatorsCard: React.FC<UsageAndCostIndicatorsCardProp
           {/* Bloco 3: Custo/Km de Manutenção — Preventiva vs Corretiva (US24.1) */}
           <View style={styles.maintenanceBlock}>
             <View style={styles.maintenanceHeaderRow}>
-              <Text style={styles.sectionSubtitle}>
-                🛠️ Custo/Km de Manutenção (Preventiva vs Corretiva)
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Icon name="Wrench" size={14} color={colors.textSecondary} />
+                <Text style={styles.sectionSubtitle}>
+                  Custo/Km de Manutenção (Preventiva vs Corretiva)
+                </Text>
+              </View>
               <Text style={styles.maintenanceTotalBadge}>
                 {formatCostPerKmDisplay(
                   indicators.custo.custoKmManutencaoTotal,

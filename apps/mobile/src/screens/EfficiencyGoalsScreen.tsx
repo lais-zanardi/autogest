@@ -25,6 +25,7 @@ import {
 import { EfficiencyGoal, DrivingProfile, EcoTip } from '@autogest/shared-types';
 import { formatarConsumo } from '../utils/formatters';
 import catalogJson from '../assets/eco_tips_catalog.json';
+import { Icon } from '../components/Icon';
 
 interface EfficiencyGoalsScreenProps {
   onClose: () => void;
@@ -160,7 +161,7 @@ export const EfficiencyGoalsScreen: React.FC<EfficiencyGoalsScreenProps> = ({ on
           accessibilityRole="button"
           accessibilityLabel="Voltar"
         >
-          <Text style={styles.closeButtonText}>✕</Text>
+          <Icon name="X" size={18} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Metas e Dicas</Text>
         <View style={{ width: 40 }} />
@@ -174,7 +175,10 @@ export const EfficiencyGoalsScreen: React.FC<EfficiencyGoalsScreenProps> = ({ on
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {/* Seção 1: Configuração da Meta */}
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>🎯 Meta de Consumo do Veículo</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+              <Icon name="Target" size={16} color={colors.lime} />
+              <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Meta de Consumo do Veículo</Text>
+            </View>
             <Text style={styles.sectionSubtitle}>
               Defina o rendimento almejado para o veículo ativo ({selectedVehicle?.name || 'Veículo'}).
             </Text>
@@ -257,47 +261,75 @@ export const EfficiencyGoalsScreen: React.FC<EfficiencyGoalsScreenProps> = ({ on
 
           {/* Seção 2: Perfil de Rodagem */}
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>🚗 Perfil de Rodagem Identificado</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+              <Icon name="Car" size={16} color={colors.lime} />
+              <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Perfil de Rodagem Identificado</Text>
+            </View>
             <View style={styles.profileGrid}>
               <View style={styles.profileItem}>
                 <Text style={styles.profileLabel}>Percurso Predominante</Text>
-                <Text style={styles.profileBadge}>
-                  {profile?.tipoPercursoPredominante === 'urbano'
-                    ? '🏙️ Urbano'
-                    : profile?.tipoPercursoPredominante === 'rodoviario'
-                      ? '🛣️ Rodoviário'
-                      : '🔄 Misto'}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                  <Icon
+                    name={
+                      profile?.tipoPercursoPredominante === 'urbano'
+                        ? 'Building'
+                        : profile?.tipoPercursoPredominante === 'rodoviario'
+                          ? 'Navigation'
+                          : 'Shuffle'
+                    }
+                    size={12}
+                    color={colors.textPrimary}
+                  />
+                  <Text style={styles.profileBadge}>
+                    {profile?.tipoPercursoPredominante === 'urbano'
+                      ? 'Urbano'
+                      : profile?.tipoPercursoPredominante === 'rodoviario'
+                        ? 'Rodoviário'
+                        : 'Misto'}
+                  </Text>
+                </View>
               </View>
 
               <View style={styles.profileItem}>
                 <Text style={styles.profileLabel}>Calibragem dos Pneus</Text>
-                <Text
-                  style={[
-                    styles.profileBadge,
-                    {
-                      color: profile?.calibragemPneusAtrasada
-                        ? colors.amber
-                        : colors.lime,
-                    },
-                  ]}
-                >
-                  {profile?.calibragemPneusAtrasada ? '⚠️ Em atraso' : '✅ Em dia'}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                  <Icon
+                    name={profile?.calibragemPneusAtrasada ? 'AlertTriangle' : 'Check'}
+                    size={12}
+                    color={profile?.calibragemPneusAtrasada ? colors.amber : colors.lime}
+                  />
+                  <Text
+                    style={[
+                      styles.profileBadge,
+                      {
+                        color: profile?.calibragemPneusAtrasada
+                          ? colors.amber
+                          : colors.lime,
+                      },
+                    ]}
+                  >
+                    {profile?.calibragemPneusAtrasada ? 'Em atraso' : 'Em dia'}
+                  </Text>
+                </View>
               </View>
 
               <View style={styles.profileItem}>
                 <Text style={styles.profileLabel}>Estabilidade de Consumo</Text>
-                <Text
-                  style={[
-                    styles.profileBadge,
-                    {
-                      color: profile?.temAnomalia ? colors.amber : colors.textPrimary,
-                    },
-                  ]}
-                >
-                  {profile?.temAnomalia ? '⚠️ Queda detectada' : 'Normal'}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                  {profile?.temAnomalia && (
+                    <Icon name="AlertTriangle" size={12} color={colors.amber} />
+                  )}
+                  <Text
+                    style={[
+                      styles.profileBadge,
+                      {
+                        color: profile?.temAnomalia ? colors.amber : colors.textPrimary,
+                      },
+                    ]}
+                  >
+                    {profile?.temAnomalia ? 'Queda detectada' : 'Normal'}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
@@ -305,7 +337,10 @@ export const EfficiencyGoalsScreen: React.FC<EfficiencyGoalsScreenProps> = ({ on
           {/* Seção 3: Dicas Recomendadas */}
           <View style={styles.sectionCard}>
             <View style={styles.tipsHeader}>
-              <Text style={styles.sectionTitle}>💡 Dicas de Eficiência</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Icon name="Lightbulb" size={16} color={colors.lime} />
+                <Text style={styles.sectionTitle}>Dicas de Eficiência</Text>
+              </View>
               <Text style={styles.tipsCounter}>
                 {recommendedTips.length} recomendadas
               </Text>

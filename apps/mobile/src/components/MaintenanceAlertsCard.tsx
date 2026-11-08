@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'rea
 import { MaintenanceAlert, Vehicle } from '@autogest/shared-types';
 import { MaintenanceAlertService } from '../services/maintenanceAlertService';
 import { colors, spacing, radius, typography } from '../theme';
+import { theme as tokens } from '../theme/tokens';
+import { Icon } from './Icon';
 
 interface MaintenanceAlertsCardProps {
   vehicle: Vehicle | null;
@@ -56,7 +58,8 @@ export const MaintenanceAlertsCard: React.FC<MaintenanceAlertsCardProps> = ({
           <Text style={styles.sectionSubtitle}>Manutenção preventiva baseada em km e tempo</Text>
         </View>
         <TouchableOpacity style={styles.configBtn} onPress={onOpenRulesPress} activeOpacity={0.7}>
-          <Text style={styles.configBtnText}>⚙️ Regras</Text>
+          <Icon name="Settings" size={12} color={colors.lime} style={{ marginRight: 4 }} />
+          <Text style={styles.configBtnText}>Regras</Text>
         </TouchableOpacity>
       </View>
 
@@ -66,7 +69,7 @@ export const MaintenanceAlertsCard: React.FC<MaintenanceAlertsCardProps> = ({
         </View>
       ) : alerts.length === 0 ? (
         <View style={styles.allGoodContainer}>
-          <Text style={styles.allGoodIcon}>🛡️</Text>
+          <Icon name="ShieldCheck" size={28} color={tokens.colors.accent} />
           <View style={styles.allGoodTextArea}>
             <Text style={styles.allGoodTitle}>Tudo em dia!</Text>
             <Text style={styles.allGoodDesc}>
@@ -131,11 +134,12 @@ export const MaintenanceAlertsCard: React.FC<MaintenanceAlertsCardProps> = ({
                 </View>
 
                 <TouchableOpacity
-                  style={styles.resolveBtn}
+                  style={[styles.resolveBtn, { flexDirection: 'row', alignItems: 'center', gap: 6 }]}
                   onPress={() => onRegisterMaintenancePress(item)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.resolveBtnText}>🛠️ Registrar Revisão</Text>
+                  <Icon name="Wrench" size={14} color={tokens.colors.background} />
+                  <Text style={styles.resolveBtnText}>Registrar Revisão</Text>
                 </TouchableOpacity>
               </View>
             );

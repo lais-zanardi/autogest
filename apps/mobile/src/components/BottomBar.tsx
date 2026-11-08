@@ -1,7 +1,9 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { CentralFab } from './CentralFab';
+import { Icon } from './Icon';
 import { useTheme } from '../theme';
+import { theme as tokens } from '../theme/tokens';
 
 interface BottomBarProps {
   currentScreen: string;
@@ -12,53 +14,78 @@ interface BottomBarProps {
 export const BottomBar: React.FC<BottomBarProps> = ({ currentScreen, onNavigate, onFabPress }) => {
   const { colors } = useTheme();
 
+  const isDashboard = currentScreen === 'Dashboard';
+  const isGarage = currentScreen === 'Garage';
+  const isReports = currentScreen === 'Reports';
+  const isSettings = currentScreen === 'Settings';
+
   return (
     <View
-      style={[styles.container, { backgroundColor: colors.surface, borderTopColor: colors.border }]}
+      style={[styles.container, { backgroundColor: tokens.colors.surface, borderTopColor: tokens.colors.line }]}
     >
       <TouchableOpacity style={styles.tab} onPress={() => onNavigate('Dashboard')}>
+        <Icon
+          name="LayoutDashboard"
+          size={20}
+          color={isDashboard ? tokens.colors.accent : tokens.colors.textSecondary}
+        />
         <Text
           style={[
             styles.tabText,
-            { color: currentScreen === 'Dashboard' ? colors.lime : colors.textSecondary },
+            { color: isDashboard ? tokens.colors.accent : tokens.colors.textSecondary },
           ]}
         >
-          📊 Dashboard
+          Dashboard
         </Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.tab} onPress={() => onNavigate('Garage')}>
+        <Icon
+          name="Car"
+          size={20}
+          color={isGarage ? tokens.colors.accent : tokens.colors.textSecondary}
+        />
         <Text
           style={[
             styles.tabText,
-            { color: currentScreen === 'Garage' ? colors.lime : colors.textSecondary },
+            { color: isGarage ? tokens.colors.accent : tokens.colors.textSecondary },
           ]}
         >
-          🚘 Garagem
+          Garagem
         </Text>
       </TouchableOpacity>
 
       <CentralFab onPress={onFabPress} />
 
       <TouchableOpacity style={styles.tab} onPress={() => onNavigate('Reports')}>
+        <Icon
+          name="TrendingUp"
+          size={20}
+          color={isReports ? tokens.colors.accent : tokens.colors.textSecondary}
+        />
         <Text
           style={[
             styles.tabText,
-            { color: currentScreen === 'Reports' ? colors.lime : colors.textSecondary },
+            { color: isReports ? tokens.colors.accent : tokens.colors.textSecondary },
           ]}
         >
-          📈 Relatórios
+          Relatórios
         </Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.tab} onPress={() => onNavigate('Settings')}>
+        <Icon
+          name="Settings"
+          size={20}
+          color={isSettings ? tokens.colors.accent : tokens.colors.textSecondary}
+        />
         <Text
           style={[
             styles.tabText,
-            { color: currentScreen === 'Settings' ? colors.lime : colors.textSecondary },
+            { color: isSettings ? tokens.colors.accent : tokens.colors.textSecondary },
           ]}
         >
-          ⚙️ Ajustes
+          Ajustes
         </Text>
       </TouchableOpacity>
     </View>
@@ -78,9 +105,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 4,
   },
   tabText: {
-    fontSize: 12,
-    fontWeight: '600',
+    ...tokens.typography.caption,
   },
 });
+

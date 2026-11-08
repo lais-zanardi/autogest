@@ -28,6 +28,7 @@ import { colors, spacing, radius, typography } from '../theme';
 import { TagSelector } from './TagSelector';
 import { TagService } from '../services/tagService';
 import { validarNota, LIMITE_MAXIMO_NOTA } from '../services/routeContextService';
+import { Icon, IconName } from './Icon';
 
 interface MaintenanceFormModalProps {
   visible: boolean;
@@ -38,17 +39,17 @@ interface MaintenanceFormModalProps {
   onSuccess?: (maintenance: Maintenance) => void;
 }
 
-const SERVICE_TYPE_OPTIONS: Array<{ key: MaintenanceServiceType; label: string; icon: string }> = [
-  { key: 'troca_oleo', label: 'Óleo', icon: '🛢️' },
-  { key: 'calibragem_pneus', label: 'Calibragem', icon: '💨' },
-  { key: 'fluido_freio', label: 'Fluido Freio', icon: '🛑' },
-  { key: 'agua_radiador', label: 'Radiador', icon: '💧' },
-  { key: 'filtros', label: 'Filtros', icon: '💨' },
-  { key: 'correia_dentada', label: 'Correia', icon: '⚙️' },
-  { key: 'velas', label: 'Velas', icon: '⚡' },
-  { key: 'pneus', label: 'Pneus', icon: '🛞' },
-  { key: 'freios', label: 'Freios', icon: '🛑' },
-  { key: 'outros', label: 'Outros', icon: '🔧' },
+const SERVICE_TYPE_OPTIONS: Array<{ key: MaintenanceServiceType; label: string; icon: IconName }> = [
+  { key: 'troca_oleo', label: 'Óleo', icon: 'Droplets' },
+  { key: 'calibragem_pneus', label: 'Calibragem', icon: 'Wind' },
+  { key: 'fluido_freio', label: 'Fluido Freio', icon: 'Disc' },
+  { key: 'agua_radiador', label: 'Radiador', icon: 'Droplet' },
+  { key: 'filtros', label: 'Filtros', icon: 'Wind' },
+  { key: 'correia_dentada', label: 'Correia', icon: 'Settings' },
+  { key: 'velas', label: 'Velas', icon: 'Zap' },
+  { key: 'pneus', label: 'Pneus', icon: 'CircleDot' },
+  { key: 'freios', label: 'Freios', icon: 'Disc' },
+  { key: 'outros', label: 'Outros', icon: 'Wrench' },
 ];
 
 export const MaintenanceFormModal: React.FC<MaintenanceFormModalProps> = ({
@@ -291,7 +292,7 @@ export const MaintenanceFormModal: React.FC<MaintenanceFormModalProps> = ({
               style={styles.closeBtn}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Text style={styles.closeBtnText}>✕</Text>
+              <Icon name="X" size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
@@ -310,18 +311,32 @@ export const MaintenanceFormModal: React.FC<MaintenanceFormModalProps> = ({
                 onPress={() => setType('preventiva')}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.typeText, type === 'preventiva' && styles.typeTextSelected]}>
-                  🛡️ Preventiva
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                  <Icon
+                    name="Shield"
+                    size={16}
+                    color={type === 'preventiva' ? colors.black : colors.textPrimary}
+                  />
+                  <Text style={[styles.typeText, type === 'preventiva' && styles.typeTextSelected]}>
+                    Preventiva
+                  </Text>
+                </View>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.typeOption, type === 'corretiva' && styles.typeOptionSelected]}
                 onPress={() => setType('corretiva')}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.typeText, type === 'corretiva' && styles.typeTextSelected]}>
-                  ⚠️ Corretiva
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                  <Icon
+                    name="AlertTriangle"
+                    size={16}
+                    color={type === 'corretiva' ? colors.black : colors.textPrimary}
+                  />
+                  <Text style={[styles.typeText, type === 'corretiva' && styles.typeTextSelected]}>
+                    Corretiva
+                  </Text>
+                </View>
               </TouchableOpacity>
             </View>
 
@@ -335,7 +350,11 @@ export const MaintenanceFormModal: React.FC<MaintenanceFormModalProps> = ({
                   onPress={() => setServiceType(opt.key)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.chipIcon}>{opt.icon}</Text>
+                  <Icon
+                    name={opt.icon}
+                    size={15}
+                    color={serviceType === opt.key ? colors.black : colors.textSecondary}
+                  />
                   <Text
                     style={[styles.chipText, serviceType === opt.key && styles.chipTextSelected]}
                   >
@@ -484,37 +503,42 @@ export const MaintenanceFormModal: React.FC<MaintenanceFormModalProps> = ({
 
               <View style={styles.attachmentBtnRow}>
                 <TouchableOpacity
-                  style={styles.attachmentBtn}
+                  style={[styles.attachmentBtn, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }]}
                   onPress={() => handlePickAttachment('camera')}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.attachmentBtnText}>📷 Tirar Foto</Text>
+                  <Icon name="Camera" size={16} color={colors.textPrimary} />
+                  <Text style={styles.attachmentBtnText}>Tirar Foto</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.attachmentBtn}
+                  style={[styles.attachmentBtn, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }]}
                   onPress={() => handlePickAttachment('gallery')}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.attachmentBtnText}>🖼️ Galeria</Text>
+                  <Icon name="Image" size={16} color={colors.textPrimary} />
+                  <Text style={styles.attachmentBtnText}>Galeria</Text>
                 </TouchableOpacity>
               </View>
 
               {attachments.map(att => (
                 <View key={att.id} style={styles.attachmentItem}>
-                  <View style={styles.attachmentItemInfo}>
-                    <Text style={styles.attachmentItemName} numberOfLines={1}>
-                      📄 {att.localPath.split('/').pop() || 'comprovante.jpg'}
-                    </Text>
-                    <Text style={styles.attachmentItemMeta}>
-                      {Math.round(att.fileSize / 1024)} KB • Status: {att.uploadStatus}
-                    </Text>
+                  <View style={[styles.attachmentItemInfo, { flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
+                    <Icon name="FileText" size={16} color={colors.textMuted} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.attachmentItemName} numberOfLines={1}>
+                        {att.localPath.split('/').pop() || 'comprovante.jpg'}
+                      </Text>
+                      <Text style={styles.attachmentItemMeta}>
+                        {Math.round(att.fileSize / 1024)} KB • Status: {att.uploadStatus}
+                      </Text>
+                    </View>
                   </View>
                   <TouchableOpacity
                     onPress={() => handleRemoveAttachment(att.id)}
                     style={styles.removeAttBtn}
                   >
-                    <Text style={styles.removeAttText}>✕</Text>
+                    <Icon name="X" size={14} color={colors.error} />
                   </TouchableOpacity>
                 </View>
               ))}

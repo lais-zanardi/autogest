@@ -16,6 +16,7 @@ import { ConsumptionChartCard } from '../components/charts/ConsumptionChartCard'
 import { formatarConsumo } from '../services/preferencesService';
 import { VehicleHeaderSelector } from '../components/VehicleHeaderSelector';
 import { consumoPorTipoPercurso } from '../services/routeContextService';
+import { Icon } from '../components/Icon';
 
 interface ConsumptionScreenProps {
   onClose?: () => void;
@@ -95,7 +96,7 @@ export const ConsumptionScreen: React.FC<ConsumptionScreenProps> = ({ onClose })
             style={[styles.closeButton, { backgroundColor: colors.surface }]}
             accessibilityLabel="Fechar tela de consumo"
           >
-            <Text style={[styles.closeText, { color: colors.textPrimary }]}>✕</Text>
+            <Icon name="X" size={18} color={colors.textPrimary} />
           </TouchableOpacity>
         )}
       </View>
@@ -157,7 +158,10 @@ export const ConsumptionScreen: React.FC<ConsumptionScreenProps> = ({ onClose })
                 { borderRightColor: colors.border, borderRightWidth: 1 },
               ]}
             >
-              <Text style={[typography.caption, { color: colors.textMuted }]}>🏙️ Urbano</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Icon name="Building" size={12} color={colors.textMuted} />
+                <Text style={[typography.caption, { color: colors.textMuted }]}>Urbano</Text>
+              </View>
               <Text style={[typography.bodyBold, { color: colors.lime, marginTop: 2 }]}>
                 {consumoPorTipo.urbano.mediaKml > 0
                   ? formatarConsumo(consumoPorTipo.urbano.mediaKml)
@@ -174,7 +178,10 @@ export const ConsumptionScreen: React.FC<ConsumptionScreenProps> = ({ onClose })
                 { borderRightColor: colors.border, borderRightWidth: 1 },
               ]}
             >
-              <Text style={[typography.caption, { color: colors.textMuted }]}>🛣️ Rodoviário</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Icon name="Navigation" size={12} color={colors.textMuted} />
+                <Text style={[typography.caption, { color: colors.textMuted }]}>Rodoviário</Text>
+              </View>
               <Text style={[typography.bodyBold, { color: colors.lime, marginTop: 2 }]}>
                 {consumoPorTipo.rodoviario.mediaKml > 0
                   ? formatarConsumo(consumoPorTipo.rodoviario.mediaKml)
@@ -191,7 +198,10 @@ export const ConsumptionScreen: React.FC<ConsumptionScreenProps> = ({ onClose })
                 { borderRightColor: colors.border, borderRightWidth: 1 },
               ]}
             >
-              <Text style={[typography.caption, { color: colors.textMuted }]}>🔀 Misto</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Icon name="Shuffle" size={12} color={colors.textMuted} />
+                <Text style={[typography.caption, { color: colors.textMuted }]}>Misto</Text>
+              </View>
               <Text style={[typography.bodyBold, { color: colors.lime, marginTop: 2 }]}>
                 {consumoPorTipo.misto.mediaKml > 0
                   ? formatarConsumo(consumoPorTipo.misto.mediaKml)
@@ -223,9 +233,12 @@ export const ConsumptionScreen: React.FC<ConsumptionScreenProps> = ({ onClose })
             { backgroundColor: colors.surface, borderColor: colors.borderSubtle },
           ]}
         >
-          <Text style={[typography.bodyBold, { color: colors.textPrimary, marginBottom: 4 }]}>
-            💡 Sobre a Média Móvel de 5 períodos
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+            <Icon name="Lightbulb" size={16} color={colors.lime} />
+            <Text style={[typography.bodyBold, { color: colors.textPrimary }]}>
+              Sobre a Média Móvel de 5 períodos
+            </Text>
+          </View>
           <Text style={[typography.caption, { color: colors.textSecondary, lineHeight: 18 }]}>
             A média móvel suaviza oscilações temporárias causadas por trânsito pesado, uso intenso
             de ar-condicionado ou percursos acidentados, revelando a verdadeira tendência mecânica

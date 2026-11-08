@@ -9,6 +9,7 @@ import {
 import { formatDecimal } from '../utils/formatters';
 import { colors, spacing, radius, typography } from '../theme';
 import { TireFluidTab } from './TireAndFluidModal';
+import { Icon } from './Icon';
 
 interface TireAndFluidCardProps {
   vehicle: Vehicle | null;
@@ -140,11 +141,14 @@ export const TireAndFluidCard: React.FC<TireAndFluidCardProps> = ({
             </View>
           )}
           {lowLevelFluids.length > 0 && (
-            <View style={[styles.summaryBadge, styles.summaryBadgeWarning]}>
-              <Text style={styles.summaryWarningLabel}>⚠️ Nível Baixo</Text>
-              <Text style={styles.summaryWarningValue}>
-                {lowLevelFluids.map(f => FLUID_TYPE_LABELS[f.fluidType]).join(', ')}
-              </Text>
+            <View style={[styles.summaryBadge, styles.summaryBadgeWarning, { flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
+              <Icon name="AlertTriangle" size={14} color={colors.amber} />
+              <View>
+                <Text style={styles.summaryWarningLabel}>Nível Baixo</Text>
+                <Text style={styles.summaryWarningValue}>
+                  {lowLevelFluids.map(f => FLUID_TYPE_LABELS[f.fluidType]).join(', ')}
+                </Text>
+              </View>
             </View>
           )}
         </View>
@@ -154,21 +158,30 @@ export const TireAndFluidCard: React.FC<TireAndFluidCardProps> = ({
       <View style={styles.filterRow}>
         {(
           [
-            { key: 'todos', label: 'Todos' },
-            { key: 'pneus', label: '🛞 Pneus' },
-            { key: 'fluidos', label: '🛢️ Fluidos' },
-          ] as Array<{ key: HistoryFilter; label: string }>
+            { key: 'todos', label: 'Todos', icon: null },
+            { key: 'pneus', label: 'Pneus', icon: 'CircleDot' },
+            { key: 'fluidos', label: 'Fluidos', icon: 'Droplets' },
+          ] as Array<{ key: HistoryFilter; label: string; icon: any }>
         ).map(tab => (
           <TouchableOpacity
             key={tab.key}
             style={[styles.filterChip, filter === tab.key && styles.filterChipActive]}
             onPress={() => setFilter(tab.key)}
           >
-            <Text
-              style={[styles.filterChipText, filter === tab.key && styles.filterChipTextActive]}
-            >
-              {tab.label}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+              {tab.icon && (
+                <Icon
+                  name={tab.icon}
+                  size={13}
+                  color={filter === tab.key ? colors.black : colors.textSecondary}
+                />
+              )}
+              <Text
+                style={[styles.filterChipText, filter === tab.key && styles.filterChipTextActive]}
+              >
+                {tab.label}
+              </Text>
+            </View>
           </TouchableOpacity>
         ))}
       </View>
@@ -194,10 +207,16 @@ export const TireAndFluidCard: React.FC<TireAndFluidCardProps> = ({
                 <View key={`pneu_${t.id}`} style={styles.itemCard}>
                   <View style={styles.itemTop}>
                     <View>
-                      <Text style={styles.itemType}>
-                        {t.type === 'troca' ? '🛞 ' : '💨 '}
-                        {TIRE_TYPE_LABELS[t.type]}
-                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                        <Icon
+                          name={t.type === 'troca' ? 'CircleDot' : 'Wind'}
+                          size={14}
+                          color={colors.textSecondary}
+                        />
+                        <Text style={styles.itemType}>
+                          {TIRE_TYPE_LABELS[t.type]}
+                        </Text>
+                      </View>
                       <Text style={styles.itemMeta}>
                         {formatDate(t.date)} • {t.km.toLocaleString('pt-BR')} km
                       </Text>
@@ -214,14 +233,19 @@ export const TireAndFluidCard: React.FC<TireAndFluidCardProps> = ({
                     </View>
                   </View>
                   <View style={styles.itemActions}>
-                    <TouchableOpacity style={styles.actionBtn} onPress={() => onEditTirePress(t)}>
-                      <Text style={styles.actionBtnText}>✏️ Editar</Text>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, { flexDirection: 'row', alignItems: 'center', gap: 4 }]}
+                      onPress={() => onEditTirePress(t)}
+                    >
+                      <Icon name="Edit2" size={12} color={colors.textPrimary} />
+                      <Text style={styles.actionBtnText}>Editar</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={[styles.actionBtn, styles.deleteBtn]}
+                      style={[styles.actionBtn, styles.deleteBtn, { flexDirection: 'row', alignItems: 'center', gap: 4 }]}
                       onPress={() => onDeleteTirePress(t)}
                     >
-                      <Text style={styles.deleteBtnText}>🗑️ Excluir</Text>
+                      <Icon name="Trash2" size={12} color={colors.error} />
+                      <Text style={styles.deleteBtnText}>Excluir</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -233,14 +257,22 @@ export const TireAndFluidCard: React.FC<TireAndFluidCardProps> = ({
               <View key={`fluido_${f.id}`} style={styles.itemCard}>
                 <View style={styles.itemTop}>
                   <View>
-                    <Text style={styles.itemType}>
-                      {f.fluidType === 'oleo_motor'
-                        ? '🛢️ '
-                        : f.fluidType === 'freio'
-                          ? '🛑 '
-                          : '💧 '}
-                      {FLUID_TYPE_LABELS[f.fluidType]}
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                      <Icon
+                        name={
+                          f.fluidType === 'oleo_motor'
+                            ? 'Droplets'
+                            : f.fluidType === 'freio'
+                              ? 'Disc'
+                              : 'Droplet'
+                        }
+                        size={14}
+                        color={colors.textSecondary}
+                      />
+                      <Text style={styles.itemType}>
+                        {FLUID_TYPE_LABELS[f.fluidType]}
+                      </Text>
+                    </View>
                     <Text style={styles.itemMeta}>
                       {formatDate(f.date)} • {f.km.toLocaleString('pt-BR')} km
                     </Text>
@@ -250,8 +282,14 @@ export const TireAndFluidCard: React.FC<TireAndFluidCardProps> = ({
                       style={[
                         styles.levelPill,
                         f.level === 'baixo' ? styles.levelPillLow : styles.levelPillNormal,
+                        { flexDirection: 'row', alignItems: 'center', gap: 4 },
                       ]}
                     >
+                      <Icon
+                        name={f.level === 'baixo' ? 'AlertTriangle' : 'Check'}
+                        size={11}
+                        color={f.level === 'baixo' ? colors.amber : colors.lime}
+                      />
                       <Text
                         style={[
                           styles.levelPillText,
@@ -260,20 +298,25 @@ export const TireAndFluidCard: React.FC<TireAndFluidCardProps> = ({
                             : styles.levelPillTextNormal,
                         ]}
                       >
-                        {f.level === 'baixo' ? '⚠️ Nível Baixo' : '✅ Normal'}
+                        {f.level === 'baixo' ? 'Nível Baixo' : 'Normal'}
                       </Text>
                     </View>
                   </View>
                 </View>
                 <View style={styles.itemActions}>
-                  <TouchableOpacity style={styles.actionBtn} onPress={() => onEditFluidPress(f)}>
-                    <Text style={styles.actionBtnText}>✏️ Editar</Text>
+                  <TouchableOpacity
+                    style={[styles.actionBtn, { flexDirection: 'row', alignItems: 'center', gap: 4 }]}
+                    onPress={() => onEditFluidPress(f)}
+                  >
+                    <Icon name="Edit2" size={12} color={colors.textPrimary} />
+                    <Text style={styles.actionBtnText}>Editar</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[styles.actionBtn, styles.deleteBtn]}
+                    style={[styles.actionBtn, styles.deleteBtn, { flexDirection: 'row', alignItems: 'center', gap: 4 }]}
                     onPress={() => onDeleteFluidPress(f)}
                   >
-                    <Text style={styles.deleteBtnText}>🗑️ Excluir</Text>
+                    <Icon name="Trash2" size={12} color={colors.error} />
+                    <Text style={styles.deleteBtnText}>Excluir</Text>
                   </TouchableOpacity>
                 </View>
               </View>

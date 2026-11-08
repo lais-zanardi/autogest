@@ -18,6 +18,7 @@ import {
   CoachMarkTarget,
 } from '../components';
 import { colors, spacing, radius, typography } from '../theme';
+import { Icon } from '../components/Icon';
 
 export const GarageScreen: React.FC = () => {
   const { vehicles, selectedVehicle } = useAppStore();
@@ -94,7 +95,7 @@ export const GarageScreen: React.FC = () => {
         {vehicles.length === 0 ? (
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIconCircle}>
-              <Text style={styles.emptyIconText}>🚘</Text>
+              <Icon name="Car" size={28} color={colors.lime} />
             </View>
             <Text style={styles.emptyTitle}>Nenhum veículo cadastrado</Text>
             <Text style={styles.emptyDescription}>
@@ -173,30 +174,33 @@ export const GarageScreen: React.FC = () => {
                   {/* Ações: Atualizar Hodômetro, Editar e Excluir */}
                   <View style={styles.cardFooter}>
                     <TouchableOpacity
-                      style={styles.actionBtn}
+                      style={[styles.actionBtn, { flexDirection: 'row', alignItems: 'center', gap: 4 }]}
                       onPress={() => {
                         setVehicleToUpdateOdo(item);
                         setOdometerModalVisible(true);
                       }}
                       activeOpacity={0.7}
                     >
-                      <Text style={styles.actionBtnText}>⏱️ Km</Text>
+                      <Icon name="Gauge" size={12} color={colors.textPrimary} />
+                      <Text style={styles.actionBtnText}>Km</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                      style={styles.actionBtn}
+                      style={[styles.actionBtn, { flexDirection: 'row', alignItems: 'center', gap: 4 }]}
                       onPress={() => handleOpenEdit(item)}
                       activeOpacity={0.7}
                     >
-                      <Text style={styles.actionBtnText}>✏️ Editar</Text>
+                      <Icon name="Edit2" size={12} color={colors.textPrimary} />
+                      <Text style={styles.actionBtnText}>Editar</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                      style={[styles.actionBtn, styles.deleteBtn]}
+                      style={[styles.actionBtn, styles.deleteBtn, { flexDirection: 'row', alignItems: 'center', gap: 4 }]}
                       onPress={() => handleOpenDelete(item)}
                       activeOpacity={0.7}
                     >
-                      <Text style={[styles.actionBtnText, styles.deleteBtnText]}>🗑️ Excluir</Text>
+                      <Icon name="Trash2" size={12} color={colors.error} />
+                      <Text style={[styles.actionBtnText, styles.deleteBtnText]}>Excluir</Text>
                     </TouchableOpacity>
                   </View>
                 </View>

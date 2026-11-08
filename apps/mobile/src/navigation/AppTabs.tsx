@@ -11,6 +11,7 @@ import { CoachMarkProvider, CoachMarkTarget } from '../components/CoachMarkTour'
 import { TutorialService } from '../services/tutorialService';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme, spacing, radius } from '../theme';
+import { Icon } from '../components/Icon';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
@@ -34,7 +35,10 @@ const SettingsScreen: React.FC = () => {
     <SafeAreaView style={[styles.screenContainer, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.settingsScroll}>
         <View style={styles.settingsHeader}>
-          <Text style={[typography.h2, { color: colors.textPrimary }]}>⚙️ Ajustes e Perfil</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Icon name="Settings" size={22} color={colors.textPrimary} />
+            <Text style={[typography.h2, { color: colors.textPrimary }]}>Ajustes e Perfil</Text>
+          </View>
           <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 4 }]}>
             Preferências da conta e sincronização offline-first
           </Text>
@@ -80,37 +84,40 @@ const SettingsScreen: React.FC = () => {
           <TouchableOpacity
             style={[
               styles.logoutButton,
-              { borderBottomWidth: 1, borderBottomColor: colors.border },
+              { borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 10 },
             ]}
             onPress={() => navigation.navigate('CreateBackupModal')}
             activeOpacity={0.7}
             accessibilityLabel="Dados e segurança › Criar backup"
           >
+            <Icon name="Lock" size={16} color={colors.lime} />
             <Text style={[styles.logoutText, { color: colors.lime }]}>
-              🔐 Criar Backup Local (.agbak)
+              Criar Backup Local (.agbak)
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
               styles.logoutButton,
-              { borderBottomWidth: 1, borderBottomColor: colors.border },
+              { borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 10 },
             ]}
             onPress={() => navigation.navigate('RestoreBackupModal')}
             activeOpacity={0.7}
             accessibilityLabel="Dados e segurança › Restaurar backup"
           >
+            <Icon name="Download" size={16} color={colors.textPrimary} />
             <Text style={[styles.logoutText, { color: colors.textPrimary }]}>
-              📥 Restaurar Backup (.agbak)
+              Restaurar Backup (.agbak)
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.logoutButton}
+            style={[styles.logoutButton, { flexDirection: 'row', alignItems: 'center', gap: 10 }]}
             onPress={() => navigation.navigate('AuditHistoryModal')}
             activeOpacity={0.7}
             accessibilityLabel="Dados e segurança › Histórico de alterações"
           >
+            <Icon name="FileText" size={16} color={colors.textPrimary} />
             <Text style={[styles.logoutText, { color: colors.textPrimary }]}>
-              📋 Histórico de Alterações (Auditoria)
+              Histórico de Alterações (Auditoria)
             </Text>
           </TouchableOpacity>
         </View>
@@ -133,114 +140,123 @@ const SettingsScreen: React.FC = () => {
           <TouchableOpacity
             style={[
               styles.logoutButton,
-              { borderBottomWidth: 1, borderBottomColor: colors.border },
+              { borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 10 },
             ]}
             onPress={() => navigation.navigate('VehicleMarketValueModal')}
             activeOpacity={0.7}
             accessibilityLabel="Valor de Mercado e Tabela FIPE"
           >
+            <Icon name="Tag" size={16} color={colors.lime} />
             <Text style={[styles.logoutText, { color: colors.lime }]}>
-              🏷️ Valor de Mercado (Tabela FIPE)
+              Valor de Mercado (Tabela FIPE)
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
               styles.logoutButton,
-              { borderBottomWidth: 1, borderBottomColor: colors.border },
+              { borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 10 },
             ]}
             onPress={() => navigation.navigate('ReportExportModal')}
             activeOpacity={0.7}
             accessibilityLabel="Exportar Relatórios em PDF e CSV"
           >
+            <Icon name="Upload" size={16} color={colors.lime} />
             <Text style={[styles.logoutText, { color: colors.lime }]}>
-              📤 Exportar Relatórios (PDF e CSV)
+              Exportar Relatórios (PDF e CSV)
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
               styles.logoutButton,
-              { borderBottomWidth: 1, borderBottomColor: colors.border },
+              { borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 10 },
             ]}
             onPress={() => navigation.navigate('EfficiencyGoalsModal')}
             activeOpacity={0.7}
             accessibilityLabel="Metas de Eficiência e Recomendações"
           >
+            <Icon name="Target" size={16} color={colors.lime} />
             <Text style={[styles.logoutText, { color: colors.lime }]}>
-              🎯 Metas de Eficiência e Dicas
+              Metas de Eficiência e Dicas
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
               styles.logoutButton,
-              { borderBottomWidth: 1, borderBottomColor: colors.border },
+              { borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 10 },
             ]}
             onPress={() => navigation.navigate('TripModal')}
             activeOpacity={0.7}
             accessibilityLabel="Modo Viagem com Origem e Destino"
           >
+            <Icon name="Navigation" size={16} color={colors.lime} />
             <Text style={[styles.logoutText, { color: colors.lime }]}>
-              🛣️ Modo Viagem (Rotas e Custos)
+              Modo Viagem (Rotas e Custos)
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
               styles.logoutButton,
-              { borderBottomWidth: 1, borderBottomColor: colors.border },
+              { borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 10 },
             ]}
             onPress={() => navigation.navigate('SearchModal')}
             activeOpacity={0.7}
             accessibilityLabel="Buscar e Filtros Avançados"
           >
+            <Icon name="Search" size={16} color={colors.textPrimary} />
             <Text style={[styles.logoutText, { color: colors.textPrimary }]}>
-              🔍 Buscar e Filtros Avançados
+              Buscar e Filtros Avançados
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
               styles.logoutButton,
-              { borderBottomWidth: 1, borderBottomColor: colors.border },
+              { borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 10 },
             ]}
             onPress={() => navigation.navigate('ConsumptionModal')}
             activeOpacity={0.7}
             accessibilityLabel="Análise de Consumo e Média Móvel"
           >
+            <Icon name="TrendingUp" size={16} color={colors.textPrimary} />
             <Text style={[styles.logoutText, { color: colors.textPrimary }]}>
-              📈 Análise de Consumo e Média Móvel
+              Análise de Consumo e Média Móvel
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
               styles.logoutButton,
-              { borderBottomWidth: 1, borderBottomColor: colors.border },
+              { borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 10 },
             ]}
             onPress={() => navigation.navigate('PreferencesModal')}
             activeOpacity={0.7}
             accessibilityLabel="Configurações › Preferências"
           >
+            <Icon name="Settings" size={16} color={colors.textPrimary} />
             <Text style={[styles.logoutText, { color: colors.textPrimary }]}>
-              ⚙️ Preferências (Unidade e Notificações)
+              Preferências (Unidade e Notificações)
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
               styles.logoutButton,
-              { borderBottomWidth: 1, borderBottomColor: colors.border },
+              { borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 10 },
             ]}
             onPress={() => {
               TutorialService.startTour().catch(() => {});
             }}
             activeOpacity={0.7}
           >
+            <Icon name="Target" size={16} color={colors.textPrimary} />
             <Text style={[styles.logoutText, { color: colors.textPrimary }]}>
-              🎯 Rever Tutorial de Primeiro Acesso
+              Rever Tutorial de Primeiro Acesso
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.logoutButton}
+            style={[styles.logoutButton, { flexDirection: 'row', alignItems: 'center', gap: 10 }]}
             onPress={() => logout()}
             activeOpacity={0.7}
           >
-            <Text style={[styles.logoutText, { color: colors.error }]}>🚪 Encerrar Sessão</Text>
+            <Icon name="LogOut" size={16} color={colors.error} />
+            <Text style={[styles.logoutText, { color: colors.error }]}>Encerrar Sessão</Text>
           </TouchableOpacity>
         </View>
 
@@ -296,7 +312,7 @@ export const AppTabs: React.FC = () => {
           component={DashboardScreen}
           options={{
             tabBarLabel: 'Início',
-            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 18 }}>📊</Text>,
+            tabBarIcon: ({ color, size }) => <Icon name="LayoutDashboard" color={color} size={size ?? 20} />,
           }}
         />
         <Tab.Screen
@@ -304,7 +320,7 @@ export const AppTabs: React.FC = () => {
           component={GarageScreen}
           options={{
             tabBarLabel: 'Garagem',
-            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 18 }}>🚘</Text>,
+            tabBarIcon: ({ color, size }) => <Icon name="Car" color={color} size={size ?? 20} />,
           }}
         />
         <Tab.Screen
@@ -320,7 +336,7 @@ export const AppTabs: React.FC = () => {
                     onPress={() => navigation.navigate('NewFuelingModal')}
                     activeOpacity={0.85}
                   >
-                    <Text style={[styles.fabIcon, { color: colors.black }]}>+</Text>
+                    <Icon name="Plus" size={24} color={colors.black} strokeWidth={2.5} />
                   </TouchableOpacity>
                 </CoachMarkTarget>
               </View>
@@ -332,7 +348,7 @@ export const AppTabs: React.FC = () => {
           component={ReportsScreen}
           options={{
             tabBarLabel: 'Relatórios',
-            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 18 }}>📈</Text>,
+            tabBarIcon: ({ color, size }) => <Icon name="TrendingUp" color={color} size={size ?? 20} />,
           }}
         />
         <Tab.Screen
@@ -340,7 +356,7 @@ export const AppTabs: React.FC = () => {
           component={SettingsScreen}
           options={{
             tabBarLabel: 'Ajustes',
-            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 18 }}>⚙️</Text>,
+            tabBarIcon: ({ color, size }) => <Icon name="Settings" color={color} size={size ?? 20} />,
           }}
         />
       </Tab.Navigator>

@@ -28,6 +28,7 @@ import {
   ExpenseCategoryChartCard,
 } from '../components';
 import { formatCurrency } from '../utils/formatters';
+import { Icon, IconName } from '../components/Icon';
 import { colors, spacing, radius, typography } from '../theme';
 
 const MONTH_NAMES = [
@@ -192,20 +193,20 @@ export const ReportsScreen: React.FC = () => {
     }
   };
 
-  const getCategoryIcon = (cat: string) => {
+  const getCategoryIconName = (cat: string): IconName => {
     switch (cat) {
       case 'Lavagem':
-        return '🚿';
+        return 'Sparkles';
       case 'Seguro':
-        return '🛡️';
+        return 'Shield';
       case 'Imposto':
-        return '🏛️';
+        return 'Landmark';
       case 'Combustível':
-        return '⛽';
+        return 'Fuel';
       case 'Manutenção':
-        return '🔧';
+        return 'Wrench';
       default:
-        return '🏷️';
+        return 'Tag';
     }
   };
 
@@ -234,13 +235,14 @@ export const ReportsScreen: React.FC = () => {
               <Text style={styles.title}>Relatórios & Despesas</Text>
             </View>
             <TouchableOpacity
-              style={styles.exportReportBtn}
+              style={[styles.exportReportBtn, { flexDirection: 'row', alignItems: 'center', gap: 5 }]}
               onPress={() => navigation.navigate('ReportExportModal')}
               activeOpacity={0.8}
               accessibilityRole="button"
               accessibilityLabel="Exportar Relatório em PDF ou CSV"
             >
-              <Text style={styles.exportReportBtnText}>📤 Exportar</Text>
+              <Icon name="Upload" size={13} color={colors.black} />
+              <Text style={styles.exportReportBtnText}>Exportar</Text>
             </TouchableOpacity>
           </View>
           <Text style={styles.subtitle}>
@@ -323,37 +325,55 @@ export const ReportsScreen: React.FC = () => {
               {/* Categorização por tipo */}
               <View style={styles.categoryPillsRow}>
                 <View style={styles.pillItem}>
-                  <Text style={styles.pillLabel}>⛽ Combustível</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Icon name="Fuel" size={11} color={colors.textSecondary} />
+                    <Text style={styles.pillLabel}>Combustível</Text>
+                  </View>
                   <Text style={styles.pillValue}>
                     {formatCurrency(breakdown?.porCategoria['Combustível'] || 0)}
                   </Text>
                 </View>
                 <View style={styles.pillItem}>
-                  <Text style={styles.pillLabel}>🔧 Manutenção</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Icon name="Wrench" size={11} color={colors.textSecondary} />
+                    <Text style={styles.pillLabel}>Manutenção</Text>
+                  </View>
                   <Text style={styles.pillValue}>
                     {formatCurrency(breakdown?.porCategoria['Manutenção'] || 0)}
                   </Text>
                 </View>
                 <View style={styles.pillItem}>
-                  <Text style={styles.pillLabel}>🚿 Lavagem</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Icon name="Sparkles" size={11} color={colors.textSecondary} />
+                    <Text style={styles.pillLabel}>Lavagem</Text>
+                  </View>
                   <Text style={styles.pillValue}>
                     {formatCurrency(breakdown?.porCategoria['Lavagem'] || 0)}
                   </Text>
                 </View>
                 <View style={styles.pillItem}>
-                  <Text style={styles.pillLabel}>🛡️ Seguro</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Icon name="Shield" size={11} color={colors.textSecondary} />
+                    <Text style={styles.pillLabel}>Seguro</Text>
+                  </View>
                   <Text style={styles.pillValue}>
                     {formatCurrency(breakdown?.porCategoria['Seguro'] || 0)}
                   </Text>
                 </View>
                 <View style={styles.pillItem}>
-                  <Text style={styles.pillLabel}>🏛️ Imposto</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Icon name="Landmark" size={11} color={colors.textSecondary} />
+                    <Text style={styles.pillLabel}>Imposto</Text>
+                  </View>
                   <Text style={styles.pillValue}>
                     {formatCurrency(breakdown?.porCategoria['Imposto'] || 0)}
                   </Text>
                 </View>
                 <View style={styles.pillItem}>
-                  <Text style={styles.pillLabel}>🏷️ Outros / Pedágio</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Icon name="Tag" size={11} color={colors.textSecondary} />
+                    <Text style={styles.pillLabel}>Outros / Pedágio</Text>
+                  </View>
                   <Text style={styles.pillValue}>
                     {formatCurrency(breakdown?.porCategoria['Outros'] || 0)}
                   </Text>
@@ -390,7 +410,7 @@ export const ReportsScreen: React.FC = () => {
                 <View key={fc.id} style={styles.expenseCard}>
                   <View style={styles.expenseLeft}>
                     <View style={styles.categoryIconCircle}>
-                      <Text style={styles.categoryIconText}>📌</Text>
+                      <Icon name="Pin" size={14} color={colors.lime} />
                     </View>
                     <View style={styles.expenseInfo}>
                       <Text style={styles.expenseCategory}>{fc.description}</Text>
@@ -406,14 +426,14 @@ export const ReportsScreen: React.FC = () => {
                         onPress={() => handleOpenEditFixedCost(fc)}
                         activeOpacity={0.7}
                       >
-                        <Text style={styles.itemActionBtnText}>✏️</Text>
+                        <Icon name="Edit2" size={12} color={colors.textPrimary} />
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[styles.itemActionBtn, styles.itemDeleteBtn]}
                         onPress={() => setFixedCostToDelete(fc)}
                         activeOpacity={0.7}
                       >
-                        <Text style={styles.itemActionBtnText}>🗑️</Text>
+                        <Icon name="Trash2" size={12} color={colors.error} />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -445,7 +465,7 @@ export const ReportsScreen: React.FC = () => {
               </View>
             ) : expenses.length === 0 ? (
               <View style={styles.emptyExpensesBox}>
-                <Text style={styles.emptyExpensesIcon}>🧾</Text>
+                <Icon name="Receipt" size={32} color={colors.textMuted} style={{ marginBottom: spacing.sm }} />
                 <Text style={styles.emptyExpensesTitle}>Nenhuma despesa neste mês</Text>
                 <Text style={styles.emptyExpensesText}>
                   Registre lavagens, pedágios, seguros e impostos para consolidar seus custos.
@@ -465,9 +485,11 @@ export const ReportsScreen: React.FC = () => {
                   <View key={item.id} style={styles.expenseCard}>
                     <View style={styles.expenseLeft}>
                       <View style={styles.categoryIconCircle}>
-                        <Text style={styles.categoryIconText}>
-                          {getCategoryIcon(item.category)}
-                        </Text>
+                        <Icon
+                          name={getCategoryIconName(item.category)}
+                          size={14}
+                          color={colors.lime}
+                        />
                       </View>
                       <View style={styles.expenseInfo}>
                         <View style={styles.expenseCategoryRow}>
@@ -498,8 +520,12 @@ export const ReportsScreen: React.FC = () => {
                                   paddingHorizontal: 6,
                                   paddingVertical: 1,
                                   borderRadius: 8,
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  gap: 4,
                                 }}
                               >
+                                <Icon name="Tag" size={10} color={colors.textSecondary} />
                                 <Text
                                   style={{
                                     ...typography.caption,
@@ -507,7 +533,7 @@ export const ReportsScreen: React.FC = () => {
                                     color: colors.textSecondary,
                                   }}
                                 >
-                                  🏷️ {tag.name || tag.nome}
+                                  {tag.name || tag.nome}
                                 </Text>
                               </View>
                             ))}
@@ -524,14 +550,14 @@ export const ReportsScreen: React.FC = () => {
                           onPress={() => handleOpenEdit(item)}
                           activeOpacity={0.7}
                         >
-                          <Text style={styles.itemActionBtnText}>✏️</Text>
+                          <Icon name="Edit2" size={12} color={colors.textPrimary} />
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={[styles.itemActionBtn, styles.itemDeleteBtn]}
                           onPress={() => handleOpenDelete(item)}
                           activeOpacity={0.7}
                         >
-                          <Text style={styles.itemActionBtnText}>🗑️</Text>
+                          <Icon name="Trash2" size={12} color={colors.error} />
                         </TouchableOpacity>
                       </View>
                     </View>

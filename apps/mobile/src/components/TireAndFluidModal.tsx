@@ -21,6 +21,7 @@ import {
 } from '@autogest/shared-types';
 import { TireAndFluidService } from '../services/tireAndFluidService';
 import { colors, spacing, radius, typography } from '../theme';
+import { Icon } from './Icon';
 
 export type TireFluidTab = 'pneu' | 'fluido';
 
@@ -174,7 +175,7 @@ export const TireAndFluidModal: React.FC<TireAndFluidModalProps> = ({
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <Text style={styles.closeBtnText}>✕</Text>
+              <Icon name="X" size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
@@ -187,9 +188,16 @@ export const TireAndFluidModal: React.FC<TireAndFluidModalProps> = ({
                   setErrorMsg(null);
                 }}
               >
-                <Text style={[styles.tabBtnText, activeTab === 'pneu' && styles.tabBtnTextActive]}>
-                  🛞 Pneus
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                  <Icon
+                    name="CircleDot"
+                    size={14}
+                    color={activeTab === 'pneu' ? colors.black : colors.textSecondary}
+                  />
+                  <Text style={[styles.tabBtnText, activeTab === 'pneu' && styles.tabBtnTextActive]}>
+                    Pneus
+                  </Text>
+                </View>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.tabBtn, activeTab === 'fluido' && styles.tabBtnActive]}
@@ -198,11 +206,18 @@ export const TireAndFluidModal: React.FC<TireAndFluidModalProps> = ({
                   setErrorMsg(null);
                 }}
               >
-                <Text
-                  style={[styles.tabBtnText, activeTab === 'fluido' && styles.tabBtnTextActive]}
-                >
-                  🛢️ Fluidos
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                  <Icon
+                    name="Droplets"
+                    size={14}
+                    color={activeTab === 'fluido' ? colors.black : colors.textSecondary}
+                  />
+                  <Text
+                    style={[styles.tabBtnText, activeTab === 'fluido' && styles.tabBtnTextActive]}
+                  >
+                    Fluidos
+                  </Text>
+                </View>
               </TouchableOpacity>
             </View>
           )}
@@ -225,27 +240,41 @@ export const TireAndFluidModal: React.FC<TireAndFluidModalProps> = ({
                     ]}
                     onPress={() => setTireType('calibragem')}
                   >
-                    <Text
-                      style={[
-                        styles.choiceChipText,
-                        tireType === 'calibragem' && styles.choiceChipTextActive,
-                      ]}
-                    >
-                      💨 Calibragem
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                      <Icon
+                        name="Wind"
+                        size={13}
+                        color={tireType === 'calibragem' ? colors.black : colors.textSecondary}
+                      />
+                      <Text
+                        style={[
+                          styles.choiceChipText,
+                          tireType === 'calibragem' && styles.choiceChipTextActive,
+                        ]}
+                      >
+                        Calibragem
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.choiceChip, tireType === 'troca' && styles.choiceChipActive]}
                     onPress={() => setTireType('troca')}
                   >
-                    <Text
-                      style={[
-                        styles.choiceChipText,
-                        tireType === 'troca' && styles.choiceChipTextActive,
-                      ]}
-                    >
-                      🛞 Troca de Pneu
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                      <Icon
+                        name="CircleDot"
+                        size={13}
+                        color={tireType === 'troca' ? colors.black : colors.textSecondary}
+                      />
+                      <Text
+                        style={[
+                          styles.choiceChipText,
+                          tireType === 'troca' && styles.choiceChipTextActive,
+                        ]}
+                      >
+                        Troca de Pneu
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 </View>
 
@@ -306,24 +335,31 @@ export const TireAndFluidModal: React.FC<TireAndFluidModalProps> = ({
                 <View style={styles.chipRow}>
                   {(
                     [
-                      { key: 'oleo_motor', label: '🛢️ Óleo do Motor' },
-                      { key: 'freio', label: '🛑 Fluido de Freio' },
-                      { key: 'radiador', label: '💧 Água do Radiador' },
-                    ] as Array<{ key: FluidType; label: string }>
+                      { key: 'oleo_motor', label: 'Óleo do Motor', icon: 'Droplets' },
+                      { key: 'freio', label: 'Fluido de Freio', icon: 'Disc' },
+                      { key: 'radiador', label: 'Água do Radiador', icon: 'Droplet' },
+                    ] as Array<{ key: FluidType; label: string; icon: any }>
                   ).map(opt => (
                     <TouchableOpacity
                       key={opt.key}
                       style={[styles.choiceChip, fluidType === opt.key && styles.choiceChipActive]}
                       onPress={() => setFluidType(opt.key)}
                     >
-                      <Text
-                        style={[
-                          styles.choiceChipText,
-                          fluidType === opt.key && styles.choiceChipTextActive,
-                        ]}
-                      >
-                        {opt.label}
-                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                        <Icon
+                          name={opt.icon}
+                          size={13}
+                          color={fluidType === opt.key ? colors.black : colors.textSecondary}
+                        />
+                        <Text
+                          style={[
+                            styles.choiceChipText,
+                            fluidType === opt.key && styles.choiceChipTextActive,
+                          ]}
+                        >
+                          {opt.label}
+                        </Text>
+                      </View>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -334,27 +370,41 @@ export const TireAndFluidModal: React.FC<TireAndFluidModalProps> = ({
                     style={[styles.choiceChip, fluidLevel === 'normal' && styles.choiceChipActive]}
                     onPress={() => setFluidLevel('normal')}
                   >
-                    <Text
-                      style={[
-                        styles.choiceChipText,
-                        fluidLevel === 'normal' && styles.choiceChipTextActive,
-                      ]}
-                    >
-                      ✅ Nível Normal
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                      <Icon
+                        name="Check"
+                        size={13}
+                        color={fluidLevel === 'normal' ? colors.black : colors.lime}
+                      />
+                      <Text
+                        style={[
+                          styles.choiceChipText,
+                          fluidLevel === 'normal' && styles.choiceChipTextActive,
+                        ]}
+                      >
+                        Nível Normal
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.choiceChip, fluidLevel === 'baixo' && styles.choiceChipWarning]}
                     onPress={() => setFluidLevel('baixo')}
                   >
-                    <Text
-                      style={[
-                        styles.choiceChipText,
-                        fluidLevel === 'baixo' && styles.choiceChipWarningText,
-                      ]}
-                    >
-                      ⚠️ Nível Baixo
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                      <Icon
+                        name="AlertTriangle"
+                        size={13}
+                        color={fluidLevel === 'baixo' ? colors.amber : colors.textSecondary}
+                      />
+                      <Text
+                        style={[
+                          styles.choiceChipText,
+                          fluidLevel === 'baixo' && styles.choiceChipWarningText,
+                        ]}
+                      >
+                        Nível Baixo
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 </View>
 

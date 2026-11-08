@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { SearchFilters, RecordType, RouteType, Tag } from '@autogest/shared-types';
 import { useTheme, typography } from '../theme';
+import { Icon } from './Icon';
+import { theme as tokens } from '../theme/tokens';
 
 interface AdvancedFilterModalProps {
   visible: boolean;
@@ -94,7 +96,7 @@ export const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
             <Text style={[typography.h3, { color: colors.textPrimary }]}>Filtros Avançados</Text>
             <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Text style={[styles.closeBtn, { color: colors.textSecondary }]}>✕</Text>
+              <Icon name="X" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
@@ -103,12 +105,13 @@ export const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
             <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>TIPO DE REGISTRO</Text>
             <View style={styles.chipRow}>
               {[
-                { key: 'todos', label: 'Todos' },
-                { key: 'abastecimento', label: '⛽ Abastecimento' },
-                { key: 'despesa', label: '💸 Despesa' },
-                { key: 'manutencao', label: '🔧 Manutenção' },
+                { key: 'todos', label: 'Todos', icon: null },
+                { key: 'abastecimento', label: 'Abastecimento', icon: 'Fuel' as const },
+                { key: 'despesa', label: 'Despesa', icon: 'Receipt' as const },
+                { key: 'manutencao', label: 'Manutenção', icon: 'Wrench' as const },
               ].map(item => {
                 const isSelected = recordType === item.key;
+                const iconColor = isSelected ? colors.black : colors.textPrimary;
                 return (
                   <TouchableOpacity
                     key={item.key}
@@ -117,10 +120,14 @@ export const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
                       {
                         backgroundColor: isSelected ? colors.lime : colors.surfaceRaised,
                         borderColor: isSelected ? colors.lime : colors.border,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 6,
                       },
                     ]}
                     onPress={() => setRecordType(item.key as any)}
                   >
+                    {item.icon && <Icon name={item.icon} size={14} color={iconColor} />}
                     <Text
                       style={[
                         styles.chipText,
@@ -217,13 +224,14 @@ export const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
             <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>TIPO DE PERCURSO</Text>
             <View style={styles.chipRow}>
               {[
-                { key: 'todos', label: 'Todos' },
-                { key: 'urbano', label: '🏙️ Urbano' },
-                { key: 'rodoviario', label: '🛣️ Rodoviário' },
-                { key: 'misto', label: '🔀 Misto' },
-                { key: 'sem_tipo', label: 'Sem tipo' },
+                { key: 'todos', label: 'Todos', icon: null },
+                { key: 'urbano', label: 'Urbano', icon: 'Building2' as const },
+                { key: 'rodoviario', label: 'Rodoviário', icon: 'Route' as const },
+                { key: 'misto', label: 'Misto', icon: 'Shuffle' as const },
+                { key: 'sem_tipo', label: 'Sem tipo', icon: null },
               ].map(item => {
                 const isSelected = routeType === item.key;
+                const iconColor = isSelected ? colors.black : colors.textPrimary;
                 return (
                   <TouchableOpacity
                     key={item.key}
@@ -232,10 +240,14 @@ export const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
                       {
                         backgroundColor: isSelected ? colors.lime : colors.surfaceRaised,
                         borderColor: isSelected ? colors.lime : colors.border,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 6,
                       },
                     ]}
                     onPress={() => setRouteType(item.key as any)}
                   >
+                    {item.icon && <Icon name={item.icon} size={14} color={iconColor} />}
                     <Text
                       style={[
                         styles.chipText,
@@ -275,6 +287,7 @@ export const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
                   </TouchableOpacity>
                   {tags.map(t => {
                     const isSelected = tagId === t.id;
+                    const iconColor = isSelected ? colors.black : colors.textPrimary;
                     return (
                       <TouchableOpacity
                         key={t.id}
@@ -283,17 +296,21 @@ export const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
                           {
                             backgroundColor: isSelected ? colors.lime : colors.surfaceRaised,
                             borderColor: isSelected ? colors.lime : colors.border,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 6,
                           },
                         ]}
                         onPress={() => setTagId(t.id)}
                       >
+                        <Icon name="Tag" size={13} color={iconColor} />
                         <Text
                           style={[
                             styles.chipText,
                             { color: isSelected ? colors.black : colors.textPrimary },
                           ]}
                         >
-                          🏷️ {t.name || t.nome}
+                          {t.name || t.nome}
                         </Text>
                       </TouchableOpacity>
                     );

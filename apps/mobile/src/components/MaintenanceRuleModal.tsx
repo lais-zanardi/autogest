@@ -13,6 +13,7 @@ import {
 import { MaintenanceRule, Vehicle } from '@autogest/shared-types';
 import { MaintenanceAlertService, SERVICE_TYPE_LABELS } from '../services/maintenanceAlertService';
 import { colors, spacing, radius, typography } from '../theme';
+import { Icon } from './Icon';
 
 interface MaintenanceRuleModalProps {
   visible: boolean;
@@ -127,7 +128,7 @@ export const MaintenanceRuleModal: React.FC<MaintenanceRuleModalProps> = ({
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <Text style={styles.closeBtnText}>✕</Text>
+              <Icon name="X" size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
@@ -278,12 +279,18 @@ export const MaintenanceRuleModal: React.FC<MaintenanceRuleModalProps> = ({
 
                   <View style={styles.ruleDetailsRow}>
                     {rule.intervalKm ? (
-                      <Text style={styles.ruleDetail}>
-                        🔁 A cada {rule.intervalKm.toLocaleString('pt-BR')} km
-                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        <Icon name="Repeat" size={12} color={colors.textSecondary} />
+                        <Text style={styles.ruleDetail}>
+                          A cada {rule.intervalKm.toLocaleString('pt-BR')} km
+                        </Text>
+                      </View>
                     ) : null}
                     {rule.intervalDays ? (
-                      <Text style={styles.ruleDetail}>📅 A cada {rule.intervalDays} dias</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        <Icon name="Calendar" size={12} color={colors.textSecondary} />
+                        <Text style={styles.ruleDetail}>A cada {rule.intervalDays} dias</Text>
+                      </View>
                     ) : null}
                   </View>
 

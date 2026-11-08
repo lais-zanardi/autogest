@@ -36,6 +36,7 @@ import {
 import { EfficiencyGoalCard } from '../components/EfficiencyGoalCard';
 import { formatCurrency, formatKml, formatDecimal } from '../utils/formatters';
 import { colors, spacing, radius, typography } from '../theme';
+import { Icon } from '../components/Icon';
 import { Maintenance, TireRecord, FluidRecord, Trip, EfficiencyGoal, GoalStatusResult, EcoTip } from '@autogest/shared-types';
 import { TripService } from '../services/tripService';
 import { EfficiencyGoalRepository } from '../repositories/EfficiencyGoalRepository';
@@ -140,7 +141,7 @@ export const DashboardScreen: React.FC = () => {
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View>
               <Text style={styles.greeting}>
-                Olá, {user?.name ? user.name.split(' ')[0] : 'Motorista'}! 👋
+                Olá, {user?.name ? user.name.split(' ')[0] : 'Motorista'}!
               </Text>
               <Text style={styles.vehicleSubtitle}>
                 {selectedVehicle
@@ -163,7 +164,7 @@ export const DashboardScreen: React.FC = () => {
                 onPress={() => navigation.navigate('MaintenanceScheduleModal', { vehicleId: selectedVehicle?.id })}
                 accessibilityLabel="Agendamentos de Manutenção"
               >
-                <Text style={{ fontSize: 18 }}>📅</Text>
+                <Icon name="Calendar" size={18} color={colors.textPrimary} />
               </TouchableOpacity>
               <TouchableOpacity
                 style={{
@@ -179,7 +180,7 @@ export const DashboardScreen: React.FC = () => {
                 onPress={() => navigation.navigate('TripModal')}
                 accessibilityLabel="Modo Viagem"
               >
-                <Text style={{ fontSize: 18 }}>🛣️</Text>
+                <Icon name="Navigation" size={18} color={colors.textPrimary} />
               </TouchableOpacity>
               <TouchableOpacity
                 style={{
@@ -195,7 +196,7 @@ export const DashboardScreen: React.FC = () => {
                 onPress={() => navigation.navigate('SearchModal')}
                 accessibilityLabel="Buscar registros do veículo"
               >
-                <Text style={{ fontSize: 18 }}>🔍</Text>
+                <Icon name="Search" size={18} color={colors.textPrimary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -220,12 +221,21 @@ export const DashboardScreen: React.FC = () => {
             accessibilityLabel="Ver viagem em andamento"
           >
             <View style={{ flex: 1 }}>
-              <Text style={{ ...typography.caption, color: colors.lime, fontWeight: '700' }}>
-                🛣️ VIAGEM EM ANDAMENTO
-              </Text>
-              <Text style={{ ...typography.bodyBold, color: colors.textPrimary, marginTop: 2 }}>
-                {activeTrip.origin} ➔ {activeTrip.destination}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                <Icon name="Navigation" size={14} color={colors.lime} />
+                <Text style={{ ...typography.caption, color: colors.lime, fontWeight: '700' }}>
+                  VIAGEM EM ANDAMENTO
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 }}>
+                <Text style={{ ...typography.bodyBold, color: colors.textPrimary }}>
+                  {activeTrip.origin}
+                </Text>
+                <Icon name="ArrowRight" size={12} color={colors.textSecondary} />
+                <Text style={{ ...typography.bodyBold, color: colors.textPrimary }}>
+                  {activeTrip.destination}
+                </Text>
+              </View>
               <Text style={{ ...typography.caption, color: colors.textSecondary }}>
                 Km inicial: {activeTrip.startOdometer} km
               </Text>
@@ -380,20 +390,33 @@ export const DashboardScreen: React.FC = () => {
                   onPress={() => setRulesModalVisible(true)}
                   activeOpacity={0.8}
                 >
-                  <Text
-                    style={[
-                      styles.cardEyebrow,
-                      nextMaint?.status === 'vencido'
-                        ? { color: colors.error }
-                        : nextMaint?.status === 'proximo'
-                          ? { color: colors.amber }
-                          : null,
-                    ]}
-                  >
-                    {nextMaint?.status === 'vencido'
-                      ? '⚠️ MANUTENÇÃO VENCIDA'
-                      : '🔔 PRÓXIMA MANUTENÇÃO'}
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Icon
+                      name={nextMaint?.status === 'vencido' ? 'AlertTriangle' : 'Bell'}
+                      size={12}
+                      color={
+                        nextMaint?.status === 'vencido'
+                          ? colors.error
+                          : nextMaint?.status === 'proximo'
+                            ? colors.amber
+                            : colors.textSecondary
+                      }
+                    />
+                    <Text
+                      style={[
+                        styles.cardEyebrow,
+                        nextMaint?.status === 'vencido'
+                          ? { color: colors.error }
+                          : nextMaint?.status === 'proximo'
+                            ? { color: colors.amber }
+                            : null,
+                      ]}
+                    >
+                      {nextMaint?.status === 'vencido'
+                        ? 'MANUTENÇÃO VENCIDA'
+                        : 'PRÓXIMA MANUTENÇÃO'}
+                    </Text>
+                  </View>
                   <Text style={styles.cardLabel} numberOfLines={1}>
                     {nextMaint ? nextMaint.serviceName : 'Revisões em Dia'}
                   </Text>
@@ -428,35 +451,39 @@ export const DashboardScreen: React.FC = () => {
                 <Text style={styles.detailsTitle}>Ficha do Veículo Ativo</Text>
                 <View style={styles.detailsHeaderActions}>
                   <TouchableOpacity
-                    style={styles.actionHeaderBtn}
+                    style={[styles.actionHeaderBtn, { flexDirection: 'row', alignItems: 'center', gap: 4 }]}
                     onPress={() => setExpenseModalVisible(true)}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.actionHeaderBtnText}>🧾 Despesa</Text>
+                    <Icon name="Receipt" size={13} color={colors.textPrimary} />
+                    <Text style={styles.actionHeaderBtnText}>Despesa</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={styles.actionHeaderBtn}
+                    style={[styles.actionHeaderBtn, { flexDirection: 'row', alignItems: 'center', gap: 4 }]}
                     onPress={() => setFixedCostModalVisible(true)}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.actionHeaderBtnText}>📌 Fixo</Text>
+                    <Icon name="Pin" size={13} color={colors.textPrimary} />
+                    <Text style={styles.actionHeaderBtnText}>Fixo</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={styles.actionHeaderBtn}
+                    style={[styles.actionHeaderBtn, { flexDirection: 'row', alignItems: 'center', gap: 4 }]}
                     onPress={() => {
                       setMaintenanceToEdit(null);
                       setMaintenanceModalVisible(true);
                     }}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.actionHeaderBtnText}>🛠️ Manutenção</Text>
+                    <Icon name="Wrench" size={13} color={colors.textPrimary} />
+                    <Text style={styles.actionHeaderBtnText}>Manutenção</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={styles.updateOdoBtn}
+                    style={[styles.updateOdoBtn, { flexDirection: 'row', alignItems: 'center', gap: 4 }]}
                     onPress={() => setOdometerModalVisible(true)}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.updateOdoBtnText}>⏱️ Atualizar km</Text>
+                    <Icon name="Gauge" size={13} color={colors.black} />
+                    <Text style={styles.updateOdoBtnText}>Atualizar km</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -493,7 +520,10 @@ export const DashboardScreen: React.FC = () => {
                 activeOpacity={0.8}
               >
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Text style={styles.fipeTitle}>💡 Cotação de Mercado (Tabela FIPE)</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Icon name="TrendingDown" size={14} color={colors.lime} />
+                    <Text style={styles.fipeTitle}>Cotação de Mercado (Tabela FIPE)</Text>
+                  </View>
                   <Text style={{ color: colors.lime, fontSize: 12 }}>Histórico ›</Text>
                 </View>
                 <Text style={styles.fipeValue}>{formatCurrency(selectedVehicle.fipeValue)}</Text>

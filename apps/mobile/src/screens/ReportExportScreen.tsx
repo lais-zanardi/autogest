@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useAppStore } from '../store/useAppStore';
 import { colors, spacing, radius, typography } from '../theme';
+import { Icon } from '../components/Icon';
 import {
   ReportExportService,
   ReportType,
@@ -128,7 +129,7 @@ export const ReportExportScreen: React.FC<ReportExportScreenProps> = ({ onClose 
           accessibilityRole="button"
           accessibilityLabel="Voltar"
         >
-          <Text style={styles.closeButtonText}>✕</Text>
+          <Icon name="X" size={18} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Exportar Relatórios</Text>
         <View style={{ width: 40 }} />
@@ -146,7 +147,10 @@ export const ReportExportScreen: React.FC<ReportExportScreenProps> = ({ onClose 
         {/* Aviso de Conexão e Pendências (US19.6) */}
         {!isOnline && (
           <View style={styles.offlineWarningBox}>
-            <Text style={styles.offlineWarningTitle}>⚠️ Modo Offline</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+              <Icon name="AlertTriangle" size={15} color={colors.amber} />
+              <Text style={styles.offlineWarningTitle}>Modo Offline</Text>
+            </View>
             <Text style={styles.offlineWarningText}>
               A exportação requer conexão com a internet para gerar os relatórios consolidados em PDF e CSV no PostgreSQL.
             </Text>
@@ -155,9 +159,12 @@ export const ReportExportScreen: React.FC<ReportExportScreenProps> = ({ onClose 
 
         {isOnline && pendingCount > 0 && (
           <View style={styles.syncNoticeBox}>
-            <Text style={styles.syncNoticeText}>
-              🔄 Existem {pendingCount} alterações locais que serão sincronizadas antes de emitir o relatório.
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Icon name="RefreshCw" size={13} color={colors.amber} />
+              <Text style={[styles.syncNoticeText, { flex: 1 }]}>
+                Existem {pendingCount} alterações locais que serão sincronizadas antes de emitir o relatório.
+              </Text>
+            </View>
           </View>
         )}
 
@@ -173,14 +180,22 @@ export const ReportExportScreen: React.FC<ReportExportScreenProps> = ({ onClose 
               onPress={() => setReportType('gastos')}
               activeOpacity={0.8}
             >
-              <Text
-                style={[
-                  styles.optionButtonText,
-                  reportType === 'gastos' && styles.optionButtonTextSelected,
-                ]}
-              >
-                🧾 Extrato de Gastos
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <Icon
+                  name="Receipt"
+                  size={15}
+                  color={reportType === 'gastos' ? colors.black : colors.textPrimary}
+                />
+                <Text
+                  style={[
+                    styles.optionButtonText,
+                    reportType === 'gastos' && styles.optionButtonTextSelected,
+                    { marginBottom: 0 },
+                  ]}
+                >
+                  Extrato de Gastos
+                </Text>
+              </View>
               <Text style={styles.optionSub}>Despesas, abastecimentos e manutenções</Text>
             </TouchableOpacity>
 
@@ -192,14 +207,22 @@ export const ReportExportScreen: React.FC<ReportExportScreenProps> = ({ onClose 
               onPress={() => setReportType('manutencoes')}
               activeOpacity={0.8}
             >
-              <Text
-                style={[
-                  styles.optionButtonText,
-                  reportType === 'manutencoes' && styles.optionButtonTextSelected,
-                ]}
-              >
-                🛠️ Histórico de Manutenções
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <Icon
+                  name="Wrench"
+                  size={15}
+                  color={reportType === 'manutencoes' ? colors.black : colors.textPrimary}
+                />
+                <Text
+                  style={[
+                    styles.optionButtonText,
+                    reportType === 'manutencoes' && styles.optionButtonTextSelected,
+                    { marginBottom: 0 },
+                  ]}
+                >
+                  Histórico de Manutenções
+                </Text>
+              </View>
               <Text style={styles.optionSub}>Revisões, serviços, peças e oficinas</Text>
             </TouchableOpacity>
           </View>
@@ -282,9 +305,16 @@ export const ReportExportScreen: React.FC<ReportExportScreenProps> = ({ onClose 
               onPress={() => setFormat('pdf')}
               activeOpacity={0.8}
             >
-              <Text style={[styles.formatButtonText, format === 'pdf' && styles.formatButtonTextSelected]}>
-                📄 PDF
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <Icon
+                  name="FileText"
+                  size={15}
+                  color={format === 'pdf' ? colors.black : colors.textPrimary}
+                />
+                <Text style={[styles.formatButtonText, format === 'pdf' && styles.formatButtonTextSelected, { marginBottom: 0 }]}>
+                  PDF
+                </Text>
+              </View>
               <Text style={styles.formatDesc}>Formatado para leitura, envio e impressão</Text>
             </TouchableOpacity>
 
@@ -293,9 +323,16 @@ export const ReportExportScreen: React.FC<ReportExportScreenProps> = ({ onClose 
               onPress={() => setFormat('csv')}
               activeOpacity={0.8}
             >
-              <Text style={[styles.formatButtonText, format === 'csv' && styles.formatButtonTextSelected]}>
-                📊 CSV (Excel)
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <Icon
+                  name="BarChart2"
+                  size={15}
+                  color={format === 'csv' ? colors.black : colors.textPrimary}
+                />
+                <Text style={[styles.formatButtonText, format === 'csv' && styles.formatButtonTextSelected, { marginBottom: 0 }]}>
+                  CSV (Excel)
+                </Text>
+              </View>
               <Text style={styles.formatDesc}>Separador ';' e vírgula decimal pt-BR</Text>
             </TouchableOpacity>
           </View>
