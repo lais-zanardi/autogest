@@ -24,4 +24,5 @@ export * from './chartSpike';
 export * from './auditService';
 export * from './consumptionHistoryService';
 export * from './consumptionAnomalyService';
+export * from './ocrService';
 export * from './sync';

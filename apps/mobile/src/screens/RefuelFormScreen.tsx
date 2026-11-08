@@ -13,7 +13,7 @@ import {
   Alert,
 } from 'react-native';
 import { useAppStore } from '../store/useAppStore';
-import { CameraService, GPSService, api } from '../services';
+import { CameraService, GPSService, MobileOCRService } from '../services';
 import { FuelingService } from '../services/fuelingService';
 import {
   calcularConsumo,
@@ -28,6 +28,7 @@ import { CoachMarkTarget } from '../components/CoachMarkTour';
 import { FuelType, Refuel, RouteType, Tag } from '@autogest/shared-types';
 import { colors, spacing, radius, typography } from '../theme';
 import { formatCurrency, formatKml } from '../utils/formatters';
+import { Icon } from '../components/Icon';
 import {
   identificarAnomaliasNoHistorico,
   avaliarAnomaliaConsumo,
@@ -174,14 +175,14 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
       const location = await GPSService.getCurrentLocation();
       if (location) {
         setCoords(location);
-        setGpsStatus('📍 Localização GPS capturada');
+        setGpsStatus('Localização GPS capturada');
       } else {
         setCoords(null);
-        setGpsStatus('📍 GPS indisponível ou negado (salvando sem coordenadas)');
+        setGpsStatus('GPS indisponível ou negado (salvando sem coordenadas)');
       }
     } catch {
       setCoords(null);
-      setGpsStatus('📍 GPS desligado');
+      setGpsStatus('GPS desligado');
     }
   };
 
@@ -241,26 +242,58 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
       : null;
 
   // Escaneamento de comprovante via OCR
-  const handleScanReceipt = async () => {
+  const executeOcrScan = async (source: 'camera' | 'gallery') => {
     setIsScanning(true);
     try {
-      const base64 = await CameraService.captureReceiptFromCamera();
-      if (base64) {
-        const response = await api.post('/refuels/scan-ocr', { imageBase64: base64 });
-        const data = response.data?.data;
-        if (data) {
-          if (data.liters) setLiters(String(data.liters));
-          if (data.pricePerLiter) setPricePerLiter(String(data.pricePerLiter));
-          if (data.totalValue) setTotalValue(String(data.totalValue));
-          if (data.fuelType && FUEL_TYPES.includes(data.fuelType)) setFuelType(data.fuelType);
-          if (data.stationName) setStationName(data.stationName);
-        }
+      const base64 =
+        source === 'camera'
+          ? await CameraService.captureReceiptFromCamera()
+          : await CameraService.selectReceiptFromGallery();
+
+      if (!base64) {
+        return;
       }
-    } catch {
-      Alert.alert('OCR', 'Não foi possível extrair dados automaticamente da imagem.');
+
+      const data = await MobileOCRService.scanReceipt(base64);
+      if (data) {
+        if (data.liters) setLiters(String(data.liters));
+        if (data.pricePerLiter) setPricePerLiter(String(data.pricePerLiter));
+        if (data.totalValue) setTotalValue(String(data.totalValue));
+        if (data.fuelType && FUEL_TYPES.includes(data.fuelType)) setFuelType(data.fuelType);
+        if (data.stationName) setStationName(data.stationName);
+
+        Alert.alert(
+          'OCR Concluído',
+          'Dados do cupom preenchidos automaticamente. Revise os campos antes de salvar o abastecimento.',
+        );
+      }
+    } catch (error: any) {
+      Alert.alert('OCR', error?.message || 'Não foi possível extrair dados automaticamente da imagem.');
     } finally {
       setIsScanning(false);
     }
+  };
+
+  const handleScanReceipt = () => {
+    Alert.alert(
+      'Escanear Nota / Comprovante',
+      'Como deseja carregar a imagem do comprovante para o escaneamento OCR?',
+      [
+        {
+          text: 'Tirar Foto (Câmera)',
+          onPress: () => executeOcrScan('camera'),
+        },
+        {
+          text: 'Escolher da Galeria',
+          onPress: () => executeOcrScan('gallery'),
+        },
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+      ],
+      { cancelable: true },
+    );
   };
 
   // Salvar abastecimento
@@ -468,8 +501,9 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
         {/* Cabeçalho */}
         <CoachMarkTarget targetId="tour-target-first-refuel">
           <View style={styles.header}>
-            <TouchableOpacity onPress={onClose} style={styles.backButton}>
-              <Text style={styles.backButtonText}>✕ Fechar</Text>
+            <TouchableOpacity onPress={onClose} style={[styles.backButton, { flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+              <Icon name="X" size={16} color={colors.textPrimary} />
+              <Text style={styles.backButtonText}>Fechar</Text>
             </TouchableOpacity>
             <View style={styles.tabSelector}>
               <TouchableOpacity
@@ -517,7 +551,7 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
             {/* Botão OCR */}
             <TouchableOpacity
-              style={styles.ocrButton}
+              style={[styles.ocrButton, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }]}
               onPress={handleScanReceipt}
               disabled={isScanning || isSubmitting}
               activeOpacity={0.8}
@@ -525,7 +559,10 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
               {isScanning ? (
                 <ActivityIndicator size="small" color={colors.black} />
               ) : (
-                <Text style={styles.ocrButtonText}>📷 Escanear Nota / Comprovante (OCR)</Text>
+                <>
+                  <Icon name="Camera" size={16} color={colors.black} />
+                  <Text style={styles.ocrButtonText}>Escanear Nota / Comprovante (OCR)</Text>
+                </>
               )}
             </TouchableOpacity>
 
@@ -660,12 +697,21 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
                 ]}
               >
                 <View style={{ flex: 1, paddingRight: 8 }}>
-                  <Text style={[styles.switchLabel, { color: colors.lime }]}>
-                    🛣️ Viagem em andamento
-                  </Text>
-                  <Text style={[styles.switchSub, { color: colors.textSecondary }]}>
-                    Vincular a {activeTrip.origin} ➔ {activeTrip.destination}
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                    <Icon name="Navigation" size={13} color={colors.lime} />
+                    <Text style={[styles.switchLabel, { color: colors.lime }]}>
+                      Viagem em andamento
+                    </Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                    <Text style={[styles.switchSub, { color: colors.textSecondary }]}>
+                      Vincular a {activeTrip.origin}
+                    </Text>
+                    <Icon name="ArrowRight" size={10} color={colors.textSecondary} />
+                    <Text style={[styles.switchSub, { color: colors.textSecondary }]}>
+                      {activeTrip.destination}
+                    </Text>
+                  </View>
                 </View>
                 <Switch
                   value={linkToTrip}
@@ -696,23 +742,28 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>Tipo de Percurso</Text>
               <View style={styles.chipRow}>
-                {(['urbano', 'rodoviario', 'misto'] as RouteType[]).map(rt => {
-                  const isSelected = routeType === rt;
-                  const label =
-                    rt === 'urbano'
-                      ? '🏙️ Urbano'
-                      : rt === 'rodoviario'
-                        ? '🛣️ Rodoviário'
-                        : '🔀 Misto';
+                {(
+                  [
+                    { key: 'urbano', label: 'Urbano', icon: 'Building' },
+                    { key: 'rodoviario', label: 'Rodoviário', icon: 'Navigation' },
+                    { key: 'misto', label: 'Misto', icon: 'Shuffle' },
+                  ] as Array<{ key: RouteType; label: string; icon: any }>
+                ).map(rt => {
+                  const isSelected = routeType === rt.key;
                   return (
                     <TouchableOpacity
-                      key={rt}
-                      style={[styles.chip, isSelected && styles.chipSelected]}
-                      onPress={() => setRouteType(rt)}
+                      key={rt.key}
+                      style={[styles.chip, isSelected && styles.chipSelected, { flexDirection: 'row', alignItems: 'center', gap: 5 }]}
+                      onPress={() => setRouteType(rt.key)}
                       disabled={isSubmitting}
                     >
+                      <Icon
+                        name={rt.icon}
+                        size={12}
+                        color={isSelected ? colors.black : colors.textSecondary}
+                      />
                       <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
-                        {label}
+                        {rt.label}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -763,7 +814,8 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
             </View>
 
             {/* Status GPS */}
-            <View style={styles.gpsRow}>
+            <View style={[styles.gpsRow, { flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
+              <Icon name="MapPin" size={12} color={colors.textMuted} />
               <Text style={styles.gpsText}>{gpsStatus}</Text>
             </View>
 
@@ -818,19 +870,26 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
               >
                 <View style={{ flexDirection: 'row', gap: 6 }}>
                   {[
-                    { key: 'todos', label: 'Todos' },
-                    { key: 'urbano', label: '🏙️ Urbano' },
-                    { key: 'rodoviario', label: '🛣️ Rodoviário' },
-                    { key: 'misto', label: '🔀 Misto' },
-                    { key: 'sem_tipo', label: 'Sem tipo' },
+                    { key: 'todos', label: 'Todos', icon: null },
+                    { key: 'urbano', label: 'Urbano', icon: 'Building' },
+                    { key: 'rodoviario', label: 'Rodoviário', icon: 'Navigation' },
+                    { key: 'misto', label: 'Misto', icon: 'Shuffle' },
+                    { key: 'sem_tipo', label: 'Sem tipo', icon: null },
                   ].map(f => {
                     const isSelected = filterRouteType === f.key;
                     return (
                       <TouchableOpacity
                         key={f.key}
-                        style={[styles.chip, isSelected && styles.chipSelected]}
+                        style={[styles.chip, isSelected && styles.chipSelected, { flexDirection: 'row', alignItems: 'center', gap: 5 }]}
                         onPress={() => setFilterRouteType(f.key)}
                       >
+                        {f.icon && (
+                          <Icon
+                            name={f.icon as any}
+                            size={12}
+                            color={isSelected ? colors.black : colors.textSecondary}
+                          />
+                        )}
                         <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
                           {f.label}
                         </Text>
@@ -863,11 +922,16 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
                         return (
                           <TouchableOpacity
                             key={tag.id}
-                            style={[styles.chip, isSelected && styles.chipSelected]}
+                            style={[styles.chip, isSelected && styles.chipSelected, { flexDirection: 'row', alignItems: 'center', gap: 4 }]}
                             onPress={() => setFilterTagId(tag.id)}
                           >
+                            <Icon
+                              name="Tag"
+                              size={11}
+                              color={isSelected ? colors.black : colors.textSecondary}
+                            />
                             <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
-                              🏷️ {tag.name || tag.nome}
+                              {tag.name || tag.nome}
                             </Text>
                           </TouchableOpacity>
                         );
@@ -880,7 +944,7 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
 
             {historyList.length === 0 ? (
               <View style={styles.emptyHistory}>
-                <Text style={styles.emptyHistoryIcon}>⛽</Text>
+                <Icon name="Fuel" size={32} color={colors.textMuted} style={{ marginBottom: spacing.sm }} />
                 <Text style={styles.emptyHistoryTitle}>Nenhum abastecimento</Text>
                 <Text style={styles.emptyHistoryText}>
                   Registre o primeiro abastecimento deste veículo na aba "Novo".
@@ -948,10 +1012,13 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
                                 }}
                                 accessibilityLabel={`Alerta de anomalia de consumo no abastecimento de ${item.odometer} km`}
                               >
-                                <Text style={styles.anomalyBadgeText}>
-                                  ⚠️ Anomalia (
-                                  {anomaliasMap.get(item.id)?.percentualQueda?.toFixed(0)}%)
-                                </Text>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                  <Icon name="AlertTriangle" size={12} color={colors.black} />
+                                  <Text style={styles.anomalyBadgeText}>
+                                    Anomalia (
+                                    {anomaliasMap.get(item.id)?.percentualQueda?.toFixed(0)}%)
+                                  </Text>
+                                </View>
                               </TouchableOpacity>
                             )}
                           </View>
@@ -979,8 +1046,22 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
                               paddingHorizontal: 8,
                               paddingVertical: 2,
                               borderRadius: 12,
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              gap: 4,
                             }}
                           >
+                            <Icon
+                              name={
+                                itemRoute === 'urbano'
+                                  ? 'Building'
+                                  : itemRoute === 'rodoviario'
+                                    ? 'Navigation'
+                                    : 'Shuffle'
+                              }
+                              size={11}
+                              color={colors.lime}
+                            />
                             <Text
                               style={{
                                 ...typography.caption,
@@ -989,10 +1070,10 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
                               }}
                             >
                               {itemRoute === 'urbano'
-                                ? '🏙️ Urbano'
+                                ? 'Urbano'
                                 : itemRoute === 'rodoviario'
-                                  ? '🛣️ Rodoviário'
-                                  : '🔀 Misto'}
+                                  ? 'Rodoviário'
+                                  : 'Misto'}
                             </Text>
                           </View>
                         )}
@@ -1007,20 +1088,24 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
                               paddingHorizontal: 8,
                               paddingVertical: 2,
                               borderRadius: 12,
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              gap: 4,
                             }}
                           >
+                            <Icon name="Tag" size={10} color={colors.textSecondary} />
                             <Text style={{ ...typography.caption, color: colors.textSecondary }}>
-                              🏷️ {tag.name || tag.nome}
+                              {tag.name || tag.nome}
                             </Text>
                           </View>
                         ))}
 
                         {itemNote ? (
                           <TouchableOpacity
-                            onPress={() => Alert.alert('📝 Nota do Abastecimento', itemNote)}
+                            onPress={() => Alert.alert('Nota do Abastecimento', itemNote)}
                             hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                           >
-                            <Text style={{ fontSize: 13 }}>📝</Text>
+                            <Icon name="FileText" size={14} color={colors.lime} />
                           </TouchableOpacity>
                         ) : null}
                       </View>
@@ -1045,18 +1130,20 @@ export const RefuelFormScreen: React.FC<RefuelFormScreenProps> = ({
 
                       <View style={styles.historyCardActions}>
                         <TouchableOpacity
-                          style={styles.historyActionBtn}
+                          style={[styles.historyActionBtn, { flexDirection: 'row', alignItems: 'center', gap: 4 }]}
                           onPress={() => handleEditPress(item)}
                         >
-                          <Text style={styles.historyActionText}>✏️ Editar</Text>
+                          <Icon name="Edit2" size={12} color={colors.textPrimary} />
+                          <Text style={styles.historyActionText}>Editar</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                          style={[styles.historyActionBtn, styles.deleteActionBtn]}
+                          style={[styles.historyActionBtn, styles.deleteActionBtn, { flexDirection: 'row', alignItems: 'center', gap: 4 }]}
                           onPress={() => handleDeletePress(item)}
                         >
+                          <Icon name="Trash2" size={12} color={colors.error} />
                           <Text style={[styles.historyActionText, styles.deleteActionText]}>
-                            🗑️ Excluir
+                            Excluir
                           </Text>
                         </TouchableOpacity>
                       </View>
