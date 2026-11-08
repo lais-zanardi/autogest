@@ -66,7 +66,7 @@ npm run dev:mobile
 
 ## Documentação
 
-- [Product Backlog por Épicos](docs/product_backlog.md)
+- [Product Backlog](docs/product_backlog.md)
 - [Diagrama ER e Dicionário de Dados](docs/banco_de_dados.md)
 - [Entrega 1 (Core)](docs/entregas/entrega-1.md)
 - [Entrega 2 (Financeiro e Dados)](docs/entregas/entrega-2.md)
