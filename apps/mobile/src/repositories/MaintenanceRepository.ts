@@ -29,6 +29,8 @@ export class MaintenanceRepository {
       description: dto.description.trim(),
       replacedParts: dto.replacedParts ? dto.replacedParts.trim() : null,
       workshop: dto.workshop ? dto.workshop.trim() : null,
+      workshopId: dto.workshopId ?? dto.oficina_id ?? null,
+      oficina_id: dto.oficina_id ?? dto.workshopId ?? null,
       mechanic: dto.mechanic ? dto.mechanic.trim() : null,
       executionTimeMin: dto.executionTimeMin ? Number(dto.executionTimeMin) : null,
       totalValue: Number(dto.totalValue),
@@ -102,6 +104,12 @@ export class MaintenanceRepository {
         : {}),
       ...(updates.workshop !== undefined
         ? { workshop: updates.workshop ? updates.workshop.trim() : null }
+        : {}),
+      ...(updates.workshopId !== undefined || updates.oficina_id !== undefined
+        ? {
+            workshopId: updates.workshopId ?? updates.oficina_id ?? null,
+            oficina_id: updates.oficina_id ?? updates.workshopId ?? null,
+          }
         : {}),
       ...(updates.mechanic !== undefined
         ? { mechanic: updates.mechanic ? updates.mechanic.trim() : null }

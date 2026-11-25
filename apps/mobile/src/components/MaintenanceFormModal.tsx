@@ -19,8 +19,10 @@ import {
   MaintenanceServiceType,
   MaintenanceAttachment,
   MaintenanceSchedule,
+  WorkshopRecord,
 } from '@autogest/shared-types';
 import { MaintenanceService } from '../services/maintenanceService';
+import { WorkshopService } from '../services/workshopService';
 import { MaintenanceScheduleService } from '../services/maintenanceScheduleService';
 import { AttachmentRepository } from '../repositories/AttachmentRepository';
 import { CameraService } from '../services/cameraService';
@@ -70,6 +72,8 @@ export const MaintenanceFormModal: React.FC<MaintenanceFormModalProps> = ({
   const [description, setDescription] = useState('');
   const [replacedParts, setReplacedParts] = useState('');
   const [workshop, setWorkshop] = useState('');
+  const [selectedWorkshopId, setSelectedWorkshopId] = useState<string | null>(null);
+  const [registeredWorkshops, setRegisteredWorkshops] = useState<WorkshopRecord[]>([]);
   const [mechanic, setMechanic] = useState('');
   const [executionTimeMin, setExecutionTimeMin] = useState('');
   const [notes, setNotes] = useState('');
@@ -99,6 +103,7 @@ export const MaintenanceFormModal: React.FC<MaintenanceFormModalProps> = ({
         setDescription(maintenanceToEdit.description || '');
         setReplacedParts(maintenanceToEdit.replacedParts || '');
         setWorkshop(maintenanceToEdit.workshop || '');
+        setSelectedWorkshopId(maintenanceToEdit.workshopId ?? maintenanceToEdit.oficina_id ?? null);
         setMechanic(maintenanceToEdit.mechanic || '');
         setExecutionTimeMin(
           maintenanceToEdit.executionTimeMin ? String(maintenanceToEdit.executionTimeMin) : '',
@@ -117,6 +122,7 @@ export const MaintenanceFormModal: React.FC<MaintenanceFormModalProps> = ({
         setDescription(scheduleToComplete.description || '');
         setReplacedParts('');
         setWorkshop('');
+        setSelectedWorkshopId(null);
         setMechanic('');
         setExecutionTimeMin('');
         setNotes('');
@@ -131,6 +137,7 @@ export const MaintenanceFormModal: React.FC<MaintenanceFormModalProps> = ({
         setDescription('');
         setReplacedParts('');
         setWorkshop('');
+        setSelectedWorkshopId(null);
         setMechanic('');
         setExecutionTimeMin('');
         setNotes('');
@@ -169,6 +176,14 @@ export const MaintenanceFormModal: React.FC<MaintenanceFormModalProps> = ({
   const handleRemoveAttachment = (id: string) => {
     setAttachments(prev => prev.filter(a => a.id !== id));
   };
+
+  useEffect(() => {
+    if (visible) {
+      WorkshopService.listarOficinas()
+        .then(setRegisteredWorkshops)
+        .catch(() => setRegisteredWorkshops([]));
+    }
+  }, [visible]);
 
   const handleSave = async () => {
     if (!vehicle) {
@@ -218,6 +233,8 @@ export const MaintenanceFormModal: React.FC<MaintenanceFormModalProps> = ({
           description: description.trim(),
           replacedParts: replacedParts.trim() || null,
           workshop: workshop.trim() || null,
+          workshopId: selectedWorkshopId,
+          oficina_id: selectedWorkshopId,
           mechanic: mechanic.trim() || null,
           executionTimeMin: executionTimeMin.trim() ? Number(executionTimeMin) : null,
           totalValue: numericAmount,
@@ -240,6 +257,8 @@ export const MaintenanceFormModal: React.FC<MaintenanceFormModalProps> = ({
           description: description.trim(),
           replacedParts: replacedParts.trim() || null,
           workshop: workshop.trim() || null,
+          workshopId: selectedWorkshopId,
+          oficina_id: selectedWorkshopId,
           mechanic: mechanic.trim() || null,
           executionTimeMin: executionTimeMin.trim() ? Number(executionTimeMin) : null,
           totalValue: numericAmount,
@@ -427,14 +446,69 @@ export const MaintenanceFormModal: React.FC<MaintenanceFormModalProps> = ({
               placeholderTextColor={colors.textMuted}
             />
 
-            {/* Oficina e Profissional */}
+            {/* Oficina e Profissional (US12.3: seleção de oficina cadastrada ou texto livre) */}
+            {registeredWorkshops.length > 0 ? (
+              <View style={{ marginBottom: spacing.sm }}>
+                <Text style={styles.fieldLabel}>OFICINAS CADASTRADAS</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ gap: spacing.xs }}
+                >
+                  {registeredWorkshops.map(oficina => {
+                    const isSelected = selectedWorkshopId === oficina.id;
+                    return (
+                      <TouchableOpacity
+                        key={oficina.id}
+                        style={[
+                          {
+                            paddingHorizontal: spacing.sm,
+                            paddingVertical: 6,
+                            borderRadius: radius.md,
+                            borderWidth: 1,
+                            borderColor: isSelected ? colors.lime : colors.border,
+                            backgroundColor: isSelected ? colors.limeDim : colors.surface,
+                          },
+                        ]}
+                        onPress={() => {
+                          if (isSelected) {
+                            setSelectedWorkshopId(null);
+                          } else {
+                            setSelectedWorkshopId(oficina.id);
+                            setWorkshop(oficina.nome);
+                          }
+                        }}
+                      >
+                        <Text
+                          style={{
+                            ...typography.caption,
+                            color: isSelected ? colors.lime : colors.textSecondary,
+                          }}
+                        >
+                          {oficina.nome}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            ) : null}
+
             <View style={styles.row}>
               <View style={styles.halfCol}>
                 <Text style={styles.fieldLabel}>OFICINA / MECÂNICA</Text>
                 <TextInput
                   style={styles.input}
                   value={workshop}
-                  onChangeText={setWorkshop}
+                  onChangeText={text => {
+                    setWorkshop(text);
+                    if (selectedWorkshopId) {
+                      const current = registeredWorkshops.find(w => w.id === selectedWorkshopId);
+                      if (!current || current.nome !== text) {
+                        setSelectedWorkshopId(null);
+                      }
+                    }
+                  }}
                   placeholder="Nome do local"
                   placeholderTextColor={colors.textMuted}
                 />
