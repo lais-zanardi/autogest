@@ -7,6 +7,7 @@ import { RootNavigator } from './src/navigation';
 import { initDatabase } from './src/database';
 import { SyncService } from './src/services/sync';
 import { NotificacaoService } from './src/services/notificationService';
+import { RegionalPricesService } from './src/services/regionalPricesService';
 
 export default function App() {
   useEffect(() => {
@@ -15,6 +16,7 @@ export default function App() {
     NotificacaoService.reconciliarAoAbrirApp().catch(err => {
       console.warn('Erro ao reconciliar agendamentos ao abrir o app:', err);
     });
+    RegionalPricesService.sincronizarAoAbrir().catch(() => {});
   }, []);
 
   return (

@@ -1,0 +1,27 @@
+{
+  "anpCsvSample": "Regiao - Sigla;Estado - Sigla;Municipio;Revenda;CNPJ da Revenda;Nome da Rua;Numero Rua;Complemento;Bairro;Cep;Produto;Data da Coleta;Valor de Venda;Valor de Compra;Unidade de Medida;Bandeira\nSE;SP;SAO PAULO;POSTO EXEMPLO A;00000000000100;AV PAULISTA;100;;BELA VISTA;01310-000;GASOLINA;24/11/2026;5,85;;R$ / litro;BRANCA\nSE;SP;SAO PAULO;POSTO EXEMPLO B;00000000000200;AV PAULISTA;200;;BELA VISTA;01310-000;GASOLINA;24/11/2026;5,93;;R$ / litro;IPIRANGA\nSE;SP;SAO PAULO;POSTO EXEMPLO A;00000000000100;AV PAULISTA;100;;BELA VISTA;01310-000;ETANOL;24/11/2026;3,95;;R$ / litro;BRANCA\nSE;SP;CAMPINAS;POSTO CAMPINAS;00000000000300;RUA CENTRAL;10;;CENTRO;13010-000;DIESEL S10;24/11/2026;6,12;;R$ / litro;SHELL",
+  "openMeteoGeocodingSample": {
+    "results": [
+      {
+        "id": 3448439,
+        "name": "São Paulo",
+        "latitude": -23.5475,
+        "longitude": -46.6361,
+        "admin1": "São Paulo",
+        "country_code": "BR"
+      }
+    ]
+  },
+  "openMeteoForecastSample": {
+    "current": {
+      "temperature_2m": 25.4,
+      "weather_code": 2
+    },
+    "daily": {
+      "time": ["2026-11-25"],
+      "temperature_2m_min": [18.2],
+      "temperature_2m_max": [28.7],
+      "weather_code": [2]
+    }
+  }
+}

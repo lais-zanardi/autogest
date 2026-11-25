@@ -227,6 +227,16 @@ export class SyncService {
         // Ignore in headless test runs
       }
 
+      // 4. Sincroniza preços regionais ANP e cache de clima (US17.7)
+      if (!EnvConfig.isMockMode()) {
+        try {
+          const { RegionalPricesService } = await import('../regionalPricesService');
+          await RegionalPricesService.sincronizarAoAbrir();
+        } catch {
+          // Ignore in headless test runs
+        }
+      }
+
       const success = pushRes.success && pullRes.success;
       const now = new Date().toISOString();
       const remainingPending = await SyncQueueRepository.countPending();

@@ -1,6 +1,7 @@
 import {
   ConsumptionUnit,
   FormattedConsumptionResult,
+  FuelType,
   UserPreferences,
 } from '@autogest/shared-types';
 import { DatabaseConnection } from '../database/DatabaseConnection';
@@ -17,6 +18,8 @@ export interface PreferenceRow {
 let cachedPreferences: UserPreferences = {
   unidade_consumo_principal: 'km/l',
   notificacoes_pausadas_ate: null,
+  combustivel_principal: 'Gasolina',
+  municipio_padrao: 'São Paulo',
 };
 
 /**
@@ -185,6 +188,8 @@ export class PreferencesService {
     cachedPreferences = {
       unidade_consumo_principal: 'km/l',
       notificacoes_pausadas_ate: null,
+      combustivel_principal: 'Gasolina',
+      municipio_padrao: 'São Paulo',
     };
   }
 
@@ -198,6 +203,8 @@ export class PreferencesService {
 
     let unidade: ConsumptionUnit = 'km/l';
     let pausadasAte: string | null = null;
+    let combustivelPrincipal: FuelType = 'Gasolina';
+    let municipioPadrao = 'São Paulo';
 
     for (const row of rows || []) {
       if (
@@ -207,19 +214,32 @@ export class PreferencesService {
         unidade = row.valor;
       } else if (row.chave === 'notificacoes_pausadas_ate') {
         pausadasAte = typeof row.valor === 'string' && row.valor.trim() ? row.valor : null;
+      } else if (
+        row.chave === 'combustivel_principal' &&
+        ['Gasolina', 'Etanol', 'Diesel', 'GNV', 'Flex'].includes(row.valor)
+      ) {
+        combustivelPrincipal = row.valor as FuelType;
+      } else if (row.chave === 'municipio_padrao' && typeof row.valor === 'string' && row.valor.trim()) {
+        municipioPadrao = row.valor.trim();
       }
     }
 
     cachedPreferences = {
       unidade_consumo_principal: unidade,
       notificacoes_pausadas_ate: pausadasAte,
+      combustivel_principal: combustivelPrincipal,
+      municipio_padrao: municipioPadrao,
     };
 
     return { ...cachedPreferences };
   }
 
   private static async salvarChave(
-    chave: 'unidade_consumo_principal' | 'notificacoes_pausadas_ate',
+    chave:
+      | 'unidade_consumo_principal'
+      | 'notificacoes_pausadas_ate'
+      | 'combustivel_principal'
+      | 'municipio_padrao',
     valor: any,
   ): Promise<void> {
     const db = DatabaseConnection.getInstance();
@@ -287,5 +307,41 @@ export class PreferencesService {
     if (!prefs.notificacoes_pausadas_ate) return false;
     const endMs = new Date(prefs.notificacoes_pausadas_ate).getTime();
     return Number.isFinite(endMs) && endMs > dataReferencia.getTime();
+  }
+
+  static async obterCombustivelPrincipal(): Promise<FuelType> {
+    const prefs = await this.obterPreferencias();
+    return prefs.combustivel_principal || 'Gasolina';
+  }
+
+  static async definirCombustivelPrincipal(combustivel: FuelType): Promise<UserPreferences> {
+    const validos: FuelType[] = ['Gasolina', 'Etanol', 'Diesel', 'GNV', 'Flex'];
+    if (!validos.includes(combustivel)) {
+      throw new Error('Combustível principal inválido.');
+    }
+    await this.salvarChave('combustivel_principal', combustivel);
+    cachedPreferences = {
+      ...cachedPreferences,
+      combustivel_principal: combustivel,
+    };
+    return { ...cachedPreferences };
+  }
+
+  static async obterMunicipioPadrao(): Promise<string> {
+    const prefs = await this.obterPreferencias();
+    return prefs.municipio_padrao || 'São Paulo';
+  }
+
+  static async definirMunicipioPadrao(municipio: string): Promise<UserPreferences> {
+    const limpo = municipio.trim();
+    if (!limpo) {
+      throw new Error('Informe um município válido.');
+    }
+    await this.salvarChave('municipio_padrao', limpo);
+    cachedPreferences = {
+      ...cachedPreferences,
+      municipio_padrao: limpo,
+    };
+    return { ...cachedPreferences };
   }
 }

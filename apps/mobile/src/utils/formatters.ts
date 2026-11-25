@@ -16,6 +16,30 @@ export function formatCurrency(value: number): string {
 }
 
 /**
+ * Alias pt-BR padronizado (US17.6 / US17.8): formata valor em reais no padrão brasileiro.
+ */
+export function formatarMoeda(valorReais: number): string {
+  return formatCurrency(valorReais);
+}
+
+/**
+ * Formata valor em centavos inteiros no padrão pt-BR (ex.: 589 -> "R$ 5,89").
+ */
+export function formatarMoedaCentavos(centavos: number): string {
+  return formatarMoeda(centavos / 100);
+}
+
+/**
+ * Formata data ISO "AAAA-MM-DD" para "DD/MM/AAAA".
+ */
+export function formatarDataColeta(dataIso?: string | null): string {
+  if (!dataIso) return '';
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dataIso.trim());
+  if (!match) return dataIso;
+  return `${match[3]}/${match[2]}/${match[1]}`;
+}
+
+/**
  * US39.4: Redireciona para `formatarConsumo` respeitando `unidade_consumo_principal`
  * e exibindo "-- km/l" quando vazio na interface.
  */
