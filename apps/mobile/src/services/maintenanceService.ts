@@ -76,8 +76,48 @@ export class MaintenanceService {
       throw new Error('Veículo informado não foi encontrado.');
     }
 
-    // 2. Grava registro de manutenção
-    const maintenance = await MaintenanceRepository.create(dto);
+    // 2. Se vinculada a uma oficina cadastrada (US12.3), resolve nome e registra atendimento após salvar
+    const resolvedWorkshopId = dto.workshopId ?? dto.oficina_id ?? null;
+    let dtoToSave: CreateMaintenanceDTO = dto;
+    if (resolvedWorkshopId) {
+      const { WorkshopService } = await import('./workshopService');
+      const oficina = await WorkshopService.buscarPorId(resolvedWorkshopId);
+      if (oficina && !dto.workshop) {
+        dtoToSave = {
+          ...dto,
+          workshop: oficina.nome,
+          workshopId: oficina.id,
+          oficina_id: oficina.id,
+        };
+      }
+    }
+
+    // Grava registro de manutenção
+    const maintenance = await MaintenanceRepository.create(dtoToSave);
+
+    // US12.3 & US36.1: Ao salvar manutenção com oficina cadastrada, cria o atendimento
+    // e registra em locais_visitados caso a oficina tenha coordenadas válidas
+    if (resolvedWorkshopId) {
+      const { WorkshopService } = await import('./workshopService');
+      await WorkshopService.registrarAtendimento(
+        resolvedWorkshopId,
+        maintenance.id,
+        dto.date,
+      ).catch(() => {});
+
+      const oficina = await WorkshopService.buscarPorId(resolvedWorkshopId);
+      if (oficina && oficina.latitude != null && oficina.longitude != null) {
+        const { VisitedPlacesService } = await import('./visitedPlacesService');
+        await VisitedPlacesService.registrarLocalVisitado({
+          tipo: 'oficina',
+          referenciaId: maintenance.id,
+          nome: oficina.nome,
+          latitude: oficina.latitude,
+          longitude: oficina.longitude,
+          data: dto.date,
+        }).catch(() => {});
+      }
+    }
 
     // 3. Regra de Hodômetro (US09.3):
     // "grava leitura de hodômetro apenas se o km for maior que o último, o que permite lançar manutenções antigas"
