@@ -27,12 +27,23 @@ export class FuelingService {
     const prevRefuel = await RefuelRepository.getPreviousRefuel(dto.vehicleId, dto.odometer);
     const kml = prevRefuel ? calcularConsumo(dto.odometer, prevRefuel.odometer, dto.liters) : null;
 
+    // US29.1 & US29.5: Carimba o perfil de condução vigente no abastecimento sem alterar o histórico passado
+    let perfilConducao = dto.perfil_conducao ?? dto.drivingProfile ?? null;
+    if (!perfilConducao) {
+      const { DrivingProfileService } = await import('./drivingProfileService');
+      perfilConducao = await DrivingProfileService.obterPerfilAtual(dto.vehicleId).catch(
+        () => 'normal' as const,
+      );
+    }
+
     // Persiste o registro de abastecimento no banco local
     const newRefuel = await RefuelRepository.create(
       {
         ...dto,
         latitude: coords?.latitude ?? null,
         longitude: coords?.longitude ?? null,
+        perfil_conducao: perfilConducao,
+        drivingProfile: perfilConducao,
       },
       kml,
     );
@@ -65,6 +76,19 @@ export class FuelingService {
 
     // Enfileira na fila outbox de sincronização offline-first
     await SyncQueueRepository.enqueue('CREATE_REFUEL', '/api/v1/refuels', savedRefuel);
+
+    // US36.1: Registra posto visitado no mapa apenas se houver coordenadas válidas
+    if (savedRefuel.latitude != null && savedRefuel.longitude != null) {
+      const { VisitedPlacesService } = await import('./visitedPlacesService');
+      await VisitedPlacesService.registrarLocalVisitado({
+        tipo: 'posto',
+        referenciaId: savedRefuel.id,
+        nome: savedRefuel.stationName || 'Posto visitado',
+        latitude: savedRefuel.latitude,
+        longitude: savedRefuel.longitude,
+        data: savedRefuel.date,
+      }).catch(() => {});
+    }
 
     // US10.5: Reavalia regras preventivas de manutenção ao salvar abastecimento
     const { MaintenanceAlertService } = await import('./maintenanceAlertService');

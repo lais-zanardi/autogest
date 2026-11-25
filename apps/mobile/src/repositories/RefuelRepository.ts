@@ -73,6 +73,8 @@ export class RefuelRepository {
       nota: dto.nota ? dto.nota.trim() : dto.notes ? dto.notes.trim() : null,
       tripId: dto.tripId || dto.viagem_id || null,
       viagem_id: dto.viagem_id || dto.tripId || null,
+      drivingProfile: dto.drivingProfile || dto.perfil_conducao || null,
+      perfil_conducao: dto.perfil_conducao || dto.drivingProfile || null,
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
