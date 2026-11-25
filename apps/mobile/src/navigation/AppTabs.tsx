@@ -139,6 +139,78 @@ const SettingsScreen: React.FC = () => {
             onPress={() => navigation.navigate('TripModal')}
           />
           <ListRow
+            title="Preços da região"
+            subtitle="Média ANP e clima local"
+            icon={<Icon name="Fuel" size={18} color={colors.textSecondary} />}
+            onPress={() => navigation.navigate('RegionalPricesModal')}
+          />
+          <ListRow
+            title="Postos mais baratos"
+            subtitle="Postos próximos por preço"
+            icon={<Icon name="MapPin" size={18} color={colors.textSecondary} />}
+            onPress={() => navigation.navigate('CheapestStationsModal')}
+          />
+          <ListRow
+            title="Histórico de preços"
+            subtitle="Tendência e alerta de preço-limite"
+            icon={<Icon name="TrendingDown" size={18} color={colors.textSecondary} />}
+            onPress={() => navigation.navigate('PriceHistoryModal')}
+          />
+          <ListRow
+            title="Oficinas favoritas"
+            subtitle="Contatos, telefone e histórico"
+            icon={<Icon name="Wrench" size={18} color={colors.textSecondary} />}
+            onPress={() => navigation.navigate('WorkshopsModal')}
+          />
+          <ListRow
+            title="Mapa de locais"
+            subtitle="Postos e oficinas visitados"
+            icon={<Icon name="Map" size={18} color={colors.textSecondary} />}
+            onPress={() => navigation.navigate('VisitedPlacesMapModal')}
+          />
+          <ListRow
+            title="Simulador"
+            subtitle="Etanol × gasolina, economia e viagem"
+            icon={<Icon name="Calculator" size={18} color={colors.textSecondary} />}
+            onPress={() => navigation.navigate('SimulatorModal')}
+          />
+          <ListRow
+            title="Inspeção visual"
+            subtitle="Lembretes de faróis, pneus e limpadores"
+            icon={<Icon name="CheckCircle" size={18} color={colors.textSecondary} />}
+            onPress={() => navigation.navigate('VisualInspectionModal')}
+          />
+          <ListRow
+            title="Fotos do veículo"
+            subtitle="Galeria cronológica e foto de capa"
+            icon={<Icon name="Camera" size={18} color={colors.textSecondary} />}
+            onPress={() => navigation.navigate('VehiclePhotosModal')}
+          />
+          <ListRow
+            title="Perfil de condução"
+            subtitle="Autoavaliação e correlação de consumo"
+            icon={<Icon name="Gauge" size={18} color={colors.textSecondary} />}
+            onPress={() => navigation.navigate('DrivingProfileModal')}
+          />
+          <ListRow
+            title="Comparar"
+            subtitle="Combustíveis e veículos"
+            icon={<Icon name="BarChart2" size={18} color={colors.textSecondary} />}
+            onPress={() => navigation.navigate('ComparisonModal')}
+          />
+          <ListRow
+            title="Compartilhar perfil"
+            subtitle="QR Code público e revogável"
+            icon={<Icon name="QrCode" size={18} color={colors.textSecondary} />}
+            onPress={() => navigation.navigate('VehicleShareModal')}
+          />
+          <ListRow
+            title="Resumo mensal por e-mail"
+            subtitle="Receber gastos, consumo e km do mês"
+            icon={<Icon name="Mail" size={18} color={colors.textSecondary} />}
+            onPress={() => navigation.navigate('MonthlySummaryEmailModal')}
+          />
+          <ListRow
             title="Valor de Mercado"
             subtitle="Consulta Tabela FIPE"
             icon={<Icon name="Tag" size={18} color={colors.textSecondary} />}

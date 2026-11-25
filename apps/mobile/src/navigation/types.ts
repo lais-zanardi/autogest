@@ -26,4 +26,16 @@ export type RootStackParamList = {
   VehicleMarketValueModal: undefined;
   MaintenanceScheduleModal: { vehicleId?: string } | undefined;
   ExpenseCategoryChartModal: undefined;
+  RegionalPricesModal: undefined;
+  CheapestStationsModal: undefined;
+  PriceHistoryModal: undefined;
+  WorkshopsModal: undefined;
+  VisitedPlacesMapModal: undefined;
+  SimulatorModal: undefined;
+  VisualInspectionModal: undefined;
+  VehiclePhotosModal: undefined;
+  DrivingProfileModal: undefined;
+  ComparisonModal: undefined;
+  VehicleShareModal: undefined;
+  MonthlySummaryEmailModal: undefined;
 };

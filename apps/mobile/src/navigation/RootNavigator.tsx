@@ -20,6 +20,18 @@ import { ReportExportScreen } from '../screens/ReportExportScreen';
 import { VehicleMarketValueScreen } from '../screens/VehicleMarketValueScreen';
 import { MaintenanceScheduleScreen } from '../screens/MaintenanceScheduleScreen';
 import { ExpenseCategoryChartScreen } from '../screens/ExpenseCategoryChartScreen';
+import { RegionalPricesScreen } from '../screens/RegionalPricesScreen';
+import { CheapestStationsScreen } from '../screens/CheapestStationsScreen';
+import { PriceHistoryScreen } from '../screens/PriceHistoryScreen';
+import { WorkshopsScreen } from '../screens/WorkshopsScreen';
+import { VisitedPlacesMapScreen } from '../screens/VisitedPlacesMapScreen';
+import { SimulatorScreen } from '../screens/SimulatorScreen';
+import { VisualInspectionScreen } from '../screens/VisualInspectionScreen';
+import { VehiclePhotosScreen } from '../screens/VehiclePhotosScreen';
+import { DrivingProfileScreen } from '../screens/DrivingProfileScreen';
+import { ComparisonScreen } from '../screens/ComparisonScreen';
+import { VehicleShareScreen } from '../screens/VehicleShareScreen';
+import { MonthlySummaryEmailScreen } from '../screens/MonthlySummaryEmailScreen';
 import { useAppStore } from '../store/useAppStore';
 import { AuthService } from '../services/authService';
 import { BiometricService } from '../services/biometricService';
@@ -95,6 +107,66 @@ const MaintenanceScheduleModalScreen: React.FC = () => {
 const ExpenseCategoryChartModalScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   return <ExpenseCategoryChartScreen onBack={() => navigation.goBack()} />;
+};
+
+const RegionalPricesModalScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+  return <RegionalPricesScreen onClose={() => navigation.goBack()} />;
+};
+
+const CheapestStationsModalScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+  return <CheapestStationsScreen onClose={() => navigation.goBack()} />;
+};
+
+const PriceHistoryModalScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+  return <PriceHistoryScreen onClose={() => navigation.goBack()} />;
+};
+
+const WorkshopsModalScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+  return <WorkshopsScreen onClose={() => navigation.goBack()} />;
+};
+
+const VisitedPlacesMapModalScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+  return <VisitedPlacesMapScreen onClose={() => navigation.goBack()} />;
+};
+
+const SimulatorModalScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+  return <SimulatorScreen onClose={() => navigation.goBack()} />;
+};
+
+const VisualInspectionModalScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+  return <VisualInspectionScreen onClose={() => navigation.goBack()} />;
+};
+
+const VehiclePhotosModalScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+  return <VehiclePhotosScreen onClose={() => navigation.goBack()} />;
+};
+
+const DrivingProfileModalScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+  return <DrivingProfileScreen onClose={() => navigation.goBack()} />;
+};
+
+const ComparisonModalScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+  return <ComparisonScreen onClose={() => navigation.goBack()} />;
+};
+
+const VehicleShareModalScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+  return <VehicleShareScreen onClose={() => navigation.goBack()} />;
+};
+
+const MonthlySummaryEmailModalScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+  return <MonthlySummaryEmailScreen onClose={() => navigation.goBack()} />;
 };
 
 export const RootNavigator: React.FC = () => {
@@ -278,6 +350,102 @@ export const RootNavigator: React.FC = () => {
           <Stack.Screen
             name="ExpenseCategoryChartModal"
             component={ExpenseCategoryChartModalScreen}
+            options={{
+              presentation: 'modal',
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="RegionalPricesModal"
+            component={RegionalPricesModalScreen}
+            options={{
+              presentation: 'modal',
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="CheapestStationsModal"
+            component={CheapestStationsModalScreen}
+            options={{
+              presentation: 'modal',
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="PriceHistoryModal"
+            component={PriceHistoryModalScreen}
+            options={{
+              presentation: 'modal',
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="WorkshopsModal"
+            component={WorkshopsModalScreen}
+            options={{
+              presentation: 'modal',
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="VisitedPlacesMapModal"
+            component={VisitedPlacesMapModalScreen}
+            options={{
+              presentation: 'modal',
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="SimulatorModal"
+            component={SimulatorModalScreen}
+            options={{
+              presentation: 'modal',
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="VisualInspectionModal"
+            component={VisualInspectionModalScreen}
+            options={{
+              presentation: 'modal',
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="VehiclePhotosModal"
+            component={VehiclePhotosModalScreen}
+            options={{
+              presentation: 'modal',
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="DrivingProfileModal"
+            component={DrivingProfileModalScreen}
+            options={{
+              presentation: 'modal',
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="ComparisonModal"
+            component={ComparisonModalScreen}
+            options={{
+              presentation: 'modal',
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="VehicleShareModal"
+            component={VehicleShareModalScreen}
+            options={{
+              presentation: 'modal',
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="MonthlySummaryEmailModal"
+            component={MonthlySummaryEmailModalScreen}
             options={{
               presentation: 'modal',
               headerShown: false,

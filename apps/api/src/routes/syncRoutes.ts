@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { createSyncResourceRouter } from './syncResourceRouter';
 import { createAuditSyncRouter } from './auditSyncRouter';
+import { PrecosController } from '../controllers/precosController';
 
 const router = Router();
 
@@ -19,6 +20,7 @@ const veiculosSyncRouter = createSyncResourceRouter({
     'odometro_inicial',
     'odometro_atual',
     'valor_fipe',
+    'foto_capa_id',
   ],
   validatePayload: body => {
     if (!body.modelo && !body.model) return { isValid: false, error: 'Modelo é obrigatório.' };
@@ -48,6 +50,7 @@ const abastecimentosSyncRouter = createSyncResourceRouter({
     'tipo_percurso',
     'nota',
     'viagem_id',
+    'perfil_conducao',
   ],
   validatePayload: body => {
     const vId = body.veiculo_id || body.vehicleId;
@@ -105,6 +108,7 @@ const manutencoesSyncRouter = createSyncResourceRouter({
     'descricao',
     'pecas',
     'oficina',
+    'oficina_id',
     'profissional',
     'tempo_execucao_min',
     'valor',
@@ -459,5 +463,228 @@ router.use('/fipe_consultations', consultasFipeSyncRouter);
 
 router.use('/agendamentos_manutencao', agendamentosManutencaoSyncRouter);
 router.use('/maintenance_schedules', agendamentosManutencaoSyncRouter);
+
+// 19. Preços de Combustível, Cache de Clima, Postos e Histórico Local — somente leitura (US17.1, US34.1, US35.1)
+router.get('/precos_combustivel', PrecosController.listPrecosSync as any);
+router.get('/cache_clima', PrecosController.listClimaSync as any);
+router.get('/postos', PrecosController.listPostosSync as any);
+router.get('/historico_precos_locais', PrecosController.listHistoricoPrecosSync as any);
+
+// 20. Alertas de Preço-Limite (US35.1)
+export const alertasPrecoSyncRouter = createSyncResourceRouter({
+  tableName: 'alertas_preco',
+  ownershipType: 'via_vehicle',
+  allowedFields: ['veiculo_id', 'combustivel', 'preco_limite_centavos', 'ativo', 'disparado_em'],
+  validatePayload: body => {
+    const vId = body.veiculo_id || body.vehicleId;
+    if (!vId) return { isValid: false, error: 'veiculo_id é obrigatório.' };
+    if (!body.combustivel) return { isValid: false, error: 'combustivel é obrigatório.' };
+    const limite = Number(body.preco_limite_centavos);
+    if (!Number.isFinite(limite) || limite <= 0) {
+      return { isValid: false, error: 'preco_limite_centavos deve ser maior que zero.' };
+    }
+    return { isValid: true };
+  },
+});
+
+router.use('/alertas_preco', alertasPrecoSyncRouter);
+router.use('/price_alerts', alertasPrecoSyncRouter);
+
+// 21. Oficinas Favoritas (US12.1)
+export const oficinasSyncRouter = createSyncResourceRouter({
+  tableName: 'oficinas',
+  ownershipType: 'direct',
+  allowedFields: [
+    'nome',
+    'telefone',
+    'endereco',
+    'latitude',
+    'longitude',
+    'favorita',
+    'observacoes',
+  ],
+  validatePayload: body => {
+    if (!body.nome || !String(body.nome).trim()) {
+      return { isValid: false, error: 'nome da oficina é obrigatório.' };
+    }
+    return { isValid: true };
+  },
+});
+
+// 22. Atendimentos de Oficina (US12.1)
+export const atendimentosOficinaSyncRouter = createSyncResourceRouter({
+  tableName: 'atendimentos_oficina',
+  ownershipType: 'direct',
+  allowedFields: ['oficina_id', 'manutencao_id', 'data'],
+  validatePayload: body => {
+    if (!body.oficina_id) return { isValid: false, error: 'oficina_id é obrigatório.' };
+    if (!body.manutencao_id) return { isValid: false, error: 'manutencao_id é obrigatório.' };
+    if (!body.data) return { isValid: false, error: 'data é obrigatória.' };
+    return { isValid: true };
+  },
+});
+
+router.use('/oficinas', oficinasSyncRouter);
+router.use('/workshops', oficinasSyncRouter);
+
+router.use('/atendimentos_oficina', atendimentosOficinaSyncRouter);
+router.use('/workshop_visits', atendimentosOficinaSyncRouter);
+
+// 23. Locais Visitados (US36.1)
+export const locaisVisitadosSyncRouter = createSyncResourceRouter({
+  tableName: 'locais_visitados',
+  ownershipType: 'direct',
+  allowedFields: ['tipo', 'referencia_id', 'nome', 'latitude', 'longitude', 'data'],
+  validatePayload: body => {
+    if (!body.tipo || !['posto', 'oficina'].includes(body.tipo)) {
+      return { isValid: false, error: 'tipo deve ser posto ou oficina.' };
+    }
+    if (!body.referencia_id) {
+      return { isValid: false, error: 'referencia_id é obrigatório.' };
+    }
+    if (
+      body.latitude === undefined ||
+      body.latitude === null ||
+      body.longitude === undefined ||
+      body.longitude === null ||
+      !Number.isFinite(Number(body.latitude)) ||
+      !Number.isFinite(Number(body.longitude))
+    ) {
+      return { isValid: false, error: 'latitude e longitude válidas são obrigatórias.' };
+    }
+    return { isValid: true };
+  },
+});
+
+router.use('/locais_visitados', locaisVisitadosSyncRouter);
+router.use('/visited_places', locaisVisitadosSyncRouter);
+
+// 24. Simulações Financeiras (US16.6)
+export const simulacoesSyncRouter = createSyncResourceRouter({
+  tableName: 'simulacoes',
+  ownershipType: 'direct',
+  allowedFields: ['tipo', 'entradas', 'resultado'],
+  validatePayload: body => {
+    if (
+      !body.tipo ||
+      !['etanol_gasolina', 'economia_potencial', 'custo_viagem'].includes(body.tipo)
+    ) {
+      return { isValid: false, error: 'tipo de simulação inválido.' };
+    }
+    if (!body.entradas || typeof body.entradas !== 'object') {
+      return { isValid: false, error: 'entradas (JSON) são obrigatórias.' };
+    }
+    if (!body.resultado || typeof body.resultado !== 'object') {
+      return { isValid: false, error: 'resultado (JSON) é obrigatório.' };
+    }
+    return { isValid: true };
+  },
+});
+
+router.use('/simulacoes', simulacoesSyncRouter);
+router.use('/simulations', simulacoesSyncRouter);
+
+// 25. Lembretes de Inspeção Visual (US31.1)
+export const lembretesInspecaoSyncRouter = createSyncResourceRouter({
+  tableName: 'lembretes_inspecao',
+  ownershipType: 'via_vehicle',
+  allowedFields: ['veiculo_id', 'item', 'periodicidade_dias', 'ultima_inspecao_em', 'ativo'],
+  validatePayload: body => {
+    const vId = body.veiculo_id || body.vehicleId;
+    if (!vId) return { isValid: false, error: 'veiculo_id é obrigatório.' };
+    if (!body.item || !String(body.item).trim()) {
+      return { isValid: false, error: 'item de inspeção é obrigatório.' };
+    }
+    const dias = Number(body.periodicidade_dias);
+    if (!Number.isFinite(dias) || dias <= 0) {
+      return { isValid: false, error: 'periodicidade_dias deve ser maior que zero.' };
+    }
+    return { isValid: true };
+  },
+});
+
+// 26. Ciclos de Inspeção Visual (US31.1)
+export const ciclosInspecaoSyncRouter = createSyncResourceRouter({
+  tableName: 'ciclos_inspecao',
+  ownershipType: 'direct',
+  allowedFields: ['lembrete_id', 'disparado_em', 'ultimo_disparo_em', 'tentativas', 'concluido_em'],
+  validatePayload: body => {
+    if (!body.lembrete_id) return { isValid: false, error: 'lembrete_id é obrigatório.' };
+    if (!body.disparado_em) return { isValid: false, error: 'disparado_em é obrigatório.' };
+    return { isValid: true };
+  },
+});
+
+router.use('/lembretes_inspecao', lembretesInspecaoSyncRouter);
+router.use('/inspection_reminders', lembretesInspecaoSyncRouter);
+
+router.use('/ciclos_inspecao', ciclosInspecaoSyncRouter);
+router.use('/inspection_cycles', ciclosInspecaoSyncRouter);
+
+// 27. Fotos do Veículo (US32.1)
+export const fotosVeiculoSyncRouter = createSyncResourceRouter({
+  tableName: 'fotos_veiculo',
+  ownershipType: 'via_vehicle',
+  allowedFields: [
+    'veiculo_id',
+    'data',
+    'legenda',
+    'arquivo_local',
+    'url_gcs',
+    'tamanho_bytes',
+    'mime_type',
+    'status_upload',
+  ],
+  validatePayload: body => {
+    const vId = body.veiculo_id || body.vehicleId;
+    if (!vId) return { isValid: false, error: 'veiculo_id é obrigatório.' };
+    if (!body.data) return { isValid: false, error: 'data é obrigatória.' };
+    const tamanho = Number(body.tamanho_bytes);
+    if (!Number.isFinite(tamanho) || tamanho <= 0 || tamanho > 1048576) {
+      return { isValid: false, error: 'tamanho_bytes deve estar entre 1 e 1048576 bytes (1 MB).' };
+    }
+    return { isValid: true };
+  },
+});
+
+router.use('/fotos_veiculo', fotosVeiculoSyncRouter);
+router.use('/vehicle_photos', fotosVeiculoSyncRouter);
+
+// 28. Perfis de Condução (US29.1)
+export const perfisConducaoSyncRouter = createSyncResourceRouter({
+  tableName: 'perfis_conducao',
+  ownershipType: 'via_vehicle',
+  allowedFields: ['veiculo_id', 'perfil_conducao', 'definido_em'],
+  validatePayload: body => {
+    const vId = body.veiculo_id || body.vehicleId;
+    if (!vId) return { isValid: false, error: 'veiculo_id é obrigatório.' };
+    if (
+      !body.perfil_conducao ||
+      !['economico', 'normal', 'agressivo'].includes(body.perfil_conducao)
+    ) {
+      return { isValid: false, error: 'perfil_conducao deve ser economico, normal ou agressivo.' };
+    }
+    return { isValid: true };
+  },
+});
+
+router.use('/perfis_conducao', perfisConducaoSyncRouter);
+router.use('/driving_profiles', perfisConducaoSyncRouter);
+
+// 29. Preferências de Resumo Mensal por E-mail (US37.1)
+export const preferenciasResumoSyncRouter = createSyncResourceRouter({
+  tableName: 'preferencias_resumo',
+  ownershipType: 'direct',
+  allowedFields: ['receber_resumo', 'email_destino'],
+  validatePayload: body => {
+    if (body.receber_resumo && (!body.email_destino || !String(body.email_destino).includes('@'))) {
+      return { isValid: false, error: 'email_destino válido é obrigatório ao ativar o resumo.' };
+    }
+    return { isValid: true };
+  },
+});
+
+router.use('/preferencias_resumo', preferenciasResumoSyncRouter);
+router.use('/summary_preferences', preferenciasResumoSyncRouter);
 
 export default router;

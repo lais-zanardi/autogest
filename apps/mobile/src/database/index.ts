@@ -17,6 +17,16 @@ import './migrations/016_create_local_viagens';
 import './migrations/017_create_local_metas_eficiencia';
 import './migrations/018_create_local_consultas_fipe';
 import './migrations/019_create_local_agendamentos_manutencao';
+import './migrations/020_create_local_precos_e_clima';
+import './migrations/021_create_local_postos';
+import './migrations/022_create_local_historico_e_alertas_preco';
+import './migrations/023_create_local_oficinas_e_atendimentos';
+import './migrations/024_create_local_locais_visitados';
+import './migrations/025_create_local_simulacoes';
+import './migrations/026_create_local_lembretes_inspecao';
+import './migrations/027_create_local_fotos_veiculo';
+import './migrations/028_create_local_perfis_conducao';
+import './migrations/029_create_local_preferencias_resumo';
 import { localMigrator } from './migrations/localMigrator';
 
 export * from './DatabaseConnection';

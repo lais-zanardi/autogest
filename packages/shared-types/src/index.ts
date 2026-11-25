@@ -27,6 +27,8 @@ export interface Vehicle {
   initialOdometer: number;
   currentOdometer: number;
   fipeValue?: number | null;
+  coverPhotoId?: string | null;
+  foto_capa_id?: string | null;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string | null;
@@ -56,6 +58,8 @@ export interface UpdateVehicleDTO {
   initialOdometer?: number;
   currentOdometer?: number;
   fipeValue?: number | null;
+  coverPhotoId?: string | null;
+  foto_capa_id?: string | null;
 }
 
 export type RouteType = 'urbano' | 'rodoviario' | 'misto';
@@ -81,6 +85,8 @@ export interface Refuel {
   nota?: string | null;
   tripId?: string | null;
   viagem_id?: string | null;
+  drivingProfile?: DrivingProfileType | null;
+  perfil_conducao?: DrivingProfileType | null;
   createdAt: string;
   updatedAt?: string;
   deletedAt?: string | null;
@@ -105,6 +111,8 @@ export interface CreateRefuelDTO {
   nota?: string | null;
   tripId?: string | null;
   viagem_id?: string | null;
+  drivingProfile?: DrivingProfileType | null;
+  perfil_conducao?: DrivingProfileType | null;
 }
 
 export interface UpdateRefuelDTO {
@@ -306,6 +314,8 @@ export interface Maintenance {
   description: string;
   replacedParts?: string | null;
   workshop?: string | null;
+  workshopId?: string | null;
+  oficina_id?: string | null;
   mechanic?: string | null;
   executionTimeMin?: number | null;
   totalValue: number;
@@ -326,6 +336,8 @@ export interface CreateMaintenanceDTO {
   description: string;
   replacedParts?: string | null;
   workshop?: string | null;
+  workshopId?: string | null;
+  oficina_id?: string | null;
   mechanic?: string | null;
   executionTimeMin?: number | null;
   totalValue: number;
@@ -342,6 +354,8 @@ export interface UpdateMaintenanceDTO {
   description?: string;
   replacedParts?: string | null;
   workshop?: string | null;
+  workshopId?: string | null;
+  oficina_id?: string | null;
   mechanic?: string | null;
   executionTimeMin?: number | null;
   totalValue?: number;
@@ -707,6 +721,8 @@ export type ConsumptionUnit = 'km/l' | 'L/100 km';
 export interface UserPreferences {
   unidade_consumo_principal: ConsumptionUnit;
   notificacoes_pausadas_ate: string | null;
+  combustivel_principal?: FuelType;
+  municipio_padrao?: string;
 }
 
 export interface FormattedConsumptionResult {
@@ -1096,4 +1112,427 @@ export interface UpdateMaintenanceScheduleDTO {
   description?: string;
   status?: MaintenanceScheduleStatus;
   maintenanceId?: string | null;
+}
+
+/**
+ * US17: Monitoramento de Preços ANP e Clima
+ */
+export type PriceGranularity = 'municipal' | 'posto';
+
+export interface FuelPriceRecord {
+  id: string;
+  municipio: string;
+  uf: string;
+  combustivel: FuelType | string;
+  preco_centavos: number;
+  data_coleta: string; // "AAAA-MM-DD"
+  fonte: string;
+  granularidade: PriceGranularity;
+  sincronizado_em: string;
+}
+
+export interface WeatherCacheRecord {
+  id: string;
+  municipio: string;
+  uf?: string | null;
+  data: string; // "AAAA-MM-DD"
+  temperatura_atual?: number | null;
+  temperatura_min: number;
+  temperatura_max: number;
+  condicao: string;
+  expira_em: string; // ISO 8601
+}
+
+export interface RegionalPriceHistoryPoint {
+  data_coleta: string; // "AAAA-MM-DD"
+  preco_centavos: number;
+}
+
+export interface RegionalPricesResponse {
+  municipio: string;
+  uf: string;
+  combustivel: string;
+  preco_medio_centavos: number;
+  data_coleta: string;
+  fonte: string;
+  granularidade: PriceGranularity;
+  aviso_granularidade: string | null;
+  historico_semana: RegionalPriceHistoryPoint[];
+  clima?: WeatherCacheRecord | null;
+}
+
+/**
+ * US34: Postos Mais Baratos por GPS
+ */
+export interface FuelStationRecord {
+  id: string;
+  nome: string;
+  bandeira: string;
+  latitude: number;
+  longitude: number;
+  municipio: string;
+  uf: string;
+  endereco?: string | null;
+  /** Preços por combustível em centavos (opcional; fallback para média municipal US17) */
+  precos_centavos?: Record<string, number>;
+  sincronizado_em?: string;
+}
+
+export interface RankedFuelStation extends FuelStationRecord {
+  combustivel: string;
+  preco_centavos: number;
+  distancia_km: number | null;
+  fonte_preco: 'posto' | 'media_municipal';
+}
+
+/**
+ * US35: Histórico de Preços e Alerta de Preço-Limite
+ */
+export interface LocalPriceHistoryRecord {
+  id: string;
+  municipio: string;
+  combustivel: FuelType | string;
+  preco_centavos: number;
+  data_coleta: string; // "AAAA-MM-DD"
+  criado_em?: string;
+  atualizado_em?: string;
+}
+
+export interface PriceAlertRecord {
+  id: string;
+  veiculo_id: string;
+  vehicleId?: string;
+  combustivel: FuelType | string;
+  preco_limite_centavos: number;
+  ativo: boolean;
+  disparado_em: string | null;
+  criado_em: string;
+  atualizado_em: string;
+  excluido_em?: string | null;
+}
+
+export type PriceTrendDirection = 'alta' | 'queda' | 'estavel' | 'dados_insuficientes';
+
+export interface PriceTrendSummary {
+  periodoDias: 30 | 90;
+  direcao: PriceTrendDirection;
+  pontos: LocalPriceHistoryRecord[];
+  precoInicialCentavos: number | null;
+  precoAtualCentavos: number | null;
+  variacaoCentavos: number;
+  variacaoPercentual: number;
+}
+
+/**
+ * US12: Diretório de Oficinas Favoritas
+ */
+export interface WorkshopRecord {
+  id: string;
+  nome: string;
+  telefone?: string | null;
+  endereco?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  favorita: boolean;
+  observacoes?: string | null;
+  criado_em: string;
+  atualizado_em: string;
+  excluido_em?: string | null;
+}
+
+export interface CreateWorkshopDTO {
+  nome: string;
+  telefone?: string | null;
+  endereco?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  favorita?: boolean;
+  observacoes?: string | null;
+}
+
+export interface UpdateWorkshopDTO {
+  nome?: string;
+  telefone?: string | null;
+  endereco?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  favorita?: boolean;
+  observacoes?: string | null;
+}
+
+export interface WorkshopVisitRecord {
+  id: string;
+  oficina_id: string;
+  manutencao_id: string;
+  data: string; // "AAAA-MM-DD"
+  criado_em: string;
+  atualizado_em: string;
+  excluido_em?: string | null;
+}
+
+export interface WorkshopVisitDetail extends WorkshopVisitRecord {
+  descricaoManutencao: string;
+  tipoServico: string;
+  valorReais: number;
+}
+
+export interface WorkshopDetailSummary {
+  oficina: WorkshopRecord;
+  atendimentos: WorkshopVisitDetail[];
+  totalGastoReais: number;
+}
+
+/**
+ * US36: Mapa de Postos e Oficinas Visitados
+ */
+export type VisitedPlaceType = 'posto' | 'oficina';
+
+export interface VisitedPlaceRecord {
+  id: string;
+  tipo: VisitedPlaceType;
+  referencia_id: string;
+  nome?: string | null;
+  latitude: number;
+  longitude: number;
+  data: string; // "AAAA-MM-DD" ou ISO
+  criado_em: string;
+  atualizado_em: string;
+  excluido_em?: string | null;
+}
+
+export interface GroupedVisitedPlace {
+  id: string;
+  tipo: VisitedPlaceType;
+  nome: string;
+  latitude: number;
+  longitude: number;
+  visitas: number;
+  ultimaData: string;
+  referencias: string[];
+}
+
+/**
+ * US16: Simulador Financeiro de Viabilidade e Economia
+ */
+export type SimulationType = 'etanol_gasolina' | 'economia_potencial' | 'custo_viagem';
+
+export interface EtanolGasolinaResult {
+  decisao: 'etanol' | 'gasolina';
+  etanolCompensa: boolean;
+  razaoPercentual: number;
+  diferencaPercentual: number;
+  pontoEquilibrioCentavos: number;
+  mensagem: string;
+}
+
+export interface EconomiaPotencialResult {
+  custoMensalAtualCentavos: number;
+  custoMensalAlternativoCentavos: number;
+  economiaMensalCentavos: number;
+  economiaAnualCentavos: number;
+  alternativaCompensa: boolean;
+  mensagem: string;
+}
+
+export interface CustoViagemResult {
+  litrosEstimados: number;
+  custoCombustivelCentavos: number;
+  pedagiosCentavos: number;
+  alimentacaoCentavos: number;
+  custoTotalCentavos: number;
+  custoPorKmCentavos: number;
+  mensagem: string;
+}
+
+export interface SimulationRecord {
+  id: string;
+  tipo: SimulationType;
+  entradas: Record<string, any>;
+  resultado: Record<string, any>;
+  criado_em: string;
+  atualizado_em?: string;
+  excluido_em?: string | null;
+}
+
+/**
+ * US31: Lembretes de Inspeção Visual
+ */
+export interface InspectionReminderRecord {
+  id: string;
+  veiculo_id: string;
+  vehicleId?: string;
+  item: string;
+  periodicidade_dias: number;
+  ultima_inspecao_em: string | null;
+  ativo: boolean;
+  criado_em: string;
+  atualizado_em: string;
+  excluido_em?: string | null;
+}
+
+export interface CreateInspectionReminderDTO {
+  veiculoId: string;
+  item: string;
+  periodicidadeDias: number;
+  ultimaInspecaoEm?: string | null;
+  ativo?: boolean;
+}
+
+export interface InspectionCycleRecord {
+  id: string;
+  lembrete_id: string;
+  disparado_em: string;
+  ultimo_disparo_em?: string;
+  tentativas: number;
+  concluido_em: string | null;
+  criado_em: string;
+  atualizado_em: string;
+  excluido_em?: string | null;
+}
+
+/**
+ * US32: Fotos do Veículo
+ */
+export interface VehiclePhotoRecord {
+  id: string;
+  veiculo_id: string;
+  vehicleId?: string;
+  data: string; // "AAAA-MM-DD"
+  legenda?: string | null;
+  arquivo_local: string;
+  url_gcs?: string | null;
+  tamanho_bytes: number;
+  mime_type: string;
+  status_upload: AttachmentUploadStatus;
+  criado_em: string;
+  atualizado_em: string;
+  excluido_em?: string | null;
+}
+
+export interface CreateVehiclePhotoDTO {
+  veiculoId: string;
+  data: string;
+  legenda?: string | null;
+  localPath: string;
+  fileSize: number;
+  mimeType?: string;
+}
+
+/**
+ * US29: Perfil de Condução
+ */
+export type DrivingProfileType = 'economico' | 'normal' | 'agressivo';
+
+export interface DrivingProfileRecord {
+  id: string;
+  veiculo_id: string;
+  vehicleId?: string;
+  perfil_conducao: DrivingProfileType;
+  definido_em: string;
+  criado_em: string;
+  atualizado_em: string;
+  excluido_em?: string | null;
+}
+
+export interface DrivingProfileCorrelationItem {
+  perfil: DrivingProfileType;
+  rotulo: string;
+  mediaKml: number | null;
+  totalAbastecimentos: number;
+}
+
+export interface DrivingProfileCorrelationResult {
+  itens: DrivingProfileCorrelationItem[];
+  totalRegistrosComConsumo: number;
+  dadosSuficientes: boolean;
+}
+
+/**
+ * US28: Comparativos entre Combustíveis e Veículos
+ */
+export interface FuelComparisonItem {
+  combustivel: FuelType | string;
+  mediaKml: number | null;
+  custoPorKm: number | null;
+  consumoFormatado: string;
+  custoPorKmFormatado: string;
+  totalGasto: number;
+  totalLitros: number;
+  totalRegistros: number;
+}
+
+export interface VehicleComparisonInput {
+  veiculoId: string;
+  nome: string;
+  placa: string;
+  consumoMedioKml: number | null;
+  kmRodados: number;
+  custoTotal: number;
+  custoPorKm: number | null;
+}
+
+export interface VehicleComparisonItem extends VehicleComparisonInput {
+  consumoFormatado: string;
+  custoPorKmFormatado: string;
+}
+
+/**
+ * US20: Perfil Compartilhável via QR Code
+ */
+export interface VehicleShareCreatedResponse {
+  id: string;
+  veiculo_id: string;
+  token: string;
+  url_publica: string;
+  criado_em: string;
+  expira_em: string;
+}
+
+export interface VehicleShareSummary {
+  id: string;
+  veiculo_id: string;
+  criado_em: string;
+  expira_em: string;
+  revogado_em: string | null;
+}
+
+export interface PublicVehicleMaintenanceItem {
+  data: string;
+  tipo: string;
+  tipo_servico: string;
+  descricao: string;
+  km: number;
+}
+
+export interface PublicVehicleProfileResponse {
+  veiculo: {
+    modelo: string;
+    marca: string | null;
+    ano: number;
+    placa: string;
+    combustivel_preferencial: string;
+    odometro_atual: number;
+  };
+  manutencoes: PublicVehicleMaintenanceItem[];
+  expira_em: string;
+}
+
+/**
+ * US37: Resumo Mensal por E-mail
+ */
+export interface MonthlySummaryPreferenceRecord {
+  id: string;
+  usuario_id?: string;
+  receber_resumo: boolean;
+  email_destino: string;
+  criado_em: string;
+  atualizado_em: string;
+  excluido_em?: string | null;
+}
+
+export interface MonthlySummaryMetrics {
+  mesReferencia: string; // "AAAA-MM"
+  gastosTotaisReais: number;
+  consumoMedioKml: number | null;
+  kmPercorridos: number;
 }

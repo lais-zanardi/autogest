@@ -826,3 +826,465 @@ SyncEntityRegistry.register({
     }
   },
 });
+
+// 17. Preços de Combustível ANP — somente leitura (US17.1 & US17.7)
+SyncEntityRegistry.register({
+  name: 'precos_combustivel',
+  endpoint: '/api/v1/sync/precos_combustivel',
+  localTable: 'precos_combustivel',
+  applyRemote: async (remote: any) => {
+    const existing = await db.findById<any>('precos_combustivel', remote.id);
+    const now = new Date().toISOString();
+    const recordData = {
+      municipio: remote.municipio,
+      uf: remote.uf,
+      combustivel: remote.combustivel,
+      preco_centavos: Number(remote.preco_centavos),
+      data_coleta: remote.data_coleta,
+      fonte: remote.fonte || 'ANP',
+      granularidade: remote.granularidade || 'municipal',
+      sincronizado_em: remote.sincronizado_em || now,
+    };
+
+    if (existing) {
+      await db.update('precos_combustivel', remote.id, recordData as any);
+    } else {
+      await db.insert('precos_combustivel', {
+        id: remote.id,
+        ...recordData,
+      });
+    }
+  },
+});
+
+// 18. Cache de Clima — somente leitura (US17.1 & US17.7)
+SyncEntityRegistry.register({
+  name: 'cache_clima',
+  endpoint: '/api/v1/sync/cache_clima',
+  localTable: 'cache_clima',
+  applyRemote: async (remote: any) => {
+    const existing = await db.findById<any>('cache_clima', remote.id);
+    const recordData = {
+      municipio: remote.municipio,
+      uf: remote.uf || null,
+      data: remote.data,
+      temperatura_atual:
+        remote.temperatura_atual !== undefined && remote.temperatura_atual !== null
+          ? Number(remote.temperatura_atual)
+          : null,
+      temperatura_min: Number(remote.temperatura_min),
+      temperatura_max: Number(remote.temperatura_max),
+      condicao: remote.condicao,
+      expira_em: remote.expira_em,
+    };
+
+    if (existing) {
+      await db.update('cache_clima', remote.id, recordData as any);
+    } else {
+      await db.insert('cache_clima', {
+        id: remote.id,
+        ...recordData,
+      });
+    }
+  },
+});
+
+// 19. Postos de Combustível — somente leitura (US34.1)
+SyncEntityRegistry.register({
+  name: 'postos',
+  endpoint: '/api/v1/sync/postos',
+  localTable: 'postos',
+  applyRemote: async (remote: any) => {
+    const existing = await db.findById<any>('postos', remote.id);
+    const now = new Date().toISOString();
+    const recordData = {
+      nome: remote.nome,
+      bandeira: remote.bandeira || 'BRANCA',
+      latitude: Number(remote.latitude),
+      longitude: Number(remote.longitude),
+      municipio: remote.municipio,
+      uf: remote.uf,
+      endereco: remote.endereco || null,
+      precos_centavos: remote.precos_centavos || {},
+      sincronizado_em: remote.sincronizado_em || now,
+    };
+
+    if (existing) {
+      await db.update('postos', remote.id, recordData as any);
+    } else {
+      await db.insert('postos', {
+        id: remote.id,
+        ...recordData,
+      });
+    }
+  },
+});
+
+// 20. Histórico de Preços Locais — somente leitura (US35.1)
+SyncEntityRegistry.register({
+  name: 'historico_precos_locais',
+  endpoint: '/api/v1/sync/historico_precos_locais',
+  localTable: 'historico_precos_locais',
+  applyRemote: async (remote: any) => {
+    const existing = await db.findById<any>('historico_precos_locais', remote.id);
+    const now = new Date().toISOString();
+    const recordData = {
+      municipio: remote.municipio,
+      combustivel: remote.combustivel,
+      preco_centavos: Number(remote.preco_centavos),
+      data_coleta: remote.data_coleta,
+      atualizado_em: remote.atualizado_em || now,
+    };
+
+    if (existing) {
+      await db.update('historico_precos_locais', remote.id, recordData as any);
+    } else {
+      await db.insert('historico_precos_locais', {
+        id: remote.id,
+        ...recordData,
+        criado_em: remote.criado_em || now,
+      });
+    }
+  },
+});
+
+// 21. Alertas de Preço-Limite (US35.1)
+SyncEntityRegistry.register({
+  name: 'alertas_preco',
+  endpoint: '/api/v1/sync/alertas_preco',
+  localTable: 'alertas_preco',
+  applyRemote: async (remote: any) => {
+    const existing = await db.findById<any>('alertas_preco', remote.id);
+    const now = new Date().toISOString();
+    const recordData = {
+      veiculo_id: remote.veiculo_id || remote.vehicleId,
+      vehicleId: remote.veiculo_id || remote.vehicleId,
+      combustivel: remote.combustivel,
+      preco_limite_centavos: Number(remote.preco_limite_centavos),
+      ativo: Boolean(remote.ativo),
+      disparado_em: remote.disparado_em || null,
+      atualizado_em: remote.atualizado_em || now,
+      excluido_em: remote.excluido_em || null,
+    };
+
+    if (existing) {
+      const localMs = new Date(existing.atualizado_em || 0).getTime();
+      const remoteMs = new Date(recordData.atualizado_em).getTime();
+      if (remoteMs >= localMs) {
+        await db.update('alertas_preco', remote.id, recordData as any);
+      }
+    } else {
+      await db.insert('alertas_preco', {
+        id: remote.id,
+        ...recordData,
+        criado_em: remote.criado_em || now,
+      });
+    }
+  },
+});
+
+// 22. Oficinas Favoritas (US12.1)
+SyncEntityRegistry.register({
+  name: 'oficinas',
+  endpoint: '/api/v1/sync/oficinas',
+  localTable: 'oficinas',
+  applyRemote: async (remote: any) => {
+    const existing = await db.findById<any>('oficinas', remote.id);
+    const now = new Date().toISOString();
+    const recordData = {
+      nome: remote.nome,
+      telefone: remote.telefone || null,
+      endereco: remote.endereco || null,
+      latitude: remote.latitude !== undefined && remote.latitude !== null ? Number(remote.latitude) : null,
+      longitude: remote.longitude !== undefined && remote.longitude !== null ? Number(remote.longitude) : null,
+      favorita: Boolean(remote.favorita),
+      observacoes: remote.observacoes || null,
+      atualizado_em: remote.atualizado_em || now,
+      excluido_em: remote.excluido_em || null,
+    };
+
+    if (existing) {
+      const localMs = new Date(existing.atualizado_em || 0).getTime();
+      const remoteMs = new Date(recordData.atualizado_em).getTime();
+      if (remoteMs >= localMs) {
+        await db.update('oficinas', remote.id, recordData as any);
+      }
+    } else {
+      await db.insert('oficinas', {
+        id: remote.id,
+        ...recordData,
+        criado_em: remote.criado_em || now,
+      });
+    }
+  },
+});
+
+// 23. Atendimentos de Oficina (US12.1)
+SyncEntityRegistry.register({
+  name: 'atendimentos_oficina',
+  endpoint: '/api/v1/sync/atendimentos_oficina',
+  localTable: 'atendimentos_oficina',
+  applyRemote: async (remote: any) => {
+    const existing = await db.findById<any>('atendimentos_oficina', remote.id);
+    const now = new Date().toISOString();
+    const recordData = {
+      oficina_id: remote.oficina_id,
+      manutencao_id: remote.manutencao_id,
+      data: remote.data,
+      atualizado_em: remote.atualizado_em || now,
+      excluido_em: remote.excluido_em || null,
+    };
+
+    if (existing) {
+      const localMs = new Date(existing.atualizado_em || 0).getTime();
+      const remoteMs = new Date(recordData.atualizado_em).getTime();
+      if (remoteMs >= localMs) {
+        await db.update('atendimentos_oficina', remote.id, recordData as any);
+      }
+    } else {
+      await db.insert('atendimentos_oficina', {
+        id: remote.id,
+        ...recordData,
+        criado_em: remote.criado_em || now,
+      });
+    }
+  },
+});
+
+// 24. Locais Visitados (US36.1)
+SyncEntityRegistry.register({
+  name: 'locais_visitados',
+  endpoint: '/api/v1/sync/locais_visitados',
+  localTable: 'locais_visitados',
+  applyRemote: async (remote: any) => {
+    const existing = await db.findById<any>('locais_visitados', remote.id);
+    const now = new Date().toISOString();
+    const recordData = {
+      tipo: remote.tipo,
+      referencia_id: remote.referencia_id,
+      nome: remote.nome || null,
+      latitude: Number(remote.latitude),
+      longitude: Number(remote.longitude),
+      data: remote.data,
+      atualizado_em: remote.atualizado_em || now,
+      excluido_em: remote.excluido_em || null,
+    };
+
+    if (existing) {
+      const localMs = new Date(existing.atualizado_em || 0).getTime();
+      const remoteMs = new Date(recordData.atualizado_em).getTime();
+      if (remoteMs >= localMs) {
+        await db.update('locais_visitados', remote.id, recordData as any);
+      }
+    } else {
+      await db.insert('locais_visitados', {
+        id: remote.id,
+        ...recordData,
+        criado_em: remote.criado_em || now,
+      });
+    }
+  },
+});
+
+// 25. Simulações Financeiras (US16.6)
+SyncEntityRegistry.register({
+  name: 'simulacoes',
+  endpoint: '/api/v1/sync/simulacoes',
+  localTable: 'simulacoes',
+  applyRemote: async (remote: any) => {
+    const existing = await db.findById<any>('simulacoes', remote.id);
+    const now = new Date().toISOString();
+    const recordData = {
+      tipo: remote.tipo,
+      entradas: remote.entradas || {},
+      resultado: remote.resultado || {},
+      atualizado_em: remote.atualizado_em || now,
+      excluido_em: remote.excluido_em || null,
+    };
+
+    if (existing) {
+      const localMs = new Date(existing.atualizado_em || 0).getTime();
+      const remoteMs = new Date(recordData.atualizado_em).getTime();
+      if (remoteMs >= localMs) {
+        await db.update('simulacoes', remote.id, recordData as any);
+      }
+    } else {
+      await db.insert('simulacoes', {
+        id: remote.id,
+        ...recordData,
+        criado_em: remote.criado_em || now,
+      });
+    }
+  },
+});
+
+// 26. Lembretes de Inspeção Visual (US31.1)
+SyncEntityRegistry.register({
+  name: 'lembretes_inspecao',
+  endpoint: '/api/v1/sync/lembretes_inspecao',
+  localTable: 'lembretes_inspecao',
+  applyRemote: async (remote: any) => {
+    const existing = await db.findById<any>('lembretes_inspecao', remote.id);
+    const now = new Date().toISOString();
+    const recordData = {
+      veiculo_id: remote.veiculo_id || remote.vehicleId,
+      vehicleId: remote.veiculo_id || remote.vehicleId,
+      item: remote.item,
+      periodicidade_dias: Number(remote.periodicidade_dias),
+      ultima_inspecao_em: remote.ultima_inspecao_em || null,
+      ativo: Boolean(remote.ativo),
+      atualizado_em: remote.atualizado_em || now,
+      excluido_em: remote.excluido_em || null,
+    };
+
+    if (existing) {
+      const localMs = new Date(existing.atualizado_em || 0).getTime();
+      const remoteMs = new Date(recordData.atualizado_em).getTime();
+      if (remoteMs >= localMs) {
+        await db.update('lembretes_inspecao', remote.id, recordData as any);
+      }
+    } else {
+      await db.insert('lembretes_inspecao', {
+        id: remote.id,
+        ...recordData,
+        criado_em: remote.criado_em || now,
+      });
+    }
+  },
+});
+
+// 27. Ciclos de Inspeção Visual (US31.1)
+SyncEntityRegistry.register({
+  name: 'ciclos_inspecao',
+  endpoint: '/api/v1/sync/ciclos_inspecao',
+  localTable: 'ciclos_inspecao',
+  applyRemote: async (remote: any) => {
+    const existing = await db.findById<any>('ciclos_inspecao', remote.id);
+    const now = new Date().toISOString();
+    const recordData = {
+      lembrete_id: remote.lembrete_id,
+      disparado_em: remote.disparado_em,
+      ultimo_disparo_em: remote.ultimo_disparo_em || remote.disparado_em,
+      tentativas: Number(remote.tentativas || 1),
+      concluido_em: remote.concluido_em || null,
+      atualizado_em: remote.atualizado_em || now,
+      excluido_em: remote.excluido_em || null,
+    };
+
+    if (existing) {
+      const localMs = new Date(existing.atualizado_em || 0).getTime();
+      const remoteMs = new Date(recordData.atualizado_em).getTime();
+      if (remoteMs >= localMs) {
+        await db.update('ciclos_inspecao', remote.id, recordData as any);
+      }
+    } else {
+      await db.insert('ciclos_inspecao', {
+        id: remote.id,
+        ...recordData,
+        criado_em: remote.criado_em || now,
+      });
+    }
+  },
+});
+
+// 28. Fotos do Veículo (US32.1)
+SyncEntityRegistry.register({
+  name: 'fotos_veiculo',
+  endpoint: '/api/v1/sync/fotos_veiculo',
+  localTable: 'fotos_veiculo',
+  applyRemote: async (remote: any) => {
+    const existing = await db.findById<any>('fotos_veiculo', remote.id);
+    const now = new Date().toISOString();
+    const recordData = {
+      veiculo_id: remote.veiculo_id || remote.vehicleId,
+      vehicleId: remote.veiculo_id || remote.vehicleId,
+      data: remote.data,
+      legenda: remote.legenda || null,
+      arquivo_local: remote.arquivo_local || '',
+      url_gcs: remote.url_gcs || null,
+      tamanho_bytes: Number(remote.tamanho_bytes || 0),
+      mime_type: remote.mime_type || 'image/jpeg',
+      status_upload: remote.status_upload || 'enviado',
+      atualizado_em: remote.atualizado_em || now,
+      excluido_em: remote.excluido_em || null,
+    };
+
+    if (existing) {
+      const localMs = new Date(existing.atualizado_em || 0).getTime();
+      const remoteMs = new Date(recordData.atualizado_em).getTime();
+      if (remoteMs >= localMs) {
+        await db.update('fotos_veiculo', remote.id, recordData as any);
+      }
+    } else {
+      await db.insert('fotos_veiculo', {
+        id: remote.id,
+        ...recordData,
+        criado_em: remote.criado_em || now,
+      });
+    }
+  },
+});
+
+// 29. Perfis de Condução (US29.1)
+SyncEntityRegistry.register({
+  name: 'perfis_conducao',
+  endpoint: '/api/v1/sync/perfis_conducao',
+  localTable: 'perfis_conducao',
+  applyRemote: async (remote: any) => {
+    const existing = await db.findById<any>('perfis_conducao', remote.id);
+    const now = new Date().toISOString();
+    const recordData = {
+      veiculo_id: remote.veiculo_id || remote.vehicleId,
+      vehicleId: remote.veiculo_id || remote.vehicleId,
+      perfil_conducao: remote.perfil_conducao,
+      definido_em: remote.definido_em || now,
+      atualizado_em: remote.atualizado_em || now,
+      excluido_em: remote.excluido_em || null,
+    };
+
+    if (existing) {
+      const localMs = new Date(existing.atualizado_em || 0).getTime();
+      const remoteMs = new Date(recordData.atualizado_em).getTime();
+      if (remoteMs >= localMs) {
+        await db.update('perfis_conducao', remote.id, recordData as any);
+      }
+    } else {
+      await db.insert('perfis_conducao', {
+        id: remote.id,
+        ...recordData,
+        criado_em: remote.criado_em || now,
+      });
+    }
+  },
+});
+
+// 30. Preferências de Resumo Mensal por E-mail (US37.1)
+SyncEntityRegistry.register({
+  name: 'preferencias_resumo',
+  endpoint: '/api/v1/sync/preferencias_resumo',
+  localTable: 'preferencias_resumo',
+  applyRemote: async (remote: any) => {
+    const existing = await db.findById<any>('preferencias_resumo', remote.id);
+    const now = new Date().toISOString();
+    const recordData = {
+      receber_resumo: Boolean(remote.receber_resumo),
+      email_destino: remote.email_destino || '',
+      atualizado_em: remote.atualizado_em || now,
+      excluido_em: remote.excluido_em || null,
+    };
+
+    if (existing) {
+      const localMs = new Date(existing.atualizado_em || 0).getTime();
+      const remoteMs = new Date(recordData.atualizado_em).getTime();
+      if (remoteMs >= localMs) {
+        await db.update('preferencias_resumo', remote.id, recordData as any);
+      }
+    } else {
+      await db.insert('preferencias_resumo', {
+        id: remote.id,
+        ...recordData,
+        criado_em: remote.criado_em || now,
+      });
+    }
+  },
+});
