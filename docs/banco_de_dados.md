@@ -13,6 +13,12 @@ erDiagram
     USUARIOS ||--o{ PREFERENCIAS : "configura"
     USUARIOS ||--o{ NOTIFICACOES_AGENDADAS : "recebe"
     USUARIOS ||--o{ FILA_SYNC : "enfileira"
+    USUARIOS ||--o{ OFICINAS : "cadastra"
+    USUARIOS ||--o{ LOCAIS_VISITADOS : "visita"
+    USUARIOS ||--o{ SIMULACOES : "salva"
+    USUARIOS ||--o{ COMPARTILHAMENTOS : "gera"
+    USUARIOS ||--o| PREFERENCIAS_RESUMO : "consente resumo"
+    USUARIOS ||--o{ ENVIOS_RESUMO_MENSAL : "recebe resumo"
 
     VEICULOS ||--o{ ABASTECIMENTOS : "registra"
     VEICULOS ||--o{ LEITURAS_HODOMETRO : "registra"
@@ -27,9 +33,18 @@ erDiagram
     VEICULOS ||--o{ METAS_EFICIENCIA : "define"
     VEICULOS ||--o{ CONSULTAS_FIPE : "historico cotacao"
     VEICULOS ||--o{ AGENDAMENTOS_MANUTENCAO : "agenda"
+    VEICULOS ||--o{ ALERTAS_PRECO : "monitora preco"
+    VEICULOS ||--o{ LEMBRETES_INSPECAO : "programa inspecao"
+    VEICULOS ||--o{ FOTOS_VEICULO : "galeria"
+    VEICULOS ||--o{ PERFIS_CONDUCAO : "historico perfil"
+    VEICULOS ||--o{ COMPARTILHAMENTOS : "compartilha QR"
 
     MANUTENCOES ||--o{ ANEXOS : "anexa"
     MANUTENCOES ||--o| AGENDAMENTOS_MANUTENCAO : "conclui"
+    MANUTENCOES ||--o{ ATENDIMENTOS_OFICINA : "vincula"
+    OFICINAS ||--o{ ATENDIMENTOS_OFICINA : "realiza"
+    OFICINAS ||--o{ MANUTENCOES : "presta servico"
+    LEMBRETES_INSPECAO ||--o{ CICLOS_INSPECAO : "abre ciclo"
     VIAGENS ||--o{ ABASTECIMENTOS : "associa"
     VIAGENS ||--o{ DESPESAS : "associa"
 
@@ -59,6 +74,7 @@ erDiagram
         string fipe_marca_codigo
         string fipe_modelo_codigo
         string fipe_ano_codigo
+        uuid foto_capa_id FK
         timestamp criado_em
         timestamp atualizado_em
         timestamp excluido_em
@@ -82,6 +98,7 @@ erDiagram
         decimal longitude
         string comprovante_url
         string nota
+        string perfil_conducao
         timestamp criado_em
         timestamp atualizado_em
         timestamp excluido_em
@@ -132,6 +149,7 @@ erDiagram
         string descricao
         string pecas
         string oficina
+        uuid oficina_id FK
         string profissional
         integer tempo_execucao_min
         decimal valor
@@ -278,6 +296,172 @@ erDiagram
         timestamp atualizado_em
         timestamp excluido_em
     }
+
+    PRECOS_COMBUSTIVEL {
+        uuid id PK
+        string municipio
+        string uf
+        string combustivel
+        integer preco_centavos
+        date data_coleta
+        string fonte
+        string granularidade
+        timestamp sincronizado_em
+    }
+
+    CACHE_CLIMA {
+        uuid id PK
+        string municipio
+        string uf
+        date data
+        decimal temperatura_atual
+        decimal temperatura_min
+        decimal temperatura_max
+        string condicao
+        timestamp expira_em
+    }
+
+    POSTOS {
+        uuid id PK
+        string nome
+        string bandeira
+        decimal latitude
+        decimal longitude
+        string municipio
+        string uf
+        string endereco
+        json precos_centavos
+        timestamp sincronizado_em
+    }
+
+    HISTORICO_PRECOS_LOCAIS {
+        uuid id PK
+        string municipio
+        string combustivel
+        integer preco_centavos
+        date data_coleta
+    }
+
+    ALERTAS_PRECO {
+        uuid id PK
+        uuid veiculo_id FK
+        string combustivel
+        integer preco_limite_centavos
+        boolean ativo
+        timestamp disparado_em
+        timestamp excluido_em
+    }
+
+    OFICINAS {
+        uuid id PK
+        uuid usuario_id FK
+        string nome
+        string telefone
+        string endereco
+        decimal latitude
+        decimal longitude
+        boolean favorita
+        string observacoes
+        timestamp excluido_em
+    }
+
+    ATENDIMENTOS_OFICINA {
+        uuid id PK
+        uuid usuario_id FK
+        uuid oficina_id FK
+        uuid manutencao_id FK
+        date data
+        timestamp excluido_em
+    }
+
+    LOCAIS_VISITADOS {
+        uuid id PK
+        uuid usuario_id FK
+        string tipo
+        uuid referencia_id
+        string nome
+        decimal latitude
+        decimal longitude
+        date data
+        timestamp excluido_em
+    }
+
+    SIMULACOES {
+        uuid id PK
+        uuid usuario_id FK
+        string tipo
+        json entradas
+        json resultado
+        timestamp criado_em
+        timestamp excluido_em
+    }
+
+    LEMBRETES_INSPECAO {
+        uuid id PK
+        uuid veiculo_id FK
+        string item
+        integer periodicidade_dias
+        timestamp ultima_inspecao_em
+        boolean ativo
+        timestamp excluido_em
+    }
+
+    CICLOS_INSPECAO {
+        uuid id PK
+        uuid usuario_id FK
+        uuid lembrete_id FK
+        timestamp disparado_em
+        timestamp ultimo_disparo_em
+        integer tentativas
+        timestamp concluido_em
+    }
+
+    FOTOS_VEICULO {
+        uuid id PK
+        uuid veiculo_id FK
+        date data
+        string legenda
+        string arquivo_local
+        string url_gcs
+        integer tamanho_bytes
+        string mime_type
+        string status_upload
+        timestamp excluido_em
+    }
+
+    PERFIS_CONDUCAO {
+        uuid id PK
+        uuid veiculo_id FK
+        string perfil_conducao
+        timestamp definido_em
+        timestamp excluido_em
+    }
+
+    COMPARTILHAMENTOS {
+        uuid id PK
+        uuid veiculo_id FK
+        uuid usuario_id FK
+        string token_opaco_hash UK
+        timestamp criado_em
+        timestamp expira_em
+        timestamp revogado_em
+    }
+
+    PREFERENCIAS_RESUMO {
+        uuid id PK
+        uuid usuario_id FK
+        boolean receber_resumo
+        string email_destino
+        string token_cancelamento_hash
+        timestamp atualizado_em
+    }
+
+    ENVIOS_RESUMO_MENSAL {
+        uuid id PK
+        uuid usuario_id FK
+        string mes_referencia
+        timestamp enviado_em
+    }
 ```
 
 ---
@@ -317,6 +501,7 @@ Cadastro de veículos da frota ou garagem pessoal.
 | `fipe_marca_codigo` | VARCHAR(30) | Sim | — | Código da marca no catálogo FIPE |
 | `fipe_modelo_codigo` | VARCHAR(30) | Sim | — | Código do modelo no catálogo FIPE |
 | `fipe_ano_codigo` | VARCHAR(30) | Sim | — | Código do ano no catálogo FIPE |
+| `foto_capa_id` | UUID | Sim | FK | Referência à foto selecionada como capa em `fotos_veiculo` (US32) |
 | `criado_em` | TIMESTAMP | Não | — | Data e hora de criação |
 | `atualizado_em` | TIMESTAMP | Não | — | Data e hora da última modificação |
 | `excluido_em` | TIMESTAMP | Sim | — | Data e hora da exclusão lógica em cascata |
@@ -345,6 +530,7 @@ Transações de reabastecimento vinculadas ao veículo.
 | `longitude` | NUMERIC(10,7) | Sim | — | Coordenada geográfica (longitude obtida por GPS) |
 | `comprovante_url` | TEXT | Sim | — | Caminho local ou URL de upload do cupom fiscal |
 | `nota` | TEXT | Sim | — | Observações livres do motorista |
+| `perfil_conducao` | VARCHAR(20) | Sim | — | Snapshot do perfil vigente no abastecimento: `economico`, `normal` ou `agressivo` (US29) |
 | `criado_em` | TIMESTAMP | Não | — | Data de inclusão |
 | `atualizado_em` | TIMESTAMP | Não | — | Data da última alteração |
 | `excluido_em` | TIMESTAMP | Sim | — | Data de exclusão lógica |
@@ -399,6 +585,7 @@ Histórico de intervenções de oficina, preventivas e corretivas.
 | `descricao` | TEXT | Não | — | Laudo descritivo do trabalho realizado |
 | `pecas` | TEXT | Sim | — | Relação de peças trocadas |
 | `oficina` | VARCHAR(150) | Sim | — | Nome do estabelecimento prestador |
+| `oficina_id` | UUID | Sim | FK | Referência opcional à oficina cadastrada em `oficinas` (US12) |
 | `profissional` | VARCHAR(150) | Sim | — | Nome do mecânico responsável |
 | `tempo_execucao_min` | INTEGER | Sim | — | Tempo total decorrido (em minutos) |
 | `valor` | NUMERIC(10,2) | Não | — | Valor total da mão de obra e peças |
@@ -548,8 +735,31 @@ Compromissos futuros de revisão e alertas de calendário.
 
 ---
 
-### 2.15. Tabelas Locais Adicionais (SQLite no Mobile)
+### 2.15. Tabelas da Entrega 3 (Integrações e Extras)
+
+| Tabela | US | Colunas-Chave | Observações |
+|---|---|---|---|
+| `precos_combustivel` | US17 | `id` (PK), `municipio`, `uf`, `combustivel`, `preco_centavos`, `data_coleta`, `fonte`, `granularidade`, `sincronizado_em` | Índice único por `(municipio, uf, combustivel, data_coleta)`; valores em centavos inteiros. |
+| `cache_clima` | US17 | `id` (PK), `municipio`, `uf`, `data`, `temperatura_atual`, `temperatura_min`, `temperatura_max`, `condicao`, `expira_em` | Cache persistido de 24h por `(municipio, data)` obtido via Open-Meteo. |
+| `postos` | US34 | `id` (PK), `nome`, `bandeira`, `latitude`, `longitude`, `municipio`, `uf`, `endereco`, `precos_centavos` (JSONB), `sincronizado_em` | Sincronizável somente leitura; abastecida pelo job diário da ANP. |
+| `historico_precos_locais` | US35 | `id` (PK), `municipio`, `combustivel`, `preco_centavos`, `data_coleta` | Série histórica regional para gráficos de 30 e 90 dias. |
+| `alertas_preco` | US35 | `id` (PK), `veiculo_id` (FK), `combustivel`, `preco_limite_centavos`, `ativo`, `disparado_em`, `excluido_em` | Sincronizável; dispara quando `precoAtual ≤ precoLimite`. |
+| `oficinas` | US12 | `id` (PK), `usuario_id` (FK), `nome`, `telefone`, `endereco`, `latitude`, `longitude`, `favorita`, `observacoes`, `excluido_em` | Exclusão lógica preserva atendimentos e histórico financeiro. |
+| `atendimentos_oficina` | US12 | `id` (PK), `usuario_id` (FK), `oficina_id` (FK), `manutencao_id` (FK), `data`, `excluido_em` | Vínculo entre manutenção realizada e oficina cadastrada. |
+| `locais_visitados` | US36 | `id` (PK), `usuario_id` (FK), `tipo` (`posto`\|`oficina`), `referencia_id`, `nome`, `latitude`, `longitude`, `data`, `excluido_em` | Preenchida apenas quando há coordenadas válidas; agrupada por raio de 50 m. |
+| `simulacoes` | US16 | `id` (PK), `usuario_id` (FK), `tipo` (`etanol_gasolina`\|`economia_potencial`\|`custo_viagem`), `entradas` (JSONB), `resultado` (JSONB), `excluido_em` | Histórico sincronizável das simulações financeiras. |
+| `lembretes_inspecao` | US31 | `id` (PK), `veiculo_id` (FK), `item`, `periodicidade_dias`, `ultima_inspecao_em`, `ativo`, `excluido_em` | Lembretes periódicos de inspeção visual (faróis, pneus, limpadores, etc.). |
+| `ciclos_inspecao` | US31 | `id` (PK), `usuario_id` (FK), `lembrete_id` (FK), `disparado_em`, `ultimo_disparo_em`, `tentativas`, `concluido_em`, `excluido_em` | Controla ciclos abertos com repetição diária (limite de 7 tentativas). |
+| `fotos_veiculo` | US32 | `id` (PK), `veiculo_id` (FK), `data`, `legenda`, `arquivo_local`, `url_gcs`, `tamanho_bytes`, `mime_type`, `status_upload`, `excluido_em` | Galeria cronológica comprimida (limite 1 MB), reusando URL assinada da US09. |
+| `perfis_conducao` | US29 | `id` (PK), `veiculo_id` (FK), `perfil_conducao` (`economico`\|`normal`\|`agressivo`), `definido_em`, `excluido_em` | Histórico de autoavaliações sem sobrescrever abastecimentos passados. |
+| `compartilhamentos` | US20 | `id` (PK), `veiculo_id` (FK), `usuario_id` (FK), `token_opaco_hash` (UK), `criado_em`, `expira_em`, `revogado_em` | Persiste apenas hash SHA-256 do token de 32 bytes; validade padrão de 30 dias. |
+| `preferencias_resumo` | US37 | `id` (PK), `usuario_id` (FK, UK), `receber_resumo` (`FALSE` padrão), `email_destino`, `token_cancelamento_hash`, `excluido_em` | Consentimento explícito sincronizável para envio do resumo mensal. |
+| `envios_resumo_mensal` | US37 | `id` (PK), `usuario_id` (FK), `mes_referencia` (`YYYY-MM`), `enviado_em` | Restrição `UNIQUE (usuario_id, mes_referencia)` garantindo idempotência no job mensal. |
+
+---
+
+### 2.16. Tabelas Locais Adicionais (SQLite no Mobile)
 
 - **`fila_sync`**: Fila persistente append-only de operações pendentes (`id`, `entidade`, `entidade_id`, `operacao`, `dados`, `criado_em`, `tentativas`).
-- **`preferencias`**: Configurações de sistema e dispositivo (`chave`, `valor`, `atualizado_em`), incluindo `unidade_consumo_principal` (km/l vs L/100 km) e `notificacoes_pausadas_ate`.
+- **`preferencias`**: Configurações de sistema e dispositivo (`chave`, `valor`, `atualizado_em`), incluindo `unidade_consumo_principal` (km/l vs L/100 km), `notificacoes_pausadas_ate`, `combustivel_principal` e `municipio_padrao`.
 - **`notificacoes_agendadas`**: Registro de triggers do sistema operacional para disparar alarmes pontuais.

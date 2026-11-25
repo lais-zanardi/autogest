@@ -1,54 +1,61 @@
 # 📦 Documentação da Entrega 3 (Integrações e Extras) — AutoGest
 
 ## 1. Identificação e Metadados
-- **Escopo:** 11 User Stories (Sprints 7 a 9)
+- **Escopo:** 12 User Stories (Sprints 7 a 9) + 3 Spikes (SPK.4, SPK.5 e SPK.6)
 - **Carga Horária Estimada:** 92h
-- **Status Geral:** **Planejada / Em Aberto** ⏳
+- **Status Geral:** **100% Concluída** ✅
+- **Data de Conclusão:** 25/11/2026
 - **Pré-requisitos:** Entregas 1 e 2 homologadas e concluídas.
 
 ---
 
 ## 2. Objetivo da Entrega
-Ampliar o ecossistema do **AutoGest** por meio de integrações de mercado em tempo real, inteligência de localização por GPS, comparativos avançados entre veículos da frota e ferramentas de compartilhamento comunitário e patrimonial: monitoramento de preços da ANP correlacionados ao clima, radar de postos econômicos, alertas de preço limite, diretório e mapa de oficinas de confiança, simulador de viabilidade financeira (ex.: Etanol vs Gasolina), prontuário veicular compartilhado por QR Code e resumo mensal por e-mail.
+Ampliar o ecossistema do **AutoGest** por meio de integrações de mercado com cache resiliente, inteligência de localização por GPS em primeiro plano, simulador financeiro, comparativos avançados entre combustíveis e veículos, galeria fotográfica, perfil de condução, compartilhamento público revogável via QR Code e resumo mensal automatizado por e-mail com consentimento explícito.
 
 ---
 
-## 3. Planejamento de Sprints e User Stories
+## 3. Histórico de User Stories e Status de Implementação
 
 ### Sprint 7 — Preços de Combustível e Mercado (28h)
 
-| US | Título | Esforço | Status | Escopo Planejado |
+| US | Título | Esforço | Status | Critério Principal Atendido |
 |---|---|---|---|---|
-| **US17** | Monitoramento de Preços ANP e Clima | 12h | **Planejada** ⏳ | Integração periódica com a base de preços médios da ANP e dados climáticos do OpenWeatherMap. |
-| **US34** | Postos Mais Baratos por GPS | 8h | **Planejada** ⏳ | Ordenação geolocalizada de postos de combustível a partir da posição atual do motorista. |
-| **US35** | Histórico de Preços e Alerta de Preço-Limite | 8h | **Planejada** ⏳ | Notificação push quando um posto no trajeto habitual estiver abaixo do teto estipulado. |
+| **US17** | Monitoramento de Preços ANP e Clima | 12h | **Concluída** ✅ | Coleta diária de preços ANP com média municipal e aviso de granularidade, clima via Open-Meteo com cache persistido de 24h e exibição offline da última coleta. |
+| **US34** | Postos Mais Baratos por GPS | 8h | **Concluída** ✅ | Tabela `postos` sincronizável somente leitura, ordenação pura por preço e distância (haversine), GPS exclusivamente em primeiro plano e fallback por município quando negado. |
+| **US35** | Histórico de Preços e Alerta de Preço-Limite | 8h | **Concluída** ✅ | Gráfico de tendência (30 e 90 dias), avaliação `precoAtual ≤ precoLimite` com disparo único até o preço voltar a subir e respeito à pausa global (US39). |
 
 ---
 
 ### Sprint 8 — Oficinas, Mapa e Simulador (28h)
 
-| US | Título | Esforço | Status | Escopo Planejado |
+| US | Título | Esforço | Status | Critério Principal Atendido |
 |---|---|---|---|---|
-| **US12** | Diretório de Oficinas Favoritas | 6h | **Planejada** ⏳ | Cadastramento de oficinas mecânicas com contatos rápidos, endereço e avaliação de serviços. |
-| **US36** | Mapa de Postos e Oficinas Visitados | 8h | **Planejada** ⏳ | Plotagem em mapa interativo dos locais físicos onde o veículo realizou abastecimentos ou revisões. |
-| **US16** | Simulador Financeiro de Viabilidade | 10h | **Planejada** ⏳ | Calculadora de paridade entre combustíveis (regra dos 70% adaptada ao consumo real do carro) e viabilidade de troca. |
-| **US31** | Lembretes de Inspeção Visual | 4h | **Planejada** ⏳ | Checklist e lembretes periódicos de conferência rápida (lâmpadas, palhetas, estepe e extintor). |
+| **US12** | Diretório de Oficinas Favoritas | 6h | **Concluída** ✅ | CRUD de oficinas com validação de telefone e botão de ligar, favoritos, vínculo com manutenções gerando atendimentos e exclusão lógica preservando histórico e total gasto. |
+| **US36** | Mapa de Postos e Oficinas Visitados | 8h | **Concluída** ✅ | Registro automático em `locais_visitados` apenas quando há coordenadas, agrupamento por proximidade (≤ 50 m) com contagem de visitas e legenda com ícones distintos. |
+| **US16** | Simulador Financeiro de Viabilidade | 10h | **Concluída** ✅ | Regra dos 70% (`etanol ≤ 70% gasolina`), economia potencial mensal e custo previsto de viagem com preços pré-carregados da US17 e histórico salvo em `simulacoes`. |
+| **US31** | Lembretes de Inspeção Visual | 4h | **Concluída** ✅ | Itens pré-definidos com periodicidade em dias, ciclos abertos em `ciclos_inspecao` com repetição diária limitada a 7 tentativas e reagendamento automático ao concluir. |
 
 ---
 
 ### Sprint 9 — Compartilhamento e Recursos Avançados (36h)
 
-| US | Título | Esforço | Status | Escopo Planejado |
+| US | Título | Esforço | Status | Critério Principal Atendido |
 |---|---|---|---|---|
-| **US20** | Perfil Compartilhável via QR Code | 6h | **Planejada** ⏳ | Geração de página web estática ou QR Code com histórico de revisões comprovadas para venda do seminovo. |
-| **US28** | Comparativos entre Combustíveis e Veículos | 10h | **Planejada** ⏳ | Matriz comparativa de custo por quilômetro real entre os veículos da garagem e tipos de combustível. |
-| **US29** | Perfil de Condução e Eficiência | 6h | **Planejada** ⏳ | Classificação do padrão de direção (econômico, agressivo ou moderado) com base na dispersão de consumo. |
-| **US32** | Galeria de Fotos do Veículo | 6h | **Planejada** ⏳ | Álbum fotográfico para registro de vistorias, estado da lataria e documentação de sinistros. |
-| **US37** | Resumo Mensal Consolidado por E-mail | 8h | **Planejada** ⏳ | Disparo automatizado no primeiro dia do mês com o demonstrativo financeiro e odômetro da frota. |
+| **US32** | Galeria de Fotos do Veículo | 6h | **Concluída** ✅ | Captura/galeria com compressão, reuso do fluxo de URL assinada da US09, exibição cronológica com legenda e seleção de foto de capa (`veiculos.foto_capa_id`). |
+| **US29** | Perfil de Condução e Eficiência | 6h | **Concluída** ✅ | Autoavaliação (`economico`, `normal`, `agressivo`) sem sensores, snapshot imutável no abastecimento sem reescrever histórico e gráfico de correlação de consumo. |
+| **US28** | Comparativos entre Combustíveis e Veículos | 10h | **Concluída** ✅ | Comparação de consumo médio e custo/km entre combustíveis do mesmo veículo e entre veículos (período padrão 90 dias, alterável), com legenda textual e fallback `--`. |
+| **US20** | Perfil Compartilhável via QR Code | 6h | **Concluída** ✅ | Token opaco de 32 bytes (armazenado apenas como hash SHA-256), validade de 30 dias revogável, allowlist estrita de campos públicos, rate limit próprio e leitor de QR no app. |
+| **US37** | Resumo Mensal Consolidado por E-mail | 8h | **Concluída** ✅ | Consentimento explícito (`receber_resumo = false` por padrão), job mensal idempotente por `(usuario_id, mes_referencia)`, modelo texto/HTML pt-BR sem dados sensíveis e cancelamento por link. |
 
 ---
 
-## 4. Próximos Passos para Início da Entrega 3
-1. **Configuração de Chaves de API de Produção:** Obtenção de chaves ativas do Google Maps SDK e OpenWeatherMap API.
-2. **Definição de Provedor de E-mail Transacional:** Configuração do SendGrid / AWS SES para a rotina de resumo mensal (US37).
-3. **Spike de Geolocalização Contínua em Background:** Avaliar impacto no consumo de bateria ao consultar postos econômicos próximos.
+## 4. Spikes e Decisões de Arquitetura Consolidadas
+- **SPK.4 (Preços ANP e Clima):** Fonte oficial CSV da ANP (média municipal com aviso de granularidade) + Open-Meteo para clima (gratuito, sem chave), com cache persistido de 24h em PostgreSQL/SQLite.
+- **SPK.5 (Coordenadas de Postos):** Extração de postos pelo job diário da ANP combinada com geocodificação no backend (Nominatim/OSM), mantendo chaves e requisições externas isoladas na API.
+- **SPK.6 (E-mail Transacional):** Provedor **Resend** atrás da interface `ProvedorEmail` (plano gratuito de 3.000 e-mails/mês e 100/dia, remetente `AutoGest <resumo@autogest.app>`), com timeout e 1 retentativa.
+
+---
+
+## 5. Evidências de Testes e Validação
+- **Suíte de Testes da Entrega 3:** 16 arquivos de teste (38 suítes, **84 testes passando**, 0 falhas) cobrindo adaptadores ANP/clima/postos com fixtures gravadas, ordenação haversine, alertas de preço, oficinas, mapa por proximidade, simulador, inspeção visual, fotos, perfil de condução, comparativos, compartilhamento QR Code e job de resumo mensal por e-mail.
+- **Verificações de Qualidade:** 0 erros de tipagem (`tsc --noEmit` em `apps/api` e `apps/mobile`) e 0 erros de lint (`eslint`).

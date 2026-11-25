@@ -221,14 +221,14 @@ Este documento consolida o **Product Backlog** do sistema AutoGest, estruturado 
 
 | US | Título | Esforço | Prioridade | Resumo |
 |---|---|---|---|---|
-| **US17** | Monitoramento de Preços ANP e Clima | 12h | Média | Comparação dos valores pagos com a média regional da ANP e clima local via OpenWeatherMap. |
-| **US34** | Postos Mais Baratos por GPS | 8h | Média | Localização dos postos com menor preço nas imediações do motorista. |
-| **US35** | Histórico de Preços e Alerta de Preço-Limite | 8h | Média | Alerta quando postos favoritos atingirem valor abaixo da meta cadastrada. |
-| **US12** | Diretório de Oficinas Favoritas | 6h | Baixa | Cadastro e avaliação de oficinas mecânicas e autoelétricas de confiança. |
-| **US36** | Mapa de Postos e Oficinas Visitados | 8h | Baixa | Visualização em mapa geográfico de todos os locais de abastecimento e manutenção. |
-| **US16** | Simulador de Viabilidade e Economia | 10h | Baixa | Comparador financeiro de viabilidade: Gasolina vs Etanol vs GNV ou troca de veículo. |
-| **US20** | Perfil Compartilhável via QR Code | 6h | Baixa | Compartilhamento do prontuário do veículo para valorização em venda de seminovos. |
-| **US28** | Comparativos entre Combustíveis e Veículos | 10h | Baixa | Cruzamento estatístico de rendimento real entre veículos da frota e combustíveis. |
-| **US29** | Perfil de Condução e Eficiência | 6h | Baixa | Diagnóstico do estilo de direção (agressivo, moderado, econômico). |
-| **US32** | Galeria de Fotos do Veículo | 6h | Baixa | Armazenamento de fotos do veículo em diferentes ângulos e vistorias. |
-| **US37** | Resumo Mensal Consolidado por E-mail | 8h | Baixa | Envio programado de relatório financeiro e de saúde do veículo para o e-mail do titular. |
+| **US17** | Monitoramento de Preços ANP e Clima | 12h | Média | Comparação dos valores pagos com a média regional da ANP e clima local via Open-Meteo com cache de 24h. |
+| **US34** | Postos Mais Baratos por GPS | 8h | Média | Localização dos postos com menor preço nas imediações do motorista (GPS apenas em primeiro plano). |
+| **US35** | Histórico de Preços e Alerta de Preço-Limite | 8h | Média | Gráfico de tendência (30 e 90 dias) e alerta quando o preço regional atingir ou ficar abaixo do limite cadastrado. |
+| **US12** | Diretório de Oficinas Favoritas | 6h | Baixa | Cadastro de oficinas de confiança com telefone, endereço, favoritos e histórico de atendimentos. |
+| **US36** | Mapa de Postos e Oficinas Visitados | 8h | Baixa | Visualização em mapa geográfico dos locais de abastecimento e manutenção agrupados por proximidade (50 m). |
+| **US16** | Simulador de Viabilidade e Economia | 10h | Baixa | Comparador Etanol × Gasolina (regra dos 70%), economia potencial mensal e custo previsto de viagem. |
+| **US20** | Perfil Compartilhável via QR Code | 6h | Baixa | Compartilhamento público revogável (token opaco, 30 dias) do prontuário do veículo para valorização na revenda. |
+| **US28** | Comparativos entre Combustíveis e Veículos | 10h | Baixa | Cruzamento estatístico de consumo médio e custo por km entre combustíveis e veículos cadastrados. |
+| **US29** | Perfil de Condução e Eficiência | 6h | Baixa | Autoavaliação do estilo de direção (`economico`, `normal`, `agressivo`) correlacionada ao consumo histórico. |
+| **US32** | Galeria de Fotos do Veículo | 6h | Baixa | Armazenamento cronológico de fotos comprimidas do veículo com legenda e seleção de foto de capa. |
+| **US37** | Resumo Mensal Consolidado por E-mail | 8h | Baixa | Envio mensal idempotente (com consentimento explícito e cancelamento por link) de gastos, consumo e km. |

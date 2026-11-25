@@ -10,7 +10,7 @@ Aplicativo Android (React Native) e API (Node.js/PostgreSQL) para gestão inteli
 |---|---|---|---|
 | **Entrega 1 (Core)** | Autenticação, Garagem, Abastecimentos, Hodômetro, Manutenções, Alertas, Despesas, Custos Fixos, Pneus/Fluidos, Dashboard e Sync Offline | 112h | **Concluída** (100%) |
 | **Entrega 2 (Financeiro e Dados)** | Teto Orçamentário, Trilha de Auditoria, Backup/Restauração Criptografados (.agbak), Gráficos, Modo Viagem, Metas de Eficiência, FIPE, Busca e Exportação PDF/CSV | 112h | **Concluída** (100%) |
-| **Entrega 3 (Integrações e Extras)** | Preços ANP e Clima, Postos via GPS, Histórico/Alerta de Preço, Oficinas, Mapa, Simulador e Compartilhamento | 92h | **Planejada** |
+| **Entrega 3 (Integrações e Extras)** | Preços ANP e Clima, Postos via GPS, Histórico/Alerta de Preço, Oficinas, Mapa, Simulador, Inspeção Visual, Fotos, Perfil de Condução, Comparativos, QR Code e Resumo por E-mail | 92h | **Concluída** (100%) |
 
 ---
 
@@ -45,7 +45,7 @@ autogest/
 # Instalar dependências
 npm install
 
-# Executar suíte de testes (336 testes)
+# Executar suíte de testes (420 testes automatizados)
 npm test
 
 # Validação de tipos TypeScript
